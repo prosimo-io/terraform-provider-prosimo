@@ -1,3 +1,10 @@
+
+---
+page_title: "Supported Features"
+subcategory: "Guides"
+description: |-
+  List of Prosimo Features supported by terraform.
+---
 ### Features:
 
 1. List of Prosimo features supported via Terraform :

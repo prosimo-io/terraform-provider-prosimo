@@ -1,6 +1,6 @@
 ---
 page_title: "DataSource Filters"
-subcategory: ""
+subcategory: "Guides"
 description: |-
   Use DataSource Filters to scope out specific results.
 ---
