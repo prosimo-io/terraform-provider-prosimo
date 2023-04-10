@@ -13,7 +13,7 @@ terraform {
   required_providers {
     prosimo = {
       version = "2.9.2"
-      source  = ""hashicorp/prosimo""
+      source  = "prosimo-io/prosimo"
     }
   }
 }
