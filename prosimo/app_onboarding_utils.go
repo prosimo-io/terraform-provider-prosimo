@@ -101,13 +101,16 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 
 		appURL := appURLOpts.GetAppURL()
 		if cloudConfigOpts.AppHOstedType == client.HostedPrivate {
-			cloudCreds, err := prosimoClient.GetCloudCreds(ctx)
+			cloudCreds, err := prosimoClient.GetCloudCredsPrivate(ctx)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 			for _, cloudCred := range cloudCreds.CloudCreds {
-				appURL.CloudKeyID = cloudCred.ID
+				if cloudCred.Nickname == cloudConfigOpts.CloudCredsName {
+					appURL.PrivateDcID = cloudCred.ID
+				}
 			}
+			appURL.DCAappIP = cloudConfigOpts.DCAappIP
 		} else {
 			// log.Println("cloudConfigOpts.CloudCredsName", cloudConfigOpts.CloudCredsName)
 			cloudCreds, err := prosimoClient.GetCloudCredsByName(ctx, cloudConfigOpts.CloudCredsName)

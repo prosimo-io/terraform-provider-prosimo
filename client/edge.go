@@ -6,17 +6,17 @@ import (
 )
 
 type Edge struct {
-	CloudKeyID  string `json:"cloudKeyID,omitempty"`
-	CloudRegion string `json:"cloudRegion,omitempty"`
-	ID          string `json:"id,omitempty"`
-
-	CloudType   string `json:"cloudType,omitempty"`
-	ClusterName string `json:"clusterName,omitempty"`
-	PappFqdn    string `json:"pappFqdn,omitempty"`
-	RegStatus   string `json:"regStatus,omitempty"`
-	Status      string `json:"status,omitempty"`
-	Subnet      string `json:"subnet,omitempty"`
-	TeamID      string `json:"teamID,omitempty"`
+	CloudKeyID       string             `json:"cloudKeyID,omitempty"`
+	CloudRegion      string             `json:"cloudRegion,omitempty"`
+	ID               string             `json:"id,omitempty"`
+	NodeSizesettings *ConnectorSettings `json:"nodeSizeSettings,omitempty"`
+	CloudType        string             `json:"cloudType,omitempty"`
+	ClusterName      string             `json:"clusterName,omitempty"`
+	PappFqdn         string             `json:"pappFqdn,omitempty"`
+	RegStatus        string             `json:"regStatus,omitempty"`
+	Status           string             `json:"status,omitempty"`
+	Subnet           string             `json:"subnet,omitempty"`
+	TeamID           string             `json:"teamID,omitempty"`
 }
 
 type EdgeList struct {

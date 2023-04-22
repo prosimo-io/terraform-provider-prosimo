@@ -59,7 +59,7 @@ func testAccResourceAppOnboardingJumpBox_basic(name string) string {
 resource "prosimo_app_onboarding_jumpbox" "test" {
 
 	app_name = "common-app-jumpbox"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "tf-jumpbox.psonar.us"
 		app_fqdn = "tf-jumpbox.psonar.us"
@@ -94,7 +94,7 @@ func testAccResourceAppOnboardingJumpBoxPre() string {
 resource "prosimo_app_onboarding_jumpbox" "test_update" {
 
 	app_name = "common-app-jumpbox-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "tf-jumpbox.psonar.us"
 		app_fqdn = "tf-jumpbox.psonar.us"
@@ -129,7 +129,7 @@ func testAccResourceAppOnboardingJumpBoxPost() string {
 resource "prosimo_app_onboarding_jumpbox" "test_update" {
 
 	app_name = "common-app-jumpbox-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "tf-jumpbox.psonar.us"
 		app_fqdn = "tf-jumpbox.psonar.us"

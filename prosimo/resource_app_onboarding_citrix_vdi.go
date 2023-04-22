@@ -26,7 +26,7 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"idp_name": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "IDP provider name.",
 			},
@@ -145,6 +145,13 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 							Required: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"app_hosted_type": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										Default:      "PUBLIC",
+										ValidateFunc: validation.StringInSlice(client.AppHostedOptn(), false),
+										Description:  "Wheather app is hosted in Public cloud like AWS/AZURE/GCP or private DC. Available options PRIVATE/PUBLIC",
+									},
 									"connection_option": {
 										Type:         schema.TypeString,
 										Required:     true,
@@ -155,6 +162,11 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 										Type:        schema.TypeString,
 										Required:    true,
 										Description: "cloud account under which application is hosted",
+									},
+									"dc_app_ip": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Applicable only if  app_hosted_type is PRIVATE, IP of the app hosted in PRIVATE DC",
 									},
 									"is_show_connection_options": {
 										Type:     schema.TypeBool,
@@ -168,8 +180,7 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 									},
 									"edge_regions": {
 										Type:     schema.TypeList,
-										MinItems: 1,
-										Required: true,
+										Optional: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"region_name": {
@@ -427,19 +438,13 @@ func resourceAppOnboarding_VDI_Create(ctx context.Context, d *schema.ResourceDat
 		return diags
 	}
 
-	//Validate IP Pool CIDR
-	// ipPoolCIDR := d.Get("ip_pool_cidr").(string)
-
-	// diags = validate_ippoolCIDR(ctx, ipPoolCIDR, meta)
-	// if diags != nil {
-	// 	return diags
-	// }
-
 	//Validate IDP
 	idpName := d.Get("idp_name").(string)
-	diags = validate_primaryIDP(ctx, idpName, meta)
-	if diags != nil {
-		return diags
+	if idpName != "" {
+		diags = validate_primaryIDP(ctx, idpName, meta)
+		if diags != nil {
+			return diags
+		}
 	}
 
 	appOnboardObjOpts, diags := getAppOnboardConfigObj_VDI(d)
@@ -768,11 +773,17 @@ func getAppOnboardConfigObj_VDI(d *schema.ResourceData) (*client.AppOnboardSetti
 
 		//Cloud Config
 		appOnboardCloudConfigOpts := &client.AppOnboardCloudConfigOpts{
+			AppHOstedType:              cloudConfig["app_hosted_type"].(string),
 			ConnectionOption:           cloudConfig["connection_option"].(string),
 			CloudCredsName:             cloudConfig["cloud_creds_name"].(string),
 			IsShowConnectionOptions:    cloudConfig["is_show_connection_options"].(bool),
 			HasPrivateConnectionOption: cloudConfig["has_private_connection_options"].(bool),
 			Regions:                    regionOptsList,
+		}
+
+		// Read DC app IP if APP is hosted in private DC
+		if appOnboardCloudConfigOpts.AppHOstedType == client.HostedPrivate {
+			appOnboardCloudConfigOpts.DCAappIP = cloudConfig["dc_app_ip"].(string)
 		}
 
 		// app protocols
@@ -788,7 +799,7 @@ func getAppOnboardConfigObj_VDI(d *schema.ResourceData) (*client.AppOnboardSetti
 				IsValidProtocolPort: formatedrotocolsValues["web_socket_enabled"].(bool),
 			}
 			if appProtocol.WebSocketEnabled {
-				if v, ok := formatedrotocolsValues["paths"]; ok {
+				if v, ok := formatedrotocolsValues["paths"]; ok && v.(*schema.Set).Len() > 0 {
 					pathList := v.([]interface{})
 					if len(pathList) > 0 {
 						appProtocol.Paths = expandStringList(v.([]interface{}))

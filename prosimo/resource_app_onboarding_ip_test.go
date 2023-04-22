@@ -59,7 +59,7 @@ func testAccResourceAppOnboardingIP_basic(name string) string {
 resource "prosimo_app_onboarding_ip" "test" {
 
 	app_name = "agent-test"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		app_fqdn = "10.10.0.36"
 		protocols {
@@ -92,7 +92,7 @@ func testAccResourceAppOnboardingIPPre() string {
 resource "prosimo_app_onboarding_ip" "test_update" {
 
 	app_name = "agent-test_update"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		app_fqdn = "10.10.0.36"
 		protocols {
@@ -125,7 +125,7 @@ func testAccResourceAppOnboardingIPPost() string {
 resource "prosimo_app_onboarding_ip" "test_update" {
 
 	app_name = "agent-test_update"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		app_fqdn = "10.10.0.36"
 		protocols {

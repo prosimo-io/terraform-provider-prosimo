@@ -59,7 +59,7 @@ func testAccResourceAppOnboardingFQDN_basic(name string) string {
 resource "prosimo_app_onboarding_fqdn" "test" {
 
 	app_name = "common-app-agent-fqdn"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		domain_type = "custom"
 		app_fqdn = "alex-app-101.abc.com"
@@ -108,7 +108,7 @@ func testAccResourceAppOnboardingFQDNPre() string {
 resource "prosimo_app_onboarding_fqdn" "test_update" {
 
 	app_name = "common-app-agent-fqdn-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		domain_type = "custom"
 		app_fqdn = "alex-app-101.abc.com"
@@ -157,7 +157,7 @@ func testAccResourceAppOnboardingFQDNPost() string {
 resource "prosimo_app_onboarding_fqdn" "test_update" {
 
 	app_name = "common-app-agent-fqdn-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		domain_type = "custom"
 		app_fqdn = "alex-app-101.abc.com"

@@ -59,7 +59,7 @@ func testAccResourceAppOnboardingCitrixVDI_basic(name string) string {
 resource "prosimo_app_onboarding_citrixvdi" "test" {
 
 	app_name = "common-app"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	citrix_ip = ["10.1.1.1"]
 	app_urls {
 		internal_domain = "google.com"
@@ -78,10 +78,10 @@ resource "prosimo_app_onboarding_citrixvdi" "test" {
 
 		cloud_config {
 			connection_option = "public"
-			cloud_creds_name = "prosimo-infra"
+			cloud_creds_name = "prosimo-aws-iam"
 			edge_regions {
 				region_type = "active"
-				region_name = "westus2"
+				region_name = "us-west-2"
 				conn_option = "public"
 				backend_ip_address_discover = true
 			}
@@ -110,7 +110,7 @@ func testAccResourceAppOnboardingCitrixVDIPre() string {
 resource "prosimo_app_onboarding_citrixvdi" "test_update" {
 
 	app_name = "common-app-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	citrix_ip = ["10.1.1.2"]
 	app_urls {
 		internal_domain = "amazon.com"
@@ -129,10 +129,10 @@ resource "prosimo_app_onboarding_citrixvdi" "test_update" {
 
 		cloud_config {
 			connection_option = "public"
-			cloud_creds_name = "prosimo-infra"
+			cloud_creds_name = "prosimo-aws-iam"
 			edge_regions {
 				region_type = "active"
-				region_name = "westus2"
+				region_name = "us-west-2"
 				conn_option = "public"
 				backend_ip_address_discover = true
 			}
@@ -161,7 +161,7 @@ func testAccResourceAppOnboardingCitrixVDIPost() string {
 resource "prosimo_app_onboarding_citrixvdi" "test_update" {
 
 	app_name = "common-app-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	citrix_ip = ["10.1.1.1"]
 	app_urls {
 		internal_domain = "amazon.com"
@@ -180,10 +180,10 @@ resource "prosimo_app_onboarding_citrixvdi" "test_update" {
 
 		cloud_config {
 			connection_option = "public"
-			cloud_creds_name = "prosimo-infra"
+			cloud_creds_name = "prosimo-aws-iam"
 			edge_regions {
 				region_type = "active"
-				region_name = "westus2"
+				region_name = "us-west-2"
 				conn_option = "public"
 				backend_ip_address_discover = true
 			}

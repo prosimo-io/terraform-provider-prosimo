@@ -185,8 +185,9 @@ func AppOnboardConnOptn() []string {
 
 // To be reviewed if it's required anymore.
 func AppHostedOptn() []string {
-	HostedOptn := make([]string, 1)
+	HostedOptn := make([]string, 2)
 	HostedOptn[0] = HostedPrivate
+	HostedOptn[1] = HostedPublic
 	return HostedOptn
 }
 

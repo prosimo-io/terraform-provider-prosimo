@@ -47,7 +47,7 @@ resource "prosimo_network_onboarding" "testapp-azure" {
 }
 
 
-# Azure with VNET peering
+# # # Azure with VNET peering
 resource "prosimo_network_onboarding" "testapp-s3" {
 
     name = "demo_network_new"
@@ -57,27 +57,22 @@ resource "prosimo_network_onboarding" "testapp-s3" {
         cloud_creds_name = "prosimo-app"
         region_name = "eastus"
         cloud_networks {
-          vnet = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/app-azure-eastus2-1662042288531-rg/providers/Microsoft.Network/virtualNetworks/app-azure-eastus2-1662042288531-vnet"
+          vnet = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/Gitlab/providers/Microsoft.Network/virtualNetworks/Gitlabvnet696"
           # hub_id = "tgw-04db5eac6fe3de45e"
            connector_placement = "Workload VPC"
           connectivity_type = "vnet-peering"
-          subnets = ["10.253.0.0/18"]
-          connector_settings {
-            bandwidth = "small"
-            bandwidth_name = "<1 Gbps"
-            instance_type = "Standard_A2_v2"
-          }
+          subnets = ["10.3.7.0/24"]
         }
         connect_type = "connector"
 
     }
-    policies = ["qing-policy"]
+    policies = ["ProAccess-policy-tf"]
     onboard_app = false
-    decommission_app = true
+    decommission_app = false
 }
 
 #AWS with transit gateway
-resource "prosimo_network_onboarding" "testapp-s3" {
+resource "prosimo_network_onboarding" "testapp-s4" {
 
     name = "demo_network_new"
     public_cloud {
@@ -132,13 +127,13 @@ resource "prosimo_network_onboarding" "sin-subnet-1" {
   public_cloud {
     cloud_type        = "public"
     connection_option = "private"
-    cloud_creds_name  = "415105605610"
+    cloud_creds_name  = "prosimo-aws-app-iam"
     region_name       = "ap-southeast-1"
     cloud_networks {
-      vpc               = "vpc-00db3ea15012270ee" 
+      vpc               = "vpc-01556b89470488af8" 
       connectivity_type = "transit-gateway"
       connector_placement = "Infra VPC"
-      subnets           = ["192.168.40.0/24"]
+      subnets           = ["192.168.250.0/26"]
       connector_settings {
         bandwidth = "small"
         bandwidth_name = "<1 Gbps"
@@ -148,8 +143,21 @@ resource "prosimo_network_onboarding" "sin-subnet-1" {
 
  connect_type = "connector"
   }
-  policies                = ["DENY-ALL-NETWORKS", "nc_allow_30000"]
-  onboard_app             = true
+  policies                = ["DENY-ALL-NETWORKS"]
+  onboard_app             = false
+  decommission_app        = false
+}
+
+
+#PrivateDC Network Onboarding
+resource "prosimo_network_onboarding" "privateDC" {
+  name = "private-network-test"
+  private_cloud {
+    cloud_creds_name  = "PrivateDC"
+     subnets           = ["10.0.0.2/32"]
+  }
+  policies                = ["ALLOW-ALL-NETWORKS"]
+  onboard_app             = false
   decommission_app        = false
 }
 ```
@@ -166,6 +174,7 @@ resource "prosimo_network_onboarding" "sin-subnet-1" {
 ### Optional
 
 - `policies` (List of String) Select policy name.e.g: ALLOW-ALL-NETWORKS, DENY-ALL-NETWORKS or Custom Policies
+- `private_cloud` (Block Set) (see [below for nested schema](#nestedblock--private_cloud))
 - `public_cloud` (Block Set) (see [below for nested schema](#nestedblock--public_cloud))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `wait_for_rollout` (Boolean) Wait for the rollout of the task to complete. Defaults to true.
@@ -177,6 +186,18 @@ resource "prosimo_network_onboarding" "sin-subnet-1" {
 - `pam_cname` (String)
 - `status` (String)
 
+<a id="nestedblock--private_cloud"></a>
+### Nested Schema for `private_cloud`
+
+Required:
+
+- `cloud_creds_name` (String) cloud application account name.
+
+Optional:
+
+- `subnets` (List of String) subnet cider list
+
+
 <a id="nestedblock--public_cloud"></a>
 ### Nested Schema for `public_cloud`
 
@@ -184,12 +205,12 @@ Required:
 
 - `cloud_creds_name` (String) cloud application account name.
 - `cloud_networks` (Block Set, Min: 1) (see [below for nested schema](#nestedblock--public_cloud--cloud_networks))
-- `cloud_type` (String) public or private cloud
 - `connection_option` (String) public or private cloud
 - `region_name` (String) Name of cloud region
 
 Optional:
 
+- `cloud_type` (String) public or private cloud
 - `connect_type` (String) connector
 
 Read-Only:

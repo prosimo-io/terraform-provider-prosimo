@@ -59,7 +59,7 @@ func testAccResourceAppOnboardingWeb_basic(name string) string {
 resource "prosimo_app_onboarding_web" "test" {
 
 	app_name = "agentless-multi-VMs-tf"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "10.100.0.142"
 		domain_type = "custom"
@@ -109,7 +109,7 @@ func testAccResourceAppOnboardingWebPre() string {
 resource "prosimo_app_onboarding_web" "test_update" {
 
 	app_name = "agentless-multi-VMs-tf-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "10.100.0.142"
 		domain_type = "custom"
@@ -159,7 +159,7 @@ func testAccResourceAppOnboardingWebPost() string {
 resource "prosimo_app_onboarding_web" "test_update" {
 
 	app_name = "agentless-multi-VMs-tf-new"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "10.100.0.142"
 		domain_type = "custom"

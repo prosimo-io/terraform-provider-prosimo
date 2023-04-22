@@ -60,7 +60,7 @@ resource "prosimo_app_onboarding_cloudsvc" "test" {
 
 	app_name = "common-app-s3"
 	cloud_svc = "amazon-s3"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "qingscnetworkers.info"
 		app_fqdn = "qingscnetworkers.info"
@@ -71,7 +71,7 @@ resource "prosimo_app_onboarding_cloudsvc" "test" {
 			edge_regions {
 				region_name = "us-east-2"
 				region_type = "active"
-				buckets = ["arun-vpc-s3"]
+				buckets = ["qing-panbootstrap"]
 			}
 		}
 		dns_service {
@@ -95,7 +95,7 @@ resource "prosimo_app_onboarding_cloudsvc" "test_update" {
 
 	app_name = "common-app-s3-new"
 	cloud_svc = "amazon-s3"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "qingscnetworkers.info"
 		app_fqdn = "qingscnetworkers.info"
@@ -106,7 +106,7 @@ resource "prosimo_app_onboarding_cloudsvc" "test_update" {
 			edge_regions {
 				region_name = "us-east-2"
 				region_type = "active"
-				buckets = ["arun-vpc2-s3"]
+				buckets = ["qing-panbootstrap"]
 			}
 		}
 		dns_service {
@@ -130,7 +130,7 @@ resource "prosimo_app_onboarding_cloudsvc" "test_update" {
 
 	app_name = "common-app-s3-new"
 	cloud_svc = "amazon-s3"
-	idp_name = "azure_ad"
+	// idp_name = "azure_ad"
 	app_urls {
 		internal_domain = "qingscnetworkers.info"
 		app_fqdn = "qingscnetworkers.info"
@@ -141,7 +141,7 @@ resource "prosimo_app_onboarding_cloudsvc" "test_update" {
 			edge_regions {
 				region_name = "us-east-2"
 				region_type = "active"
-				buckets = ["arun-vpc2-s3"]
+				buckets = ["qing-panbootstrap"]
 			}
 		}
 		dns_service {

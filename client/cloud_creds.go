@@ -126,6 +126,23 @@ func (prosimoClient *ProsimoClient) GetCloudCreds(ctx context.Context) (*CloudCr
 
 }
 
+func (prosimoClient *ProsimoClient) GetCloudCredsPrivate(ctx context.Context) (*CloudCredsList, error) {
+
+	req, err := prosimoClient.api_client.NewRequest("GET", CloudCredsEndpointPrivate, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudCredsList := &CloudCredsList{}
+	_, err = prosimoClient.api_client.Do(ctx, req, cloudCredsList)
+	if err != nil {
+		return nil, err
+	}
+
+	return cloudCredsList, nil
+
+}
+
 func (prosimoClient *ProsimoClient) GetCloudCredsByName(ctx context.Context, cloudCredsName string) (*CloudCreds, error) {
 
 	req, err := prosimoClient.api_client.NewRequest("GET", CloudCredsEndpoint, nil)

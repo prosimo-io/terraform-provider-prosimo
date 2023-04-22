@@ -67,22 +67,25 @@ func TestAccResourceNetworkOnboarding_Update(t *testing.T) {
 func testAccResourceNetworkOnboarding_basic(name string) string {
 	return fmt.Sprintf(` 
 resource "prosimo_network_onboarding" "test" {
-	name = "aws-u2n-euspoke3-tf"
+
+	name = "demo_network_new"
 	public_cloud {
-		cloud_type        = "public"
+		cloud_type = "public"
 		connection_option = "private"
-		cloud_creds_name  = "prosimo-aws-app-iam"
-		region_name       = "eu-west-1"
+		cloud_creds_name = "prosimo-aws-iam"
+		region_name = "us-west-2"
 		cloud_networks {
-		hub_id              = "tgw-06d2d8db5d344a1ed"
-		vpc                 = "vpc-02669f01859cd3545"
-		connectivity_type   = "transit-gateway"
-		connector_placement = "none"
-		subnets             = ["10.24.3.0/28","10.24.3.32/28"]
+			vpc = "vpc-0748dd68349f5ada2"
+			# hub_id = "tgw-04db5eac6fe3de45e"
+			connector_placement = "none"
+			connectivity_type = "vpc-peering"
+			subnets = ["10.0.0.1/24"]
 		}
+		connect_type = "connector"
+
 	}
-	policies         = ["ALLOW-ALL-NETWORKS"]
-	onboard_app      = true
+	policies = ["DENY-ALL-NETWORKS"]
+	onboard_app = false
 	decommission_app = false
 	}
 `)
@@ -91,22 +94,25 @@ resource "prosimo_network_onboarding" "test" {
 func testAccResourceNetworkOnboardingPre() string {
 	return fmt.Sprintf(`
 resource "prosimo_network_onboarding" "test_update" {
-	name = "aws-u2n-euspoke3-tf-new"
+
+	name = "demo_network_new"
 	public_cloud {
-		cloud_type        = "public"
+		cloud_type = "public"
 		connection_option = "private"
-		cloud_creds_name  = "prosimo-aws-app-iam"
-		region_name       = "eu-west-1"
+		cloud_creds_name = "prosimo-aws-iam"
+		region_name = "us-west-2"
 		cloud_networks {
-		hub_id              = "tgw-06d2d8db5d344a1ed"
-		vpc                 = "vpc-02669f01859cd3545"
-		connectivity_type   = "transit-gateway"
-		connector_placement = "none"
-		subnets             = ["10.24.3.0/28","10.24.3.32/28"]
+			vpc = "vpc-0748dd68349f5ada2"
+			# hub_id = "tgw-04db5eac6fe3de45e"
+			connector_placement = "none"
+			connectivity_type = "vpc-peering"
+			subnets = ["10.0.0.1/24"]
 		}
+		connect_type = "connector"
+
 	}
-	policies         = ["ALLOW-ALL-NETWORKS"]
-	onboard_app      = true
+	policies = ["DENY-ALL-NETWORKS"]
+	onboard_app = false
 	decommission_app = false
 	}
 `)
@@ -115,22 +121,25 @@ resource "prosimo_network_onboarding" "test_update" {
 func testAccResourceNetworkOnboardingPost() string {
 	return fmt.Sprintf(`
 resource "prosimo_network_onboarding" "test_update" {
-	name = "aws-u2n-euspoke3-tf-new"
+
+	name = "demo_network_new"
 	public_cloud {
-		cloud_type        = "public"
+		cloud_type = "public"
 		connection_option = "private"
-		cloud_creds_name  = "prosimo-aws-app-iam"
-		region_name       = "eu-west-1"
+		cloud_creds_name = "prosimo-aws-iam"
+		region_name = "us-west-2"
 		cloud_networks {
-		hub_id              = "tgw-06d2d8db5d344a1ed"
-		vpc                 = "vpc-02669f01859cd3545"
-		connectivity_type   = "transit-gateway"
-		connector_placement = "none"
-		subnets             = ["10.24.3.0/28","10.24.3.32/28"]
+			vpc = "vpc-0748dd68349f5ada2"
+			# hub_id = "tgw-04db5eac6fe3de45e"
+			connector_placement = "none"
+			connectivity_type = "vpc-peering"
+			subnets = ["10.0.0.1/24"]
 		}
+		connect_type = "connector"
+
 	}
-	policies         = ["DENY-ALL-NETWORKS"]
-	onboard_app      = true
+	policies = ["ALLOW-ALL-NETWORKS"]
+	onboard_app = false
 	decommission_app = false
 	}
 `)

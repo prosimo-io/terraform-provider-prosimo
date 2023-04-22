@@ -148,6 +148,10 @@ const (
 
 	DefaultPolicyNetwork = "DEFAULT-MCN-POLICY"
 
+	AzureBandwidth     = "small"
+	AzureBandwidthName = "<1 Gbps"
+	AzureInstanceType  = "Standard_A2_v2"
+
 	Optnpeering          = "peering"
 	OptnpeeringInput     = "private" //parse it to private
 	OptnawsPrivateLink   = "awsPrivateLink"
@@ -160,6 +164,7 @@ const (
 	Optnprivate          = "private"
 
 	HostedPrivate = "PRIVATE"
+	HostedPublic = "PUBLIC"
 
 	PublicCloudConnectionOption  = "public"
 	PrivateCloudConnectionOption = "private"
@@ -239,6 +244,7 @@ const (
 	RoleEndpoint       = APIPrefix + "role"
 	IPPoolEndpoint     = APIPrefix + "ippool"
 	CloudCredsEndpoint = APIPrefix + "cloud/creds"
+	CloudCredsEndpointPrivate = APIPrefix + "cloud/private"
 	TaskEndpoint       = APIPrefix + "task"
 	CloudS3Endpoint    = APIPrefix + "cloud/service/amazon/s3/discovery"
 
@@ -289,6 +295,7 @@ const (
 	UploadClientCertEndpoint   = APIPrefix + "cert/client"
 	CacheRuleEndpoint          = APIPrefix + "cacherule"
 	WafEndpoint                = APIPrefix + "waf"
+	GetPolicyEndpoint          = APIPrefix + "policy/search"
 	PolicyEndpoint             = APIPrefix + "policy"
 	IPRepEndpoint              = APIPrefix + "ip-reputation"
 	DynamicRiskEndpoint        = APIPrefix + "dynamicrisk"

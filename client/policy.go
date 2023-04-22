@@ -7,7 +7,11 @@ import (
 )
 
 type PolicyListData struct {
-	Data []*Policy `json:"data,omitempty"`
+	Records    []*Policy `json:"records,omitempty"`
+	TotalCount int       `json:"totalCount,omitempty"`
+}
+type PolicyListDataResponse struct {
+	Data *PolicyListData `json:"data,omitempty"`
 }
 
 type PolicytData struct {
@@ -115,18 +119,19 @@ func (prosimoClient *ProsimoClient) ReadJson() MatchItem {
 
 func (prosimoClient *ProsimoClient) GetPolicy(ctx context.Context) ([]*Policy, error) {
 
-	req, err := prosimoClient.api_client.NewRequest("GET", PolicyEndpoint, nil)
+	PolicySearchInput := Policy{}
+	req, err := prosimoClient.api_client.NewRequest("POST", GetPolicyEndpoint, PolicySearchInput)
 	if err != nil {
 		return nil, err
 	}
 
-	policyListData := &PolicyListData{}
+	policyListData := &PolicyListDataResponse{}
 	_, err = prosimoClient.api_client.Do(ctx, req, policyListData)
 	if err != nil {
 		return nil, err
 	}
 
-	return policyListData.Data, nil
+	return policyListData.Data.Records, nil
 
 }
 
@@ -190,7 +195,6 @@ func (prosimoClient *ProsimoClient) GetPolicyByID(ctx context.Context, policyID 
 			break
 		}
 	}
-
 	if policy == nil {
 		return nil, errors.New("Policy doesnt exists")
 	}

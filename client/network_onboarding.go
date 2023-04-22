@@ -17,14 +17,15 @@ type NetworkDiscoveryResponse struct {
 }
 
 type NetworkOnboardoptns struct {
-	ID          string       `json:"id,omitempty"`
-	Name        string       `json:"name,omitempty"`
-	TeamID      string       `json:"teamID,omitempty"`
-	PamCname    string       `json:"pamCname,omitempty"`
-	Deployed    bool         `json:"deployed,omitempty"`
-	Status      string       `json:"status,omitempty"`
-	PublicCloud *PublicCloud `json:"publicCloud,omitempty"`
-	Security    *Security    `json:"security,omitempty"`
+	ID           string        `json:"id,omitempty"`
+	Name         string        `json:"name,omitempty"`
+	TeamID       string        `json:"teamID,omitempty"`
+	PamCname     string        `json:"pamCname,omitempty"`
+	Deployed     bool          `json:"deployed,omitempty"`
+	Status       string        `json:"status,omitempty"`
+	PublicCloud  *PublicCloud  `json:"publicCloud,omitempty"`
+	PrivateCloud *PrivateCloud `json:"privateCloud,omitempty"`
+	Security     *Security     `json:"security,omitempty"`
 }
 
 type NetworkOnboardRes struct {
@@ -67,6 +68,14 @@ type PublicCloud struct {
 	CloudRegion      string            `json:"cloudRegion,omitempty"`
 	CloudNetworks    []CloudNetworkops `json:"cloudNetworks,omitempty"`
 	ConnectType      string            `json:"connectType,omitempty"`
+}
+
+type PrivateCloud struct {
+	Id               string   `json:"id,omitempty"`
+	CloudType        string   `json:"cloudType,omitempty"`
+	ConnectionOption string   `json:"connectionOption,omitempty"`
+	PrivateCloudID   string   `json:"privateCloudID,omitempty"`
+	Subnets          []string `json:"subnets,omitempty"`
 }
 
 type Policyops struct {

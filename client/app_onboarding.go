@@ -91,6 +91,8 @@ type AppURLOpts struct {
 	TeamID           string                          `json:"teamID,omitempty"`
 	PappFqdn         string                          `json:"pappFqdn,omitempty"`
 	CloudKeyID       string                          `json:"cloudKeyID,omitempty"`
+	PrivateDcID      string                          `json:"dcID,omitempty"`
+	DCAappIP         string                          `json:"dcAppIp,omitempty"`
 	CertID           string                          `json:"certID,omitempty"`
 	CacheRuleID      string                          `json:"cacheRuleID,omitempty"`
 	CacheRuleName    string                          `json:"cacheRuleName,omitempty"`
@@ -115,6 +117,8 @@ func (appURLOpts *AppURLOpts) GetAppURL() *AppURL {
 	appURL.TeamID = appURLOpts.TeamID
 	appURL.PappFqdn = appURLOpts.PappFqdn
 	appURL.CloudKeyID = appURLOpts.CloudKeyID
+	appURL.PrivateDcID = appURLOpts.PrivateDcID
+	appURL.DCAappIP = appURLOpts.DCAappIP
 	appURL.CertID = appURLOpts.CertID
 	appURL.CacheRuleID = appURLOpts.CacheRuleID
 	appURL.DNSService = appURLOpts.DNSService
@@ -181,6 +185,8 @@ type AppURL struct {
 	TeamID           string                          `json:"teamID,omitempty"`
 	PappFqdn         string                          `json:"pappFqdn,omitempty"`
 	CloudKeyID       string                          `json:"cloudKeyID,omitempty"`
+	PrivateDcID      string                          `json:"dcID,omitempty"`
+	DCAappIP         string                          `json:"dcAppIp,omitempty"`
 	CertID           string                          `json:"certID,omitempty"`
 	CacheRuleID      string                          `json:"cacheRuleID,omitempty"`
 	DNSService       *DNSService                     `json:"dnsService,omitempty"`
@@ -302,7 +308,8 @@ type AppOnboardCloudConfigOpts struct {
 	Regions                    []*AppOnboardCloudConfigRegionOpts `json:"regions,omitempty"`
 	IsShowConnectionOptions    bool                               `json:"isShowConnectionOptions,omitempty"`
 	HasPrivateConnectionOption bool                               `json:"hasPrivateConnectionOptions,omitempty"`
-	AppHOstedType              string                             `json:"appHostedType,omitempty"`
+	AppHOstedType              string                             `json:"cloudType,omitempty"`
+	DCAappIP                   string                             `json:"dcAppIp,omitempty"`
 }
 
 type AppOnboardCloudConfigRegionOpts struct {

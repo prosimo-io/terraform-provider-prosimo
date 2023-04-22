@@ -36,6 +36,29 @@ func resourceEdge() *schema.Resource {
 				ForceNew:    true,
 				Description: "Cloud Region",
 			},
+			"node_size_settings": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"bandwidth": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "EX: small, medium, large",
+						},
+						"bandwidth_name": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "EX: <1 Gbps, >1 Gbps",
+						},
+						"instance_type": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "EX: t3.medium, t3.large",
+						},
+					},
+				},
+			},
 			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -131,6 +154,25 @@ func resourceEdgeCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	edge := &client.Edge{
 		CloudKeyID:  cloudCreds.ID,
 		CloudRegion: region,
+	}
+	//NodeSize Settings
+	if cloudCreds.CloudType == client.AWSCloudType {
+		if v, ok := d.GetOk("node_size_settings"); ok {
+			nodesizesettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+			nodesizesettingInput := &client.ConnectorSettings{
+				Bandwidth:     nodesizesettingConfig["bandwidth"].(string),
+				BandwidthName: nodesizesettingConfig["bandwidth_name"].(string),
+				InstanceType:  nodesizesettingConfig["instance_type"].(string),
+			}
+			edge.NodeSizesettings = nodesizesettingInput
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Missing Node Size options",
+				Detail:   "Node Size options are required for edges to be spun up in aws..",
+			})
+			return diags
+		}
 	}
 	edgeResponseData, err := prosimoClient.CreateEdge(ctx, edge)
 	if err != nil {

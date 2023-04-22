@@ -59,8 +59,8 @@ NAMESPACE=prosimo
 NAME=prosimo
 BINARY=terraform-provider-${NAME}
 MAJOR_VERSION=3
-MINOR_VERSION=0
-REVISION=2
+MINOR_VERSION=2
+REVISION=3
 # BUILDNUMBER=0
 VERSION=${MAJOR_VERSION}.$(MINOR_VERSION).$(REVISION)
 OS_ARCH=darwin_amd64
@@ -68,9 +68,7 @@ OS_ARCH=darwin_amd64
 default: install
 
 stat:
-	@echo "##### $(PERSONALITY) Static Analysis #####" | tee $(PERSONALITY)-static.log
-	@semgrep --config=p/r2c-ci . 2>&1 | grep -e warning -e error -e ^[1-9] | tee -a $(PERSONALITY)-static.log
-	@echo "Done with static analysis"
+	cd $(basedir) && tfsec --force-all-dirs
 
 build:
 	go fmt prosimo/*
@@ -134,7 +132,7 @@ image:
 	cd $(basedir) && tar -C $(BINDIR) -cpf $(PERSONALITY).tar .
 
 push:
-	gsutil cp $(basedir)$(PERSONALITY).tar gs://$(GCSBUCKET)
+	gsutil -o GSUtil:parallel_composite_upload_threshold=150M cp $(basedir)$(PERSONALITY).tar gs://$(GCSBUCKET)
 
 clean-build:
 	rm -f $(BINFILE)

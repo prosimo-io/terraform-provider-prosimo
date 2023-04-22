@@ -6,7 +6,7 @@ input_flag=$1
 current_major_version=`sed -n 's/^ *MAJOR_VERSION*= *//p' "$file"`
 current_minor_version=`sed -n 's/^ *MINOR_VERSION*= *//p' "$file"`
 current_revision=`sed -n 's/^ *REVISION*= *//p' "$file"`
-current_build_number = `sed -n 's/^ *BUILDNUMBER*= *//p' "$file"`
+# current_build_number = `sed -n 's/^ *BUILDNUMBER*= *//p' "$file"`
 
 if [ "$input_flag" == "major-version" ]; then
     current_major_version=$(( $current_major_version + 1 ))
