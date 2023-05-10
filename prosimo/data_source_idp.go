@@ -2,14 +2,13 @@ package prosimo
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mitchellh/mapstructure"
 )
 
 func dataSourceIDP() *schema.Resource {
@@ -64,17 +63,15 @@ func dataSourceIDPRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	filter := d.Get("filter").(string)
+	log.Println("filter:", filter)
 
 	if filter != "" {
+
 		for _, filteredList := range getIDP.IDPs {
-			filteredMap := map[string]interface{}{}
-			err := mapstructure.Decode(filteredList, &filteredMap)
-			if err != nil {
-				panic(err)
-			}
-			log.Println("FilteredMap", filteredMap)
-			diags, flag := checkMainOperand(filter, filteredMap)
+			log.Println("FilteredList", filteredList)
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredList))
 			if diags != nil {
 				return diags
 			}
@@ -82,15 +79,6 @@ func dataSourceIDPRead(ctx context.Context, d *schema.ResourceData, meta interfa
 				returnedIDP = append(returnedIDP, filteredList)
 
 			}
-		}
-		if len(returnedIDP) == 0 {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
 		}
 	} else {
 		for _, idpDetail := range getIDP.IDPs {

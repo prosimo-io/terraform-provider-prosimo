@@ -3,12 +3,12 @@ package prosimo
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mitchellh/mapstructure"
 )
 
 func dataSourceEdge() *schema.Resource {
@@ -83,27 +83,14 @@ func dataSourceEdgeRead(ctx context.Context, d *schema.ResourceData, meta interf
 	fmt.Println("filter:", filter)
 	if filter != "" {
 		for _, returnEdge := range edgeList.Edges {
-			filteredMap := map[string]interface{}{}
-			err := mapstructure.Decode(returnEdge, &filteredMap)
-			if err != nil {
-				panic(err)
-			}
-			diags, flag := checkMainOperand(filter, filteredMap)
+			fmt.Println("returnEdge", returnEdge)
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(returnEdge))
 			if diags != nil {
 				return diags
 			}
 			if flag {
 				returnEdgeList = append(returnEdgeList, returnEdge)
 			}
-		}
-		if len(returnEdgeList) == 0 {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
 		}
 	} else {
 		for _, returnEdge := range edgeList.Edges {

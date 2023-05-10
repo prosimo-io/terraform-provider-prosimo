@@ -3,7 +3,8 @@ package prosimo
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"log"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
@@ -22,43 +23,6 @@ func dataSourceAppOnboarding() *schema.Resource {
 				Optional:    true,
 				Description: "Custom filters to scope specific results. Usage: filter = app_access_type==agent",
 			},
-			"filter_cloud_type": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Filter based upon cloud type, e.g: AWS, AZURE, GCP",
-			},
-			"filter_cloud_region": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Filter based upon cloud region, e.g: europe-central2, us-east-2",
-			},
-			"filter_protocol": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Filter based upon protocol used, e.g: http, https, tcp",
-			},
-			"filter_port": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "Filter based on port number, eg: 80, 22 etc",
-			},
-			"filter_internal_domain": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Filter based on internal domain name, eg: abc.com, 10.5.0.4/32 etc",
-			},
-			"filter_papp_fqdn": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Filter based upon papp fqdn",
-			},
-			"filter_app_fqdn": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Filter based upon onboarded app fqdn",
-			},
 			"app_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -73,7 +37,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"id": {
+						"appid": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -89,7 +53,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"policy_group_id": {
+						"policygroupid": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -109,7 +73,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"saml_rewrite": {
+						"appsamlrewrite": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -117,7 +81,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"onboardtype": {
+						"apponboardtype": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -129,7 +93,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"app_urls": {
+						"appurls": {
 							Type:     schema.TypeSet,
 							Computed: true,
 							Elem: &schema.Resource{
@@ -167,7 +131,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 										Computed:    true,
 										Description: "Set True if Subdomians need to be included else False",
 									},
-									"cloud_key_id": {
+									"cloudkeyid": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
@@ -234,7 +198,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 											},
 										},
 									},
-									"health_check_info": {
+									"healthcheckinfo": {
 										Type:     schema.TypeSet,
 										Computed: true,
 										Elem: &schema.Resource{
@@ -256,7 +220,7 @@ func dataSourceAppOnboarding() *schema.Resource {
 										Computed:    true,
 										Description: "type of connection: e.g- Private,Public.",
 									},
-									"edge_regions": {
+									"regions": {
 										Type:     schema.TypeList,
 										Computed: true,
 										Elem: &schema.Resource{
@@ -334,34 +298,30 @@ func dataSourceAppOnboardingRead(ctx context.Context, d *schema.ResourceData, me
 
 	var diags diag.Diagnostics
 	var returnAPPList []client.AppOnboardSettings
-	count := 0
 	// flag := false
 
 	apppnboardSearchops := &client.AppOnboardSearch{}
 	apppnboardSearchops.Category = "app"
 	onboardAppList, err := prosimoClient.SearchAppOnboardApps(ctx, apppnboardSearchops)
+	//convert json string
+	//map
+	log.Println("onboardAppList", onboardAppList)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	filter := d.Get("filter").(string)
-	cloudType := d.Get("filter_cloud_type").([]interface{})
-	cloudRegions := d.Get("filter_cloud_region").([]interface{})
-	protocol := d.Get("filter_protocol").(string)
-	port := d.Get("filter_port").(int)
-	internalDomain := d.Get("filter_internal_domain").(string)
-	pappFqdn := d.Get("filter_papp_fqdn").(string)
-	appFqdn := d.Get("filter_app_fqdn").(string)
 
 	if filter != "" {
-		count += 1
 		for _, onboardApp := range onboardAppList.Data.Records {
-			filteredMap := map[string]interface{}{}
+			log.Println("OnboardApp", onboardApp)
+			// filteredMap := map[string]interface{}{}
+			var filteredMap *client.AppOnboardSettings
 
 			err := mapstructure.Decode(onboardApp, &filteredMap)
 			if err != nil {
 				panic(err)
 			}
-			diags, flag := checkMainOperand(filter, filteredMap)
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredMap))
 			if diags != nil {
 				return diags
 			}
@@ -378,204 +338,10 @@ func dataSourceAppOnboardingRead(ctx context.Context, d *schema.ResourceData, me
 
 			return diags
 		}
-	}
-
-	if pappFqdn != "" {
-		count += 1
-		flag := false
-		for _, onboardApp := range onboardAppList.Data.Records {
-			for _, appUrl := range onboardApp.AppURLs {
-				if appUrl.PappFqdn == pappFqdn {
-					returnAPPList = append(returnAPPList, *onboardApp)
-					flag = true
-					break
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	if appFqdn != "" {
-		count += 1
-		flag := false
-		for _, onboardApp := range onboardAppList.Data.Records {
-			for _, appUrl := range onboardApp.AppURLs {
-				if appUrl.AppFqdn == appFqdn {
-					returnAPPList = append(returnAPPList, *onboardApp)
-					flag = true
-					break
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	if internalDomain != "" {
-		count += 1
-		flag := false
-		for _, onboardApp := range onboardAppList.Data.Records {
-			for _, appUrl := range onboardApp.AppURLs {
-				if appUrl.InternalDomain == internalDomain {
-					returnAPPList = append(returnAPPList, *onboardApp)
-					flag = true
-					break
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	if protocol != "" {
-		count += 1
-		flag := false
-		for _, onboardApp := range onboardAppList.Data.Records {
-			for _, appUrl := range onboardApp.AppURLs {
-				for _, protocoL := range appUrl.Protocols {
-					if protocoL.Protocol == protocol {
-						returnAPPList = append(returnAPPList, *onboardApp)
-						flag = true
-					}
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	if port != 0 {
-		count += 1
-		flag := false
-		for _, onboardApp := range onboardAppList.Data.Records {
-			for _, appUrl := range onboardApp.AppURLs {
-				for _, protocoL := range appUrl.Protocols {
-					if protocoL.Port == port {
-						returnAPPList = append(returnAPPList, *onboardApp)
-						flag = true
-					} else if len(protocoL.PortList) > 0 {
-						for _, porT := range protocoL.PortList {
-							i, _ := strconv.Atoi(porT)
-							if i == port {
-								returnAPPList = append(returnAPPList, *onboardApp)
-								flag = true
-							}
-						}
-					}
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	if len(cloudType) > 0 {
-		count += 1
-		flag := false
-		CloudNameList := expandStringList(cloudType)
-		getCloud, err := prosimoClient.GetCloudCreds(ctx)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		for _, cloudName := range CloudNameList {
-			var idList []string
-			for _, cloudCred := range getCloud.CloudCreds {
-				if cloudCred.CloudType == cloudName {
-					idList = append(idList, cloudCred.ID)
-				}
-			}
-			for _, cloudkey := range idList {
-				for _, onboardApp := range onboardAppList.Data.Records {
-					for _, appurl := range onboardApp.AppURLs {
-						if appurl.CloudKeyID == cloudkey {
-							returnAPPList = append(returnAPPList, *onboardApp)
-							flag = true
-						}
-					}
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	if len(cloudRegions) > 0 {
-		count += 1
-		flag := false
-		CloudRegionList := expandStringList(cloudRegions)
-		for _, regionName := range CloudRegionList {
-			for _, onboardApp := range onboardAppList.Data.Records {
-				for _, appUrl := range onboardApp.AppURLs {
-					for _, region := range appUrl.Regions {
-						if region.Name == regionName {
-							returnAPPList = append(returnAPPList, *onboardApp)
-							flag = true
-						}
-					}
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	// }
-	if count == 0 {
+	} else {
 		for _, onboardapp := range onboardAppList.Data.Records {
 			returnAPPList = append(returnAPPList, *onboardapp)
 		}
-	}
-	if count > 1 {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Invalid Input, more than one filter condition is not supported",
-			Detail:   fmt.Sprintln("As of now Prosimo datasources support a single filtering entity."),
-		})
-
-		return diags
 	}
 
 	d.SetId(time.Now().Format(time.RFC850))
@@ -590,24 +356,24 @@ func flattenAppItemsData(AppItems []client.AppOnboardSettings) []interface{} {
 		ois := make([]interface{}, len(AppItems), len(AppItems))
 
 		for i, AppItem := range AppItems {
-			oi := make(map[string]interface{})
+			oi := make(map[interface{}]interface{})
 
 			oi["app_name"] = AppItem.App_Name
-			oi["id"] = AppItem.ID
+			oi["appid"] = AppItem.ID
 			oi["team_id"] = AppItem.Team_ID
 			oi["idp_id"] = AppItem.IDP_ID
 			oi["app_access_type"] = AppItem.App_Access_Type
-			oi["policy_group_id"] = AppItem.PolicyGroupID
+			oi["policygroupid"] = AppItem.PolicyGroupID
 			oi["optimize_app_experience"] = AppItem.Optimize_App_Experience
 			oi["optoption"] = AppItem.OptOption
 			oi["enablemulticloud"] = AppItem.EnableMultiCloud
 			oi["status"] = AppItem.Status
 			oi["apptype"] = AppItem.AppType
-			oi["onboardtype"] = AppItem.OnboardType
+			oi["apponboardtype"] = AppItem.OnboardType
 			oi["interactiontype"] = AppItem.InterActionType
 			oi["addresstype"] = AppItem.AddressType
 			appUrlItems := flattenAppUrlItemsData(AppItem.AppURLs)
-			oi["app_urls"] = appUrlItems
+			oi["appurls"] = appUrlItems
 
 			ois[i] = oi
 		}
@@ -631,7 +397,7 @@ func flattenAppUrlItemsData(AppUrlItems []*client.AppURL) []interface{} {
 			oi["appfqdn"] = AppUrlItem.AppFqdn
 			oi["pappfqdn"] = AppUrlItem.PappFqdn
 			oi["subdomainincluded"] = AppUrlItem.SubdomainIncluded
-			oi["cloud_key_id"] = AppUrlItem.CloudKeyID
+			oi["cloudkeyid"] = AppUrlItem.CloudKeyID
 			oi["certid"] = AppUrlItem.CertID
 			oi["cacheruleid"] = AppUrlItem.CacheRuleID
 			protocolItems := flattenProtocolItemsData(AppUrlItem.Protocols)
@@ -644,10 +410,10 @@ func flattenAppUrlItemsData(AppUrlItems []*client.AppURL) []interface{} {
 			healthCheckInfoTF["enabled"] = appHealthCheckInfo.Enabled
 			healthCheckInfoTF["endpoint"] = appHealthCheckInfo.Endpoint
 			healthCheckInfo = append(healthCheckInfo, healthCheckInfoTF)
-			oi["health_check_info"] = healthCheckInfo
+			oi["healthcheckinfo"] = healthCheckInfo
 			oi["connectionoption"] = AppUrlItem.ConnectionOption
 			cloudConfigItems := flattenCloudConfiglItemsData(AppUrlItem.Regions)
-			oi["edge_regions"] = cloudConfigItems
+			oi["regions"] = cloudConfigItems
 			dnsInfo := make([]map[string]interface{}, 0)
 			appDnsInfo := AppUrlItem.DNSService
 			dnsInfoTF := make(map[string]interface{})

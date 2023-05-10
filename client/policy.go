@@ -68,7 +68,7 @@ type Values struct {
 }
 type InputItems struct {
 	ItemID          string     `json:"id,omitempty"`
-	IteamName       string     `json:"name,omitempty"`
+	ItemName       string     `json:"name,omitempty"`
 	CityCode        int        `json:"cityCode,omitempty"`
 	CityName        string     `json:"cityName,omitempty"`
 	CountryCodeISO2 string     `json:"countryCodeISO2,omitempty"`

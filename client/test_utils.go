@@ -109,3 +109,134 @@ func GetNetworkOnboardingfiltered(id string) (*NetworkOnboardoptns, bool) {
 
 	return nil, false
 }
+
+func GetSharedServicefiltered(id string) (*Shared_Service, bool) {
+
+	ctx := context.Background()
+
+	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+	if err != nil {
+		fmt.Errorf("err - %s", err)
+	}
+
+	sharedService, err1 := prosimo_client.GetSharedServiceByID(ctx, id)
+
+	if err1 != nil {
+		// fmt.Printf("err - %s", err)
+		return sharedService, true
+	}
+
+	return nil, false
+}
+
+func GetServiceInsertionfiltered(id string) (*Service_Insertion, bool) {
+
+	ctx := context.Background()
+
+	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+	if err != nil {
+		fmt.Errorf("err - %s", err)
+	}
+
+    serviceInsertion, err1 := prosimo_client.GetServiceInsertionByID(ctx, id)
+
+	if err1 != nil {
+		// fmt.Printf("err - %s", err)
+		return serviceInsertion, true
+	}
+
+	return nil, false
+}
+
+func GetPrivateLinkSourcefiltered(id string) (*PL_Source, bool) {
+
+	ctx := context.Background()
+
+	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+	if err != nil {
+		fmt.Errorf("err - %s", err)
+	}
+
+    plSource, err1 := prosimo_client.GetPrivateLinkSourceByID(ctx, id)
+
+	if err1 != nil {
+		// fmt.Printf("err - %s", err)
+		return plSource, true
+	}
+
+	return nil, false
+}
+func GetPrivateLinkMappingfiltered(id string) (*PL_Map, bool) {
+
+	ctx := context.Background()
+
+	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+	if err != nil {
+		fmt.Errorf("err - %s", err)
+	}
+
+    plMap, err1 := prosimo_client.GetPrivateLinkMappingByID(ctx, id)
+
+	if err1 != nil {
+		// fmt.Printf("err - %s", err)
+		return plMap, true
+	}
+
+	return nil, false
+}
+func GetPolicyfiltered(id string) (*Policy, bool) {
+
+	ctx := context.Background()
+
+	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+	if err != nil {
+		fmt.Errorf("err - %s", err)
+	}
+
+    policy, err1 := prosimo_client.GetPolicyByID(ctx, id)
+
+	if err1 != nil {
+		// fmt.Printf("err - %s", err)
+		return policy, true
+	}
+
+	return nil, false
+}
+
+func GetWaffiltered(id string) (*Waf, bool) {
+
+	ctx := context.Background()
+
+	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+	if err != nil {
+		fmt.Errorf("err - %s", err)
+	}
+
+    waf, err1 := prosimo_client.GetWafByID(ctx, id)
+
+	if err1 != nil {
+		// fmt.Printf("err - %s", err)
+		return waf, true
+	}
+
+	return nil, false
+}
+
+func GetIDPfiltered(id string) (*IDP, bool) {
+
+	ctx := context.Background()
+
+	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+	if err != nil {
+		fmt.Errorf("err - %s", err)
+	}
+
+    idp, err1 := prosimo_client.GetIDPByID(ctx, id)
+
+	if err1 != nil {
+		// fmt.Printf("err - %s", err)
+		return idp, true
+	}
+
+	return nil, false
+}

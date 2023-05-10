@@ -386,21 +386,27 @@ func resourceNetworkOnboardingDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	if appSummary.Status != "DEPLOYED" {
-		err := prosimoClient.DeleteNetworkDeployment(ctx, networkOffBoardSettingsID)
+	if appSummary.Status == "DEPLOYED" {
+		log.Printf("[INFO] Network is in Onboarded State, Initiating Offboard ")
+		appOffboardResData, err := prosimoClient.OffboardNetworkDeployment(ctx, networkOffBoardSettingsID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Can't Delete an Onboarded App",
-			Detail:   "App is Onboarded. First decommission the App and then try deleting.",
-		})
-		return diags
+		if d.Get("wait_for_rollout").(bool) {
+			log.Printf("[DEBUG] Waiting for task id %s to complete", appOffboardResData.NetworkDeploymentResops.TaskID)
+			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+				retryUntilTaskComplete(ctx, d, meta, appOffboardResData.NetworkDeploymentResops.TaskID))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			log.Printf("[DEBUG] task %s is successful", appOffboardResData.NetworkDeploymentResops.TaskID)
+		}
+	}
+	del_err := prosimoClient.DeleteNetworkDeployment(ctx, networkOffBoardSettingsID)
+	if del_err != nil {
+		return diag.FromErr(del_err)
 	}
 	return diags
-
 }
 
 func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceData, meta interface{}, networkOnboardops *client.NetworkOnboardoptns) diag.Diagnostics {

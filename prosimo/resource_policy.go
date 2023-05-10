@@ -452,7 +452,7 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 					selectappid, _ := prosimoClient.GetAppID(ctx, selectappName)
 					//selectappid := selectapp["id"].(string)
 					newinputitems1 := client.InputItems{}
-					newinputitems1.IteamName = selectappName
+					newinputitems1.ItemName = selectappName
 					newinputitems1.ItemID = selectappid
 					slectitemlist = append(slectitemlist, newinputitems1)
 				}
@@ -473,7 +473,7 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 					selectnetworkid, _ := prosimoClient.GetNetworkID(ctx, selectnetworkName)
 					//selectappid := selectapp["id"].(string)
 					newinputitems1 := client.InputItems{}
-					newinputitems1.IteamName = selectnetworkName
+					newinputitems1.ItemName = selectnetworkName
 					newinputitems1.ItemID = selectnetworkid
 					slectitemlist = append(slectitemlist, newinputitems1)
 				}
@@ -767,7 +767,7 @@ func matchNetworkEntry(ctx context.Context, d *schema.ResourceData, meta interfa
 														newselecteditems.ItemID = strconv.Itoa(geoDetail.CityCode)
 														newselecteditems.StateName = geoDetail.StateName
 														newselecteditems.CityName = geoDetail.CityName
-														newselecteditems.IteamName = strings.Join([]string{geoDetail.CityName, geoDetail.StateName, geoDetail.CountryName}, ",")
+														newselecteditems.ItemName = strings.Join([]string{geoDetail.CityName, geoDetail.StateName, geoDetail.CountryName}, ",")
 														newselecteditems.Region = geoDetail.Region
 														newselecteditems.CountryCodeISO2 = geoDetail.CountryCodeISO2
 													}
@@ -784,7 +784,7 @@ func matchNetworkEntry(ctx context.Context, d *schema.ResourceData, meta interfa
 														newselecteditems.ItemID = strconv.Itoa(geoDetail.CityCode)
 														newselecteditems.StateName = geoDetail.StateName
 														// newselecteditems.CityName = geoDetail.CityName
-														newselecteditems.IteamName = strings.Join([]string{geoDetail.StateName, geoDetail.CountryName}, ",")
+														newselecteditems.ItemName = strings.Join([]string{geoDetail.StateName, geoDetail.CountryName}, ",")
 														newselecteditems.Region = geoDetail.Region
 														newselecteditems.CountryCodeISO2 = geoDetail.CountryCodeISO2
 													}
@@ -795,7 +795,7 @@ func matchNetworkEntry(ctx context.Context, d *schema.ResourceData, meta interfa
 										newselecteditems.CityCode = countryDetails.CityCode
 										newselecteditems.CountryCodeISO2 = countryDetails.CountryCodeISO2
 										newselecteditems.ItemID = strconv.Itoa(countryDetails.CityCode)
-										newselecteditems.IteamName = countryDetails.CountryName
+										newselecteditems.ItemName = countryDetails.CountryName
 										newselecteditems.CountryName = countryDetails.CountryName
 
 									}
@@ -872,7 +872,7 @@ func matchDeviceEntry(meta interface{}, matchEntries map[string]interface{}) cli
 					}
 					if !flag {
 						selecteditemId := selecteditem["name"].(string)
-						newselecteditems.IteamName = selecteditemName
+						newselecteditems.ItemName = selecteditemName
 						newselecteditems.ItemID = selecteditemId
 					} else {
 						log.Println("[ERROR]:Invalid Selected item in Device")
@@ -945,7 +945,7 @@ func matchDeviceEntry(meta interface{}, matchEntries map[string]interface{}) cli
 					} else {
 						log.Println("[ERROR]:Invalid Selected item in Device")
 					}
-					newselecteditems.IteamName = selecteditemName
+					newselecteditems.ItemName = selecteditemName
 					newselecteditems.ItemID = selecteditemId
 					slectitemlist = append(slectitemlist, newselecteditems)
 				}
@@ -992,7 +992,7 @@ func matchDeviceEntry(meta interface{}, matchEntries map[string]interface{}) cli
 					}
 					if !flag {
 						selecteditemId := selecteditem["name"].(string)
-						newselecteditems.IteamName = selecteditemName
+						newselecteditems.ItemName = selecteditemName
 						newselecteditems.ItemID = selecteditemId
 					} else {
 						log.Println("[ERROR]:Invalid Selected item in Device")
@@ -1100,7 +1100,7 @@ func matchAdvanceEntry(meta interface{}, matchEntries map[string]interface{}) cl
 					}
 					if !flag {
 						selecteditemId := selecteditem["name"].(string)
-						newselecteditems.IteamName = selecteditemName
+						newselecteditems.ItemName = selecteditemName
 						newselecteditems.ItemID = selecteditemId
 					} else {
 						log.Println("[ERROR]:Invalid Selected item in Device")
@@ -1180,8 +1180,8 @@ func matchProsimoNWEntry(ctx context.Context, meta interface{}, matchEntries map
 			for _, val := range v.List() {
 				selecteditem := val.(map[string]interface{})
 				newselecteditems := client.InputItems{}
-				newselecteditems.IteamName = selecteditem["name"].(string)
-				selectnetworkid, _ := prosimoClient.GetNetworkID(ctx, newselecteditems.IteamName)
+				newselecteditems.ItemName = selecteditem["name"].(string)
+				selectnetworkid, _ := prosimoClient.GetNetworkID(ctx, newselecteditems.ItemName)
 				if selectnetworkid != "" {
 					// if err != nil {
 					// 	return diag.FromErr(err)
@@ -1210,7 +1210,7 @@ func getMatchValues(inputval map[string]interface{}) client.Values {
 	if v, ok := inputval["inputitems"].(*schema.Set); ok && v.Len() > 0 {
 		for _, val := range v.List() {
 			inputitem := val.(map[string]interface{})
-			newinputitems.IteamName = inputitem["name"].(string)
+			newinputitems.ItemName = inputitem["name"].(string)
 			newinputitems.ItemID = inputitem["name"].(string)
 			if v, ok := inputitem["ip_details"].(*schema.Set); ok && v.Len() > 0 {
 				ipDetails := v.List()[0].(map[string]interface{})
@@ -1229,7 +1229,7 @@ func getMatchValues(inputval map[string]interface{}) client.Values {
 	if v, ok := inputval["selecteditems"].(*schema.Set); ok && v.Len() > 0 {
 		for _, val := range v.List() {
 			selecteditem := val.(map[string]interface{})
-			newselecteditems.IteamName = selecteditem["name"].(string)
+			newselecteditems.ItemName = selecteditem["name"].(string)
 			newselecteditems.ItemID = selecteditem["name"].(string)
 			slectitemlist = append(slectitemlist, newselecteditems)
 		}
@@ -1237,7 +1237,7 @@ func getMatchValues(inputval map[string]interface{}) client.Values {
 	if v, ok := inputval["selectedgroups"].(*schema.Set); ok && v.Len() > 0 {
 		for _, val := range v.List() {
 			selectedgroup := val.(map[string]interface{})
-			newselectedgroups.IteamName = selectedgroup["name"].(string)
+			newselectedgroups.ItemName = selectedgroup["name"].(string)
 			newselectedgroups.ItemID = selectedgroup["name"].(string)
 			selectitemgroup = append(slectitemlist, newselectedgroups)
 		}

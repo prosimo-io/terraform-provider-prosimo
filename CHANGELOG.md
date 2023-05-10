@@ -1,3 +1,20 @@
+## 3.3.4(April 27 2023)
+### Enhancements:
+- `Terraform destroy` now would both offboard and delete an app/network if it's in onboarded state.
+- Data Source filter enhancements.
+## 3.3.3(April 14 2023)
+
+### Features:
+- Terraform support for Firewall Service Insertion.
+    New Resources:
+        `prosimo_shared_services`
+        `prosimo_service_insertion`
+- Terraform support for Private Link Mapping.
+    New Resources:
+        `prosimo_private_link_source`
+        `prosimo_private_link_mapping`
+### Notes:
+- Refer documentation for examples of each.
 ## 3.2.3(April 04 2023)
 
 ### Features:

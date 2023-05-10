@@ -158,6 +158,29 @@ func (prosimoClient *ProsimoClient) GetIDP(ctx context.Context) (*IDPList, error
 
 }
 
+func (prosimoClient *ProsimoClient) GetIDPByID(ctx context.Context, id string) (*IDP, error) {
+
+	req, err := prosimoClient.api_client.NewRequest("GET", IDPEndpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	idpList := &IDPList{}
+	_, err = prosimoClient.api_client.Do(ctx, req, idpList)
+	if err != nil {
+		return nil, err
+	}
+	return_idp := &IDP{}
+	for _, idp := range idpList.IDPs {
+		if idp.ID == id {
+			return_idp = idp
+		}
+	} 
+
+	return return_idp, nil
+
+}
+
 func (prosimoClient *ProsimoClient) DeleteIDP(ctx context.Context, idpID string) error {
 
 	deleteIDPEndpt := fmt.Sprintf("%s/%s", IDPEndpoint, idpID)

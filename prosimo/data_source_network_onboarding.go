@@ -3,6 +3,7 @@ package prosimo
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
@@ -20,18 +21,6 @@ func dataSourceNetworkOnboarding() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Custom filters to scope specific results. Usage: filter = app_access_type==agent",
-			},
-			"filter_cloud_type": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Filter based upon cloud type, e.g: AWS, AZURE, GCP",
-			},
-			"filter_cloud_region": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Filter based upon cloud region, e.g: europe-central2, us-east-2",
 			},
 			"network_count": {
 				Type:        schema.TypeInt,
@@ -71,12 +60,12 @@ func dataSourceNetworkOnboarding() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"public_cloud": {
+						"publiccloud": {
 							Type:     schema.TypeSet,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"cloud_id": {
+									"id": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
@@ -84,23 +73,23 @@ func dataSourceNetworkOnboarding() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"cloud_type": {
+									"cloudtype": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"connection_option": {
+									"connectionoption": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"cloud_key_id": {
+									"cloudkeyid": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"cloud_region": {
+									"cloudregion": {
 										Type:     schema.TypeString,
 										Computed: true,
 									},
-									"cloud_networks": {
+									"cloudnetworks": {
 										Type:     schema.TypeSet,
 										Computed: true,
 										Elem: &schema.Resource{
@@ -109,23 +98,23 @@ func dataSourceNetworkOnboarding() *schema.Resource {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
-												"cloud_network_id": {
+												"cloudnetworkid": {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
-												"connector_group_id": {
+												"connectorgrpid": {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
-												"edge_connectivity_id": {
+												"edgeconnectivityid": {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
-												"hub_id": {
+												"hubid": {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
-												"connectivity_type": {
+												"connectivitytype": {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
@@ -134,7 +123,7 @@ func dataSourceNetworkOnboarding() *schema.Resource {
 													Computed: true,
 													Elem:     &schema.Schema{Type: schema.TypeString},
 												},
-												"connector_placement": {
+												"connectorplacement": {
 													Type:     schema.TypeString,
 													Computed: true,
 												},
@@ -180,26 +169,22 @@ func dataSourceNetworkOnboardingRead(ctx context.Context, d *schema.ResourceData
 
 	var diags diag.Diagnostics
 	var returnNetworkList []client.NetworkOnboardoptns
-	count := 0
 
 	onboardNetworkList, err := prosimoClient.SearchOnboardNetworks(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	filter := d.Get("filter").(string)
-	cloudType := d.Get("filter_cloud_type").([]interface{})
-	cloudRegions := d.Get("filter_cloud_region").([]interface{})
 
 	if filter != "" {
-		count += 1
 		for _, onboardNetwork := range onboardNetworkList.Data.Records {
-			filteredMap := map[string]interface{}{}
+			var filteredMap *client.NetworkOnboardoptns
 
 			err := mapstructure.Decode(onboardNetwork, &filteredMap)
 			if err != nil {
 				panic(err)
 			}
-			diags, flag := checkMainOperand(filter, filteredMap)
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredMap))
 			if diags != nil {
 				return diags
 			}
@@ -215,78 +200,10 @@ func dataSourceNetworkOnboardingRead(ctx context.Context, d *schema.ResourceData
 			})
 			return diags
 		}
-	}
-	if len(cloudType) > 0 {
-		count += 1
-		flag := false
-		CloudNameList := expandStringList(cloudType)
-		getCloud, err := prosimoClient.GetCloudCreds(ctx)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		for _, cloudName := range CloudNameList {
-			var idList []string
-			for _, cloudCred := range getCloud.CloudCreds {
-				if cloudCred.CloudType == cloudName {
-					idList = append(idList, cloudCred.ID)
-				}
-			}
-			for _, cloudkey := range idList {
-				for _, onboardNetwork := range onboardNetworkList.Data.Records {
-					if onboardNetwork.PublicCloud.CloudKeyID == cloudkey {
-						returnNetworkList = append(returnNetworkList, *onboardNetwork)
-						flag = true
-					}
-					// }
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-	if len(cloudRegions) > 0 {
-		count += 1
-		flag := false
-		CloudRegionList := expandStringList(cloudRegions)
-		for _, regionName := range CloudRegionList {
-			for _, onboardNetwork := range onboardNetworkList.Data.Records {
-				if onboardNetwork.PublicCloud.CloudRegion == regionName {
-					returnNetworkList = append(returnNetworkList, *onboardNetwork)
-					flag = true
-				}
-			}
-		}
-		if !flag {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
-	}
-
-	if count == 0 {
+	} else {
 		for _, onboardNetwork := range onboardNetworkList.Data.Records {
 			returnNetworkList = append(returnNetworkList, *onboardNetwork)
 		}
-	}
-	if count > 1 {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Invalid Input, more than one filter condition is not supported",
-			Detail:   fmt.Sprintln("As of now Prosimo datasources support a single filtering entity."),
-		})
-
-		return diags
 	}
 
 	d.SetId(time.Now().Format(time.RFC850))
@@ -309,7 +226,7 @@ func flattenNetworkItemsData(NetworkItems []client.NetworkOnboardoptns) []interf
 			oi["status"] = NetworkItem.Status
 			oi["pamcname"] = NetworkItem.PamCname
 			publicCloudItems := flattenPublicCloudItemsData(NetworkItem.PublicCloud)
-			oi["public_cloud"] = publicCloudItems
+			oi["publiccloud"] = publicCloudItems
 			securityItems := flattenSecurityItemsData(NetworkItem.Security)
 			oi["security"] = securityItems
 
@@ -327,14 +244,14 @@ func flattenPublicCloudItemsData(PublicCloudItems *client.PublicCloud) interface
 		// for i, PublicCloudItem := range PublicCloudItems {
 		oi := make(map[string]interface{})
 
-		oi["cloud_id"] = PublicCloudItems.Id
+		oi["id"] = PublicCloudItems.Id
 		oi["cloud"] = PublicCloudItems.Cloud
-		oi["cloud_type"] = PublicCloudItems.CloudType
-		oi["connection_option"] = PublicCloudItems.ConnectionOption
-		oi["cloud_key_id"] = PublicCloudItems.CloudKeyID
-		oi["cloud_region"] = PublicCloudItems.CloudRegion
+		oi["cloudtype"] = PublicCloudItems.CloudType
+		oi["connectionoption"] = PublicCloudItems.ConnectionOption
+		oi["cloudkeyid"] = PublicCloudItems.CloudKeyID
+		oi["cloudregion"] = PublicCloudItems.CloudRegion
 		cloudNetworkItems := flattenCloudNetworksItemsData(PublicCloudItems.CloudNetworks)
-		oi["cloud_networks"] = cloudNetworkItems
+		oi["cloudnetworks"] = cloudNetworkItems
 
 		ois = append(ois, oi)
 		return ois
@@ -349,12 +266,13 @@ func flattenCloudNetworksItemsData(CloudNetworkItems []client.CloudNetworkops) [
 			oi := make(map[string]interface{})
 
 			oi["id"] = CloudNetworkItem.Id
-			oi["cloud_network_id"] = CloudNetworkItem.CloudNetworkID
-			oi["connector_group_id"] = CloudNetworkItem.ConnectorGrpID
-			oi["edge_connectivity_id"] = CloudNetworkItem.EdgeConnectivityID
-			oi["hub_id"] = CloudNetworkItem.HubID
-			oi["connectivity_type"] = CloudNetworkItem.ConnectivityType
+			oi["cloudnetworkid"] = CloudNetworkItem.CloudNetworkID
+			oi["connectorgrpid"] = CloudNetworkItem.ConnectorGrpID
+			oi["edgeconnectivityid"] = CloudNetworkItem.EdgeConnectivityID
+			oi["hubid"] = CloudNetworkItem.HubID
+			oi["connectivitytype"] = CloudNetworkItem.ConnectivityType
 			oi["subnets"] = CloudNetworkItem.Subnets
+			oi["connectorplacement"] = CloudNetworkItem.ConnectorPlacement
 
 			ois[i] = oi
 		}

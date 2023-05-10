@@ -33,11 +33,10 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"prosimo_ip_addresses": resourceIPAddresses(),
-			"prosimo_cloud_creds":  resourceCloudCreds(),
-			"prosimo_edge":         resourceEdge(),
-			"prosimo_idp":          resourceIDP(),
-			// "prosimo_app_onboarding":           resourceAppOnboarding(),
+			"prosimo_ip_addresses":             resourceIPAddresses(),
+			"prosimo_cloud_creds":              resourceCloudCreds(),
+			"prosimo_edge":                     resourceEdge(),
+			"prosimo_idp":                      resourceIDP(),
 			"prosimo_app_onboarding_web":       resourceAppOnboarding_Web(),
 			"prosimo_app_onboarding_fqdn":      resourceAppOnboarding_FQDN(),
 			"prosimo_app_onboarding_ip":        resourceAppOnboarding_IP(),
@@ -60,6 +59,10 @@ func Provider() *schema.Provider {
 			"prosimo_log_exporter":             resourceLogConfig(),
 			"prosimo_grouping":                 resourceGrpConfig(),
 			"prosimo_connector_placement":      resourceConnPlacement(),
+			"prosimo_shared_services":          resourceSharedServices(),
+			"prosimo_service_insertion":        resourceServiceInsertion(),
+			"prosimo_private_link_source":      resourcePrivateLinkSource(),
+			"prosimo_private_link_mapping":     resourcePrivateLinkMapping(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

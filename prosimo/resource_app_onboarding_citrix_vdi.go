@@ -8,6 +8,7 @@ import (
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -699,19 +700,25 @@ func resourceAppOnboarding_VDI_Delete(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	if appSummary.Status != "DEPLOYED" {
-		err := prosimoClient.DeleteApp(ctx, appOffBoardSettingsID)
+	if appSummary.Status == "DEPLOYED" {
+		log.Printf("[INFO] App is in Onboarded State, Initiating Offboard ")
+		appOffboardResData, err := prosimoClient.OffboardAppDeployment(ctx, appOffBoardSettingsID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Can't Delete an Onboarded App",
-			Detail:   "App is Onboarded. First decommission the App and then try deleting.",
-		})
-		return diags
+		if d.Get("wait_for_rollout").(bool) {
+			log.Printf("[DEBUG] Waiting for task id %s to complete", appOffboardResData.ResourceData.ID)
+			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+				retryUntilTaskComplete(ctx, d, meta, appOffboardResData.ResourceData.ID))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			log.Printf("[DEBUG] task %s is successful", appOffboardResData.ResourceData.ID)
+		}
+	}
+	del_err := prosimoClient.DeleteApp(ctx, appOffBoardSettingsID)
+	if del_err != nil {
+		return diag.FromErr(del_err)
 	}
 	return diags
 

@@ -18,6 +18,7 @@ const (
 	TypeCloudSvc  = "cloud-svc"
 	TypeJumpBox   = "jumpbox"
 	TypeCitrixVDI = "vdi"
+    
 
 	PatternEqual       = "=="
 	PatternEqualNoCase = "=*"
@@ -164,7 +165,7 @@ const (
 	Optnprivate          = "private"
 
 	HostedPrivate = "PRIVATE"
-	HostedPublic = "PUBLIC"
+	HostedPublic  = "PUBLIC"
 
 	PublicCloudConnectionOption  = "public"
 	PrivateCloudConnectionOption = "private"
@@ -240,14 +241,24 @@ const (
 
 	APIPrefix = "api/"
 
-	APITokenEndpoint   = APIPrefix + "token"
-	RoleEndpoint       = APIPrefix + "role"
-	IPPoolEndpoint     = APIPrefix + "ippool"
-	CloudCredsEndpoint = APIPrefix + "cloud/creds"
-	CloudCredsEndpointPrivate = APIPrefix + "cloud/private"
-	TaskEndpoint       = APIPrefix + "task"
-	CloudS3Endpoint    = APIPrefix + "cloud/service/amazon/s3/discovery"
-
+	APITokenEndpoint                 = APIPrefix + "token"
+	RoleEndpoint                     = APIPrefix + "role"
+	IPPoolEndpoint                   = APIPrefix + "ippool"
+	CloudCredsEndpoint               = APIPrefix + "cloud/creds"
+	CloudCredsEndpointPrivate        = APIPrefix + "cloud/private"
+	TaskEndpoint                     = APIPrefix + "task"
+	CloudS3Endpoint                  = APIPrefix + "cloud/service/amazon/s3/discovery"
+	SharedServiceEndpoint            = APIPrefix + "shared-svc"
+	SharedServiceDeploymentEndpoint  = APIPrefix + "shared-svc/deployment"
+	GetSharedServiceEndpoint         = APIPrefix + "shared-svc/search"
+	ServiceInsertionEndpoint         = APIPrefix + "svc-insert"
+	GetServiceInsertionEndpoint      = APIPrefix + "svc-insert/search"
+	PrivateLinkSourceEndpoint        = APIPrefix + "private-link-source"
+	GetPrivateLinkSourceEndpoint     = APIPrefix + "private-link-source/search"
+	DiscoverPVSNetworkEndpoint       = APIPrefix + "private-link-source/discovery/networks"
+	DiscoverPVSSubnetEndpoint        = APIPrefix + "private-link-source/discovery/subnets"
+	PrivateLinkMappingEndpoint        = APIPrefix + "private-link-source/policy"
+	GetPrivateLinkMappingEndpoint     = APIPrefix + "private-link-source/policy/search"
 	EdgeEndpoint                     = APIPrefix + "prosimo/app"
 	AppDeploymentEndpoint            = APIPrefix + "prosimo/app/deployment"
 	CloudRegionEndpoint              = APIPrefix + "cloud/%s/region"

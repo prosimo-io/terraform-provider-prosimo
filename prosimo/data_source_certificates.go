@@ -3,6 +3,7 @@ package prosimo
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
@@ -119,18 +120,19 @@ func dataSourceCertificateRead(ctx context.Context, d *schema.ResourceData, meta
 	filter := d.Get("filter").(string)
 	if filter != "" {
 		for _, certDetails := range getCerts {
-			filteredMap := map[string]interface{}{}
+			// filteredMap := map[string]interface{}{}
+			var filteredMap *client.AppOnboardSettings
 
-			err := mapstructure.Decode(certDetails, &filteredMap)
+			err := mapstructure.Decode(onboardApp, &filteredMap)
 			if err != nil {
 				panic(err)
 			}
-			diags, flag := checkMainOperand(filter, filteredMap)
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredMap))
 			if diags != nil {
 				return diags
 			}
 			if flag {
-				returnedCerts = append(returnedCerts, certDetails)
+				returnedCerts = append(returnedCerts, *&certDetails)
 			}
 		}
 		if len(returnedCerts) == 0 {

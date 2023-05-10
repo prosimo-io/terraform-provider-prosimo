@@ -3,12 +3,12 @@ package prosimo
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mitchellh/mapstructure"
 )
 
 func datasourcePolicyAccess() *schema.Resource {
@@ -89,11 +89,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -105,11 +105,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -145,11 +145,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -161,11 +161,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -201,11 +201,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -217,11 +217,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -257,11 +257,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -273,11 +273,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -313,11 +313,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -329,11 +329,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -369,11 +369,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -385,11 +385,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -425,11 +425,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -441,11 +441,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -481,11 +481,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -497,11 +497,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -537,11 +537,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -553,11 +553,11 @@ func datasourcePolicyAccess() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -583,11 +583,11 @@ func datasourcePolicyAccess() *schema.Resource {
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
-															"id": {
+															"itemid": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
-															"name": {
+															"itemname": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
@@ -607,11 +607,11 @@ func datasourcePolicyAccess() *schema.Resource {
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
-															"id": {
+															"itemid": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
-															"name": {
+															"itemname": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
@@ -655,12 +655,7 @@ func datasourcePolicyAccessRead(ctx context.Context, d *schema.ResourceData, met
 	if filter != "" {
 		for _, filteredList := range policyList {
 			if filteredList.App_Access_Type == "access" {
-				filteredMap := map[string]interface{}{}
-				err := mapstructure.Decode(filteredList, &filteredMap)
-				if err != nil {
-					panic(err)
-				}
-				diags, flag := checkMainOperand(filter, filteredMap)
+				diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredList))
 				if diags != nil {
 					return diags
 				}
@@ -701,6 +696,7 @@ func flattenAccessPolicyItemsData(PolicyItems []*client.Policy) []interface{} {
 			oi["name"] = PolicyItem.DisplayName
 			oi["type"] = PolicyItem.Type
 			oi["teamid"] = PolicyItem.TeamID
+			oi["device_posture_configured"] = PolicyItem.Device_Posture_Configured
 			oi["app_access_type"] = PolicyItem.App_Access_Type
 			detailItems := flattenDetailItemsDataAccess(&PolicyItem.Details)
 			oi["details"] = detailItems

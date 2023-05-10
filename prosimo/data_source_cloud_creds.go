@@ -3,13 +3,13 @@ package prosimo
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/mitchellh/mapstructure"
 )
 
 func dataSourceCloudCreds() *schema.Resource {
@@ -28,9 +28,8 @@ func dataSourceCloudCreds() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cloudtype": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice(client.GetCloudTypes(), false),
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"nickname": {
 							Type:     schema.TypeString,
@@ -176,39 +175,28 @@ func dataSourceCloudCredsRead(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	// v := d.Get("input_cloud_type").([]interface{})
+	// v1 := d.Get("input_nickname").([]interface{})
+
 	filter := d.Get("filter").(string)
 	if filter != "" {
-		for _, returnedCloudCreds := range cloudCredsList.CloudCreds {
-			filteredMap := map[string]interface{}{}
-
-			err := mapstructure.Decode(returnedCloudCreds, &filteredMap)
-			if err != nil {
-				panic(err)
-			}
-			diags, flag := checkMainOperand(filter, filteredMap)
+		for _, filteredCreds := range cloudCredsList.CloudCreds {
+			fmt.Println("filteredCreds", filteredCreds)
+			// filteredCredsMap := structs.Map(filteredCreds)
+			// fmt.Println("filteredCredsMap", filteredCredsMap)
+			// var filteredCredsMap *client.CloudCreds
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredCreds))
 			if diags != nil {
 				return diags
 			}
 			if flag {
-				returnCloudCredList = append(returnCloudCredList, returnedCloudCreds)
+				returnCloudCredList = append(returnCloudCredList, filteredCreds)
 			}
-		}
-		if len(returnCloudCredList) == 0 {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
 		}
 	} else {
 		for _, filteredCreds := range cloudCredsList.CloudCreds {
 			returnCloudCredList = append(returnCloudCredList, filteredCreds)
 		}
-	}
-	if err != nil {
-		return diag.FromErr(err)
 	}
 	if len(returnCloudCredList) > 0 {
 		cloudCredItems := flattenCloudCredItemsData(returnCloudCredList)

@@ -11,62 +11,108 @@ import (
 )
 
 func matchOperand(filtered map[string]string, value string) bool {
+	fmt.Println("VLAUE", value)
 
 	operand := filtered["oprand"]
 	values := filtered["values"]
-	var result bool
+	log.Println("Passed value to match", value)
+	result := false
 
 	if operand == client.PatternEqual {
-		if values == value {
+		if strings.ToLower(values) == value {
 			result = true
 		}
 
 	}
 	if operand == client.PatternEqualNoCase {
-		if strings.EqualFold(values, value) {
+		if strings.EqualFold(strings.ToLower(values), value) {
 			result = true
 		}
 
 	}
 	if operand == client.PatternNotEqual {
-		if !(strings.EqualFold(values, value)) {
+		if !(strings.EqualFold(strings.ToLower(values), value)) {
 			result = true
 		}
 	}
 
 	if operand == client.PatternContains {
-		if strings.Contains(value, values) {
+		if strings.Contains(value, strings.ToLower(values)) {
 			result = true
 		}
 	}
 	return result
 }
 
-func lowerCaseConvertMap(input map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	for k, v := range input {
-		switch v := v.(type) {
-		case map[string]interface{}:
-			result[strings.ToLower(k)] = lowerCaseConvertMap(v)
-		case []interface{}:
-			for i, iv := range v {
-				if reflect.TypeOf(iv).Kind() == reflect.Map {
-					v[i] = lowerCaseConvertMap(iv.(map[string]interface{}))
-				}
+func traverseStruct(path string, filtered map[string]string, val reflect.Value) bool {
+	switch val.Kind() {
+	case reflect.Slice:
+		for i := 0; i < val.Len(); i++ {
+			sliceVal := val.Index(i)
+			fieldPath := fmt.Sprintf("%s[%d]", path, i)
+			if traverseStruct(fieldPath, filtered, sliceVal) {
+				return true
 			}
-			result[strings.ToLower(k)] = v
-		default:
-			result[strings.ToLower(k)] = v
 		}
+
+	case reflect.Ptr:
+		if val.IsNil() {
+			fmt.Printf("%s: <nil>\n", path)
+		} else {
+			elem := val.Elem()
+			fieldPath := path + "*"
+			if traverseStruct(fieldPath, filtered, elem) {
+				return true
+			}
+		}
+
+	case reflect.Struct:
+		for i := 0; i < val.NumField(); i++ {
+			dataValue := val.Field(i)
+			key := val.Type().Field(i).Name
+
+			result := matchKV(filtered, key, dataValue)
+			if result {
+				return true
+			}
+			fieldPath := path + "." + key
+
+			if traverseStruct(fieldPath, filtered, dataValue) {
+				return true
+			}
+		}
+
+	case reflect.String:
+		fmt.Printf("%s: %s\n", path, val.String())
+
+	case reflect.Int:
+		fmt.Printf("%s: %d\n", path, val.Int())
+
+	case reflect.Bool:
+		fmt.Printf("%s: %t\n", path, val.Bool())
+
+	default:
+		fmt.Printf("unhandled data type at this location %s: %v\n", path, val)
+
 	}
-	return result
+	return false
 }
 
-func checkMainOperand(filter string, value map[string]interface{}) (diag.Diagnostics, bool) {
+func matchKV(filtered map[string]string, key string, value reflect.Value) bool {
+
+	if strings.ToLower(key) != strings.ToLower(filtered["key"]) {
+
+		return false
+	}
+	log.Println("Key Matched")
+
+	return matchOperand(filtered, strings.ToLower(value.String()))
+
+}
+
+func checkMainOperand(filter string, value reflect.Value) (diag.Diagnostics, bool) {
 	var diags diag.Diagnostics
-	// Conveting the value map (keys) to lowercase form camelCase
-	lowercaseValueMap := lowerCaseConvertMap(value)
-	log.Println("lowercaseValueMap", lowercaseValueMap)
+	log.Println("Value Map:", value)
 
 	var strArr []string
 	var ifAnd bool
@@ -101,20 +147,11 @@ func checkMainOperand(filter string, value map[string]interface{}) (diag.Diagnos
 		}
 		log.Println("StrArr :", strArr)
 		for _, v := range strArr {
-			diags, filtered := checkFilter(v)
-			if diags != nil {
-				return diags, false
-			}
-			tempKey := filtered["key"]
+			filtered := checkFilter(v)
+			fmt.Println("filtered", filtered)
 			var res bool
-			if v, ok := lowercaseValueMap[tempKey]; ok {
-				if data, ok := v.(string); ok {
-					res = matchOperand(filtered, data)
-				} else {
-					return nil, false
-				}
-			}
-			// res := matchOperand(a, value)
+			res = traverseStruct("root", filtered, value) //pass filtered
+			log.Println("final result:", filtered["key"], res)
 			if ifAnd && !res {
 				return nil, false
 			}
@@ -129,9 +166,9 @@ func checkMainOperand(filter string, value map[string]interface{}) (diag.Diagnos
 	return nil, false
 }
 
-func checkFilter(filter string) (diag.Diagnostics, map[string]string) {
+func checkFilter(filter string) map[string]string {
 	filtered := make(map[string]string)
-	var diags diag.Diagnostics
+
 	if strings.Contains(filter, client.PatternEqual) {
 		equalSlice := strings.Split(filter, client.PatternEqual)
 		filtered["key"] = equalSlice[0]
@@ -150,18 +187,11 @@ func checkFilter(filter string) (diag.Diagnostics, map[string]string) {
 		filtered["oprand"] = client.PatternContains
 		filtered["values"] = containsSlice[1]
 
-	} else if strings.Contains(filter, client.PatternNotEqual) {
+	} else {
 		noteqSlice := strings.Split(filter, client.PatternNotEqual)
 		filtered["key"] = noteqSlice[0]
 		filtered["oprand"] = client.PatternNotEqual
 		filtered["values"] = noteqSlice[1]
-	} else {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "Invalid Input, Conditional Operator should be one of ==, !=, =*, =@",
-			Detail:   fmt.Sprintln("Invalid Input, Conditional Operator should be one of ==, !=, =*, =@"),
-		})
-		return diags, nil
 	}
-	return nil, filtered
+	return filtered
 }

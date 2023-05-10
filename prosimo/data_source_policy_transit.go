@@ -3,9 +3,8 @@ package prosimo
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
-
-	"github.com/fatih/structs"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -92,11 +91,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -108,11 +107,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -148,11 +147,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -164,11 +163,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -204,11 +203,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -220,11 +219,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -260,11 +259,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -276,11 +275,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -316,11 +315,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -332,11 +331,11 @@ func datasourcePolicyTransit() *schema.Resource {
 																			Computed: true,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
-																					"id": {
+																					"itemid": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
-																					"name": {
+																					"itemname": {
 																						Type:     schema.TypeString,
 																						Computed: true,
 																					},
@@ -427,11 +426,11 @@ func datasourcePolicyTransit() *schema.Resource {
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
-															"id": {
+															"itemid": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
-															"name": {
+															"itemname": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
@@ -451,11 +450,11 @@ func datasourcePolicyTransit() *schema.Resource {
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
-															"id": {
+															"itemid": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
-															"name": {
+															"itemname": {
 																Type:     schema.TypeString,
 																Computed: true,
 															},
@@ -498,8 +497,7 @@ func datasourcePolicyTransitRead(ctx context.Context, d *schema.ResourceData, me
 	if filter != "" {
 		for _, filteredList := range policyList {
 			if filteredList.App_Access_Type == "transit" {
-				filteredMap := structs.Map(filteredList)
-				diags, flag := checkMainOperand(filter, filteredMap)
+				diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredList))
 				if diags != nil {
 					return diags
 				}
@@ -542,6 +540,7 @@ func flattenPolicyItemsData(PolicyItems []*client.Policy) []interface{} {
 			oi["name"] = PolicyItem.Name
 			oi["type"] = PolicyItem.Type
 			oi["teamid"] = PolicyItem.TeamID
+			oi["device_posture_configured"] = PolicyItem.Device_Posture_Configured
 			oi["app_access_type"] = PolicyItem.App_Access_Type
 			detailItems := flattenDetailItemsData(&PolicyItem.Details)
 			oi["details"] = detailItems
@@ -673,8 +672,8 @@ func flattenValuesItemData(Items []client.InputItems) []interface{} {
 				keyvaluesItem := flattenkeyValuesItemData(Item.KeyValues)
 				oi["keyvalues"] = keyvaluesItem
 			} else {
-				oi["id"] = Item.ItemID
-				oi["name"] = Item.IteamName
+				oi["itemid"] = Item.ItemID
+				oi["itemname"] = Item.ItemName
 			}
 
 			ois[i] = oi

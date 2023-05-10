@@ -2,13 +2,12 @@ package prosimo
 
 import (
 	"context"
-	"fmt"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mitchellh/mapstructure"
 )
 
 func dataSourceIPAddresses() *schema.Resource {
@@ -70,27 +69,13 @@ func dataSourceIPAddressesRead(ctx context.Context, d *schema.ResourceData, meta
 	filter := d.Get("filter").(string)
 	if filter != "" {
 		for _, filteredIPPoolList := range ipPoolList.IPPools {
-			filteredMap := map[string]interface{}{}
-			err := mapstructure.Decode(filteredIPPoolList, &filteredMap)
-			if err != nil {
-				panic(err)
-			}
-			diags, flag := checkMainOperand(filter, filteredMap)
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredIPPoolList))
 			if diags != nil {
 				return diags
 			}
 			if flag {
 				returnIPPoolList = append(returnIPPoolList, filteredIPPoolList)
 			}
-		}
-		if len(returnIPPoolList) == 0 {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
 		}
 	} else {
 		for _, filteredIPPoolList := range ipPoolList.IPPools {

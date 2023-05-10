@@ -2,13 +2,12 @@ package prosimo
 
 import (
 	"context"
-	"fmt"
+	"reflect"
 	"time"
 
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mitchellh/mapstructure"
 )
 
 func dataSourceNetworkDiscovered() *schema.Resource {
@@ -17,6 +16,14 @@ func dataSourceNetworkDiscovered() *schema.Resource {
 		ReadContext: dataSourceNetworkDiscoveredRead,
 		Schema: map[string]*schema.Schema{
 			"filter": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"input_cloud_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"input_account_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -120,12 +127,7 @@ func dataSourceNetworkDiscoveredRead(ctx context.Context, d *schema.ResourceData
 	filter := d.Get("filter").(string)
 	if filter != "" {
 		for _, filteredDNList := range discoveredNetworkList {
-			filteredMap := map[string]interface{}{}
-			err := mapstructure.Decode(filteredDNList, &filteredMap)
-			if err != nil {
-				panic(err)
-			}
-			diags, flag := checkMainOperand(filter, filteredMap)
+			diags, flag := checkMainOperand(filter, reflect.ValueOf(filteredDNList))
 			if diags != nil {
 				return diags
 			}
@@ -133,72 +135,11 @@ func dataSourceNetworkDiscoveredRead(ctx context.Context, d *schema.ResourceData
 				returnfilteredNetworks = append(returnfilteredNetworks, filteredDNList)
 			}
 		}
-		if len(returnfilteredNetworks) == 0 {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No match for input attribute",
-				Detail:   fmt.Sprintln("No match for input attribute"),
-			})
-
-			return diags
-		}
 	} else {
 		for _, filteredDNList := range discoveredNetworkList {
 			returnfilteredNetworks = append(returnfilteredNetworks, filteredDNList)
 		}
 	}
-
-	// if len(cloud_type) > 0 && len(account_name) > 0 {
-	// 	diags = append(diags, diag.Diagnostic{
-	// 		Severity: diag.Error,
-	// 		Summary:  "Invalid Input, either of input_cloud_type/input_account_name is expected",
-	// 		Detail:   fmt.Sprintln("Invalid Input, please enter either of the mentioned inputs: input_cloud_type/input_account_name"),
-	// 	})
-
-	// 	return diags
-	// }
-
-	// if len(cloud_type) > 0 {
-	// 	flag := false
-	// 	for _, discoveredNetworkDetails := range discoveredNetworkList {
-	// 		if discoveredNetworkDetails.CloudType == cloud_type {
-	// 			returnfilteredNetworks = append(returnfilteredNetworks, discoveredNetworkDetails)
-	// 			// fmt.Println("Discovered Networks:", returnfilteredNetworks)
-	// 			flag = true
-	// 		}
-	// 	}
-	// 	if !flag {
-	// 		diags = append(diags, diag.Diagnostic{
-	// 			Severity: diag.Error,
-	// 			Summary:  "Cloud Type does not exists",
-	// 			Detail:   fmt.Sprintln("Given Cloud Type does not exists"),
-	// 		})
-
-	// 		return diags
-	// 	}
-	// } else if len(account_name) > 0 {
-	// 	flag := false
-	// 	for _, discodiscoveredNetworkDetails := range discoveredNetworkList {
-	// 		if discodiscoveredNetworkDetails.AccountName == account_name {
-	// 			returnfilteredNetworks = append(returnfilteredNetworks, discodiscoveredNetworkDetails)
-	// 			// fmt.Println("Discovered Networks:", returnfilteredNetworks)
-	// 			flag = true
-	// 		}
-	// 	}
-	// 	if !flag {
-	// 		diags = append(diags, diag.Diagnostic{
-	// 			Severity: diag.Error,
-	// 			Summary:  "Account Name does not exists",
-	// 			Detail:   fmt.Sprintln("Given Account Name does not exists"),
-	// 		})
-
-	// 	}
-	// } else {
-	// 	for _, discodiscoveredNetworkDetails := range discoveredNetworkList {
-	// 		returnfilteredNetworks = append(returnfilteredNetworks, discodiscoveredNetworkDetails)
-	// 	}
-	// }
-
 	d.SetId(time.Now().Format(time.RFC850))
 	discoveredNetworkItems := flattenDNItemsData(returnfilteredNetworks)
 	d.Set("discovered_networks", discoveredNetworkItems)

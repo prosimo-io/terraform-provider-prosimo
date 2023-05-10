@@ -3,7 +3,6 @@ module git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git
 go 1.18
 
 require (
-	github.com/fatih/structs v1.1.0
 	github.com/hashicorp/terraform-plugin-docs v0.14.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/mitchellh/mapstructure v1.5.0
