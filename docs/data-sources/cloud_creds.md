@@ -20,7 +20,7 @@ This resource is usually used along with `terraform-provider-prosimo`.
 data "prosimo_cloud_creds" "cloud_creds" {
   # filter="nickname==prosimo-infra,cloudtype!=AWS"
   # filter="cloudtype=*aws"
-  filter="nickname=@prosimo"
+  # filter="nickname==prosimo-aws-discovery-account2"
 
 }
 

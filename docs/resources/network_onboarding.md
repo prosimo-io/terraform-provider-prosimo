@@ -20,6 +20,7 @@ This resource is usually used along with `terraform-provider-prosimo`.
 resource "prosimo_network_onboarding" "testapp-azure" {
 
     name = "demo_network_azure"
+    namespace = "default"
     public_cloud {
         cloud_type = "public"
         connection_option = "private"
@@ -51,6 +52,7 @@ resource "prosimo_network_onboarding" "testapp-azure" {
 resource "prosimo_network_onboarding" "testapp-s3" {
 
     name = "demo_network_new"
+    namespace = "namespace1"
     public_cloud {
         cloud_type = "public"
         connection_option = "private"
@@ -75,6 +77,7 @@ resource "prosimo_network_onboarding" "testapp-s3" {
 resource "prosimo_network_onboarding" "testapp-s4" {
 
     name = "demo_network_new"
+    namespace = "namespace1"
     public_cloud {
         cloud_type = "public"
         connection_option = "private"
@@ -103,6 +106,7 @@ resource "prosimo_network_onboarding" "testapp-s4" {
 #AWS with transit gateway and connector placement as none.
 resource "prosimo_network_onboarding" "aws_u2n_euspoke3" {
   name = "aws-u2n-euspoke3-tf"
+  namespace = "default"
   public_cloud {
     cloud_type        = "public"
     connection_option = "private"
@@ -124,6 +128,7 @@ resource "prosimo_network_onboarding" "aws_u2n_euspoke3" {
 #AWS with transit gateway and connector placement in Infra VPC.
 resource "prosimo_network_onboarding" "sin-subnet-1" {
   name = "sin-subnet-tf"
+  namespace = "namespace1"
   public_cloud {
     cloud_type        = "public"
     connection_option = "private"
@@ -152,6 +157,7 @@ resource "prosimo_network_onboarding" "sin-subnet-1" {
 #PrivateDC Network Onboarding
 resource "prosimo_network_onboarding" "privateDC" {
   name = "private-network-test"
+  namespace = "default"
   private_cloud {
     cloud_creds_name  = "PrivateDC"
      subnets           = ["10.0.0.2/32"]
@@ -169,10 +175,12 @@ resource "prosimo_network_onboarding" "privateDC" {
 
 - `decommission_app` (Boolean) Set this to true if you would like the network  to be offboarded from fabric
 - `name` (String) name for the application
+- `network_exportable_policy` (Boolean) Mark Network Exportable in Policy
 - `onboard_app` (Boolean) Set this to true if you would like the network to be onboarded to fabric
 
 ### Optional
 
+- `namespace` (String) Assigned Namespace
 - `policies` (List of String) Select policy name.e.g: ALLOW-ALL-NETWORKS, DENY-ALL-NETWORKS or Custom Policies
 - `private_cloud` (Block Set) (see [below for nested schema](#nestedblock--private_cloud))
 - `public_cloud` (Block Set) (see [below for nested schema](#nestedblock--public_cloud))
@@ -229,6 +237,7 @@ Optional:
 - `connectivity_type` (String) transit-gateway, vpc-peering
 - `connector_settings` (Block Set) (see [below for nested schema](#nestedblock--public_cloud--cloud_networks--connector_settings))
 - `hub_id` (String) (Required if transit-gateway is selected) tgw-id
+- `service_insertion_endpoint_subnets` (String) Service Insertion Endpoint, applicable when connector is placed in Workload VPC
 - `subnets` (List of String) subnet cider list
 - `vnet` (String) VNET ID
 - `vpc` (String) VPC ID
@@ -241,6 +250,10 @@ Required:
 - `bandwidth` (String) EX: small, medium, large
 - `bandwidth_name` (String) EX: <1 Gbps, >1 Gbps
 - `instance_type` (String) EX: t3.medium, t3.large
+
+Optional:
+
+- `connector_subnets` (List of String) connector subnet cider list
 
 
 

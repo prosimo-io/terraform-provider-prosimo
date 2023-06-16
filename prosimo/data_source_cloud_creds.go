@@ -9,7 +9,6 @@ import (
 	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceCloudCreds() *schema.Resource {
@@ -33,49 +32,45 @@ func dataSourceCloudCreds() *schema.Resource {
 						},
 						"nickname": {
 							Type:     schema.TypeString,
-							Required: true,
+							Computed: true,
 						},
 						"aws": {
 							Type:     schema.TypeSet,
-							MaxItems: 1,
-							Optional: true,
+							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"preferred_auth": {
-										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validation.StringInSlice(client.GetAWSAuthTypes(), false),
+										Type:     schema.TypeString,
+										Computed: true,
 									},
 									"iam_role": {
 										Type:     schema.TypeSet,
-										MaxItems: 1,
-										Optional: true,
+										Computed: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"role_arn": {
 													Type:     schema.TypeString,
-													Required: true,
+													Computed: true,
 												},
 												"external_id": {
 													Type:     schema.TypeString,
-													Required: true,
+													Computed: true,
 												},
 											},
 										},
 									},
 									"access_keys": {
 										Type:     schema.TypeSet,
-										MaxItems: 1,
-										Optional: true,
+										Computed: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"access_key_id": {
 													Type:     schema.TypeString,
-													Required: true,
+													Computed: true,
 												},
 												"secret_key_id": {
 													Type:     schema.TypeString,
-													Required: true,
+													Computed: true,
 												},
 											},
 										},
@@ -85,8 +80,7 @@ func dataSourceCloudCreds() *schema.Resource {
 						},
 						"azure": {
 							Type:     schema.TypeSet,
-							MaxItems: 1,
-							Optional: true,
+							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"subscription_id": {
@@ -110,8 +104,7 @@ func dataSourceCloudCreds() *schema.Resource {
 						},
 						"gcp": {
 							Type:     schema.TypeSet,
-							MaxItems: 1,
-							Optional: true,
+							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"service_account": {

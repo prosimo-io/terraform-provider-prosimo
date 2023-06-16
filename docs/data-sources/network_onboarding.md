@@ -21,8 +21,8 @@ data "prosimo_network_onboarding" "test-app" {
 # filter_cloud_type = [""]
 # filter_cloud_region = ["us-east-2"]
 # filter = "pamcname==a-o0pt6l.network.prosimo-eng.prosimoedge.us,id==8524d150-9a13-4a2a-97ee-9ae6f1203315"
-filter = "name==private-DC,status==DEPLOYED"
-
+# filter = "name==private-DC,status==DEPLOYED"
+filter = "id==9d5863fe-5c6c-4765-a54d-3f827ffbbfd7,connectionoption==private"
 }
 
 output "network_onboard_output" {
@@ -37,8 +37,6 @@ output "network_onboard_output" {
 ### Optional
 
 - `filter` (String) Custom filters to scope specific results. Usage: filter = app_access_type==agent
-- `filter_cloud_region` (List of String) Filter based upon cloud region, e.g: europe-central2, us-east-2
-- `filter_cloud_type` (List of String) Filter based upon cloud type, e.g: AWS, AZURE, GCP
 
 ### Read-Only
 
@@ -55,36 +53,36 @@ Read-Only:
 - `id` (String)
 - `name` (String)
 - `pamcname` (String)
-- `public_cloud` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--public_cloud))
+- `publiccloud` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--publiccloud))
 - `security` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--security))
 - `status` (String)
 - `teamid` (String)
 - `updatedtime` (String)
 
-<a id="nestedobjatt--onboarded_networks--public_cloud"></a>
-### Nested Schema for `onboarded_networks.public_cloud`
+<a id="nestedobjatt--onboarded_networks--publiccloud"></a>
+### Nested Schema for `onboarded_networks.publiccloud`
 
 Read-Only:
 
 - `cloud` (String)
-- `cloud_id` (String)
-- `cloud_key_id` (String)
-- `cloud_networks` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--public_cloud--cloud_networks))
-- `cloud_region` (String)
-- `cloud_type` (String)
-- `connection_option` (String)
+- `cloudkeyid` (String)
+- `cloudnetworks` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--publiccloud--cloudnetworks))
+- `cloudregion` (String)
+- `cloudtype` (String)
+- `connectionoption` (String)
+- `id` (String)
 
-<a id="nestedobjatt--onboarded_networks--public_cloud--cloud_networks"></a>
-### Nested Schema for `onboarded_networks.public_cloud.cloud_networks`
+<a id="nestedobjatt--onboarded_networks--publiccloud--cloudnetworks"></a>
+### Nested Schema for `onboarded_networks.publiccloud.cloudnetworks`
 
 Read-Only:
 
-- `cloud_network_id` (String)
-- `connectivity_type` (String)
-- `connector_group_id` (String)
-- `connector_placement` (String)
-- `edge_connectivity_id` (String)
-- `hub_id` (String)
+- `cloudnetworkid` (String)
+- `connectivitytype` (String)
+- `connectorgrpid` (String)
+- `connectorplacement` (String)
+- `edgeconnectivityid` (String)
+- `hubid` (String)
 - `id` (String)
 - `subnets` (List of String)
 

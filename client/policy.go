@@ -24,6 +24,7 @@ type Policy struct {
 	Name                      string  `json:"name,omitempty"`
 	TeamID                    string  `json:"teamID,omitempty"`
 	App_Access_Type           string  `json:"appAccessType,omitempty"`
+	NamespaceID               string  `json:"namespaceID,omitempty"`
 	Details                   Details `json:"details,omitempty"`
 	Device_Posture_Configured bool    `json:"devicePostureConfigured,omitempty"`
 	Type                      string  `json:"type,omitempty"`

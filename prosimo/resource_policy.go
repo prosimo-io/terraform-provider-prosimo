@@ -55,6 +55,11 @@ func resourcePolicy() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(client.GetPolicyappAccessType(), false),
 				Description:  "app access type, e.g: access, transit",
 			},
+			"namespace": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Policy Namespace, only applicable for transit app_access_type",
+			},
 			"details": {
 				Type:     schema.TypeSet,
 				Required: true,
@@ -288,7 +293,7 @@ func resourcePolicy() *schema.Resource {
 func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{}) (diag.Diagnostics, client.Policy) {
 	prosimoClient := meta.(*client.ProsimoClient)
 
-	//var diags diag.Diagnostics
+	// var diags diag.Diagnostics
 
 	newpolicy := &client.Policy{}
 	newdetails := client.Details{}
@@ -312,6 +317,16 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if v, ok := d.GetOk("app_access_type"); ok {
 		appaccestype = v.(string)
 		newpolicy.App_Access_Type = appaccestype
+		if newpolicy.App_Access_Type == client.PolicyTransit {
+			inNameSpace := d.Get("namespace").(string)
+			if inNameSpace != "" {
+				nameSpaceDetails, _ := prosimoClient.GetNamespaceByName(ctx, inNameSpace)
+				newpolicy.NamespaceID = nameSpaceDetails.ID
+			} else {
+				log.Println("[ERROR]: Missing Namespace details")
+			}
+		}
+
 		// if appaccestype == "Agentless" {
 		// 	newpolicy.AppAccessType = "agentless"
 		// } else if appaccestype == "Agent Based Access" {
@@ -1289,6 +1304,9 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, meta interf
 	d.Set("teamid", res.TeamID)
 	d.Set("types", res.PolicyType)
 	d.Set("app_access_type", res.App_Access_Type)
+	if res.App_Access_Type == client.PolicyTransit {
+		d.Set("namespace", d.Get("namespace").(string))
+	}
 
 	return diags
 }

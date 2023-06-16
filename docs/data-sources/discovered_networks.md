@@ -33,6 +33,8 @@ output "discovered_network_details" {
 ### Optional
 
 - `filter` (String)
+- `input_account_name` (String)
+- `input_cloud_type` (String)
 
 ### Read-Only
 

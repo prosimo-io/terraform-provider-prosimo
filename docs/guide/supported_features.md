@@ -38,6 +38,7 @@
   - **resource_policy**
   - **resource_user_settings**
   - **resource_waf**
-
- ### Caveats:
- - As of now we don't have any terraform support for Private DC. This would be included in future depending upon the use case.
+  - **resource_shared_services**
+  - **resource_service_insertion**
+  - **resource_private_link_source**
+  - **resource_private_link_mapping**

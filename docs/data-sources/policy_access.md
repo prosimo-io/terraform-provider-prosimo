@@ -61,8 +61,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -103,8 +103,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -112,8 +112,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -140,8 +140,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -149,8 +149,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -177,8 +177,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -186,8 +186,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -214,8 +214,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -223,8 +223,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -251,8 +251,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -260,8 +260,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -288,8 +288,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -297,8 +297,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -325,8 +325,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -334,8 +334,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -362,8 +362,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -371,8 +371,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -399,8 +399,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 <a id="nestedobjatt--policy--details--matches--users--values--selecteditems"></a>
@@ -408,8 +408,8 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 
 
@@ -427,7 +427,7 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
+- `itemid` (String)
+- `itemname` (String)
 
 

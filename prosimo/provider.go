@@ -63,6 +63,8 @@ func Provider() *schema.Provider {
 			"prosimo_service_insertion":        resourceServiceInsertion(),
 			"prosimo_private_link_source":      resourcePrivateLinkSource(),
 			"prosimo_private_link_mapping":     resourcePrivateLinkMapping(),
+			"prosimo_namespace":                resourceNamespace(),
+			"prosimo_cloud_gateway":            resourceCloudGateway(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

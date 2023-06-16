@@ -292,6 +292,7 @@ This resource is usually used along with `terraform-provider-prosimo`.
   resource "prosimo_policy" "policy-for-common-app-new" {
      name = "psonar-test-policy-transit"
      app_access_type = "transit"
+     namespace = "default"
      details {
         actions = "allow"
         # lock_users = false
@@ -409,6 +410,7 @@ This resource is usually used along with `terraform-provider-prosimo`.
 
 - `app_access_type` (String) app access type, e.g: access, transit
 - `device_posture_configured` (Boolean) only applicable for access app access type, set it to true to enable device posture
+- `namespace` (String) Policy Namespace, only applicable for transit app_access_type
 - `teamid` (String)
 - `types` (String) type of policy, e.g: default, managed
 

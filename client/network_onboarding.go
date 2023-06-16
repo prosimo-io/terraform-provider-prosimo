@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"log"
 )
 
 type NetworkDiscovery struct {
@@ -19,6 +20,8 @@ type NetworkDiscoveryResponse struct {
 type NetworkOnboardoptns struct {
 	ID           string        `json:"id,omitempty"`
 	Name         string        `json:"name,omitempty"`
+	Exportable   bool          `json:"exportable,omitempty"`
+	NamespaceID  string        `json:"namespaceID,omitempty"`
 	TeamID       string        `json:"teamID,omitempty"`
 	PamCname     string        `json:"pamCname,omitempty"`
 	Deployed     bool          `json:"deployed,omitempty"`
@@ -42,9 +45,13 @@ type NetworkOnboardSearchResponseData struct {
 	Data *NetworkOnboardSearchResponse `json:"data,omitempty"`
 }
 type ConnectorSettings struct {
-	Bandwidth     string `json:"bandwidth,omitempty"`
-	BandwidthName string `json:"bandwidthName,omitempty"`
-	InstanceType  string `json:"instanceType,omitempty"`
+	Bandwidth     string   `json:"bandwidth,omitempty"`
+	BandwidthName string   `json:"bandwidthName,omitempty"`
+	InstanceType  string   `json:"instanceType,omitempty"`
+	Subnets       []string `json:"subnets,omitempty"`
+}
+type ServiceSubnets struct {
+	Mode string `json:"mode,omitempty"`
 }
 
 type CloudNetworkops struct {
@@ -56,6 +63,7 @@ type CloudNetworkops struct {
 	HubID              string             `json:"hubID,omitempty"`
 	ConnectivityType   string             `json:"connectivityType,omitempty"`
 	ConnectorPlacement string             `json:"connectorPlacement,omitempty"`
+	Servicesubnets     *ServiceSubnets    `json:"serviceSubnets,omitempty"`
 	Connectorsettings  *ConnectorSettings `json:"connectorSettings,omitempty"`
 }
 
@@ -205,6 +213,7 @@ func (prosimoClient *ProsimoClient) OnboardNetworkDeployment(ctx context.Context
 }
 
 func (prosimoClient *ProsimoClient) OnboardNetworkDeploymentPost(ctx context.Context, networkOnboardsops *NetworkOnboardoptns) (*NetworkDeploymentres, error) {
+	log.Println("Entering reboard block", networkOnboardsops)
 	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, networkOnboardsops.ID)
 
 	// onboardrequest := &NetworkDeploymentres{}

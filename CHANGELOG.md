@@ -1,3 +1,15 @@
+## 3.4.4(June 24 2023)
+### Features:
+- Terraform support for network namespaces and cloud gateway .
+    New Resources:
+        `prosimo_namespace`, 
+         `prosimo_cloud_gateway`
+- New field `namespace` included in following resources.
+        `prosimo_network_onboarding`, 
+         `prosimo_policy`
+- Additionally following fields have been included in resource `prosimo_network_onboarding`: 
+        `connector_subnets` (List of String) connector subnet cider list
+         and `service_insertion_endpoint_subnets` (String) Service Insertion Endpoint, applicable when connector is placed in Workload VPC
 ## 3.3.4(April 27 2023)
 ### Enhancements:
 - `Terraform destroy` now would both offboard and delete an app/network if it's in onboarded state.

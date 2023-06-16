@@ -163,6 +163,14 @@ func GetConnectorPlacementOptions() []string {
 	return ConnectorPlacementOptions
 }
 
+func GetServiceInsertionOptions() []string {
+	ServiceInsertionOptions := make([]string, 3)
+	ServiceInsertionOptions[0] = AutoServiceInsertionOptions
+	ServiceInsertionOptions[1] = NoneServiceInsertionOptions
+	ServiceInsertionOptions[2] = ManualServiceInsertionOptions
+	return ServiceInsertionOptions
+}
+
 func GetCloudTypeOptions() []string {
 	CloudtypeOptions := make([]string, 2)
 	CloudtypeOptions[0] = PublicCloudConnectionOption

@@ -673,7 +673,7 @@ func flattenValuesItemData(Items []client.InputItems) []interface{} {
 				oi["keyvalues"] = keyvaluesItem
 			} else {
 				oi["itemid"] = Item.ItemID
-				oi["itemname"] = Item.ItemName
+				oi["	"] = Item.ItemName
 			}
 
 			ois[i] = oi

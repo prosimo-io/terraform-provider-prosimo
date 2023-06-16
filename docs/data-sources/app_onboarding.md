@@ -16,19 +16,17 @@ This resource is usually used along with `terraform-provider-prosimo`.
 ## Example Usage
 
 ```terraform
-# Either of these filter options can be used.Max one filter condition per request. 
-data "prosimo_app_onboarding" "test-app" { 
+data "prosimo_app_onboarding" "test-app" {
 # filter_cloud_type = ["AZURE", "GCP"]
 # filter_cloud_region = ["us-east-2"]
-# filter_protocol = "http"
+# filter_protocaol = "http"
 # filter_port = 90
 # filter_internal_domain = "psonar-url-rewrite-wordpress.myeventarena.com"
-# filter_papp_fqdn = "a-dok1a1.agentaccess.prosimo-eng.prosimoedge.us"
+# filter = "id==d7d4b477-b01c-45c4-b786-eca5a0f674ae&app_name==common-app"
+# filter = "id==8209c912-977e-48fe-9007-04e48b49aca6"
 # filter_app_fqdn = "sshtesting.access.myeveqingchen1657127431278.scnetworkers.info"
 # filter = "app_access_type==agent&status==CONFIGURING"
-filter = "app_access_type==agentless"
-# filter = "status==CONFIGURING"
-
+filter = "name==us-west-1"
 }
 
 output "app_onboard_output" {
@@ -43,13 +41,6 @@ output "app_onboard_output" {
 ### Optional
 
 - `filter` (String) Custom filters to scope specific results. Usage: filter = app_access_type==agent
-- `filter_app_fqdn` (String) Filter based upon onboarded app fqdn
-- `filter_cloud_region` (List of String) Filter based upon cloud region, e.g: europe-central2, us-east-2
-- `filter_cloud_type` (List of String) Filter based upon cloud type, e.g: AWS, AZURE, GCP
-- `filter_internal_domain` (String) Filter based on internal domain name, eg: abc.com, 10.5.0.4/32 etc
-- `filter_papp_fqdn` (String) Filter based upon papp fqdn
-- `filter_port` (Number) Filter based on port number, eg: 80, 22 etc
-- `filter_protocol` (String) Filter based upon protocol used, e.g: http, https, tcp
 
 ### Read-Only
 
@@ -65,44 +56,44 @@ Read-Only:
 - `addresstype` (String)
 - `app_access_type` (String)
 - `app_name` (String)
-- `app_urls` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--app_urls))
+- `appid` (String)
+- `apponboardtype` (String)
+- `appsamlrewrite` (String)
 - `apptype` (String)
+- `appurls` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls))
 - `enablemulticloud` (Boolean)
-- `id` (String)
 - `idp_id` (String)
 - `interactiontype` (String)
-- `onboardtype` (String)
 - `optimize_app_experience` (Boolean)
 - `optoption` (String)
-- `policy_group_id` (String)
-- `saml_rewrite` (String)
+- `policygroupid` (String)
 - `status` (String)
 - `team_id` (String)
 
-<a id="nestedobjatt--onboarded_apps--app_urls"></a>
-### Nested Schema for `onboarded_apps.app_urls`
+<a id="nestedobjatt--onboarded_apps--appurls"></a>
+### Nested Schema for `onboarded_apps.appurls`
 
 Read-Only:
 
 - `appfqdn` (String)
 - `cacheruleid` (String)
 - `certid` (String)
-- `cloud_key_id` (String)
+- `cloudkeyid` (String)
 - `connectionoption` (String)
-- `dnsservice` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--app_urls--dnsservice))
+- `dnsservice` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls--dnsservice))
 - `domaintype` (String)
-- `edge_regions` (List of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--app_urls--edge_regions))
-- `ext_protocols` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--app_urls--ext_protocols))
-- `health_check_info` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--app_urls--health_check_info))
+- `ext_protocols` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls--ext_protocols))
+- `healthcheckinfo` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls--healthcheckinfo))
 - `id` (String)
 - `internaldomain` (String)
 - `pappfqdn` (String)
-- `protocols` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--app_urls--protocols))
+- `protocols` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls--protocols))
+- `regions` (List of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls--regions))
 - `subdomainincluded` (Boolean)
 - `teamid` (String)
 
-<a id="nestedobjatt--onboarded_apps--app_urls--dnsservice"></a>
-### Nested Schema for `onboarded_apps.app_urls.dnsservice`
+<a id="nestedobjatt--onboarded_apps--appurls--dnsservice"></a>
+### Nested Schema for `onboarded_apps.appurls.dnsservice`
 
 Read-Only:
 
@@ -111,29 +102,8 @@ Read-Only:
 - `type` (String)
 
 
-<a id="nestedobjatt--onboarded_apps--app_urls--edge_regions"></a>
-### Nested Schema for `onboarded_apps.app_urls.edge_regions`
-
-Read-Only:
-
-- `connoption` (String)
-- `endpoints` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--app_urls--edge_regions--endpoints))
-- `id` (String)
-- `name` (String)
-- `regiontype` (String)
-
-<a id="nestedobjatt--onboarded_apps--app_urls--edge_regions--endpoints"></a>
-### Nested Schema for `onboarded_apps.app_urls.edge_regions.regiontype`
-
-Read-Only:
-
-- `appip` (String)
-- `appnetworkid` (String)
-
-
-
-<a id="nestedobjatt--onboarded_apps--app_urls--ext_protocols"></a>
-### Nested Schema for `onboarded_apps.app_urls.ext_protocols`
+<a id="nestedobjatt--onboarded_apps--appurls--ext_protocols"></a>
+### Nested Schema for `onboarded_apps.appurls.ext_protocols`
 
 Read-Only:
 
@@ -141,8 +111,8 @@ Read-Only:
 - `protocol` (String)
 
 
-<a id="nestedobjatt--onboarded_apps--app_urls--health_check_info"></a>
-### Nested Schema for `onboarded_apps.app_urls.health_check_info`
+<a id="nestedobjatt--onboarded_apps--appurls--healthcheckinfo"></a>
+### Nested Schema for `onboarded_apps.appurls.healthcheckinfo`
 
 Read-Only:
 
@@ -150,8 +120,8 @@ Read-Only:
 - `endpoint` (String)
 
 
-<a id="nestedobjatt--onboarded_apps--app_urls--protocols"></a>
-### Nested Schema for `onboarded_apps.app_urls.protocols`
+<a id="nestedobjatt--onboarded_apps--appurls--protocols"></a>
+### Nested Schema for `onboarded_apps.appurls.protocols`
 
 Read-Only:
 
@@ -161,5 +131,25 @@ Read-Only:
 - `portlist` (List of String)
 - `protocol` (String)
 - `websocketenabled` (Boolean)
+
+
+<a id="nestedobjatt--onboarded_apps--appurls--regions"></a>
+### Nested Schema for `onboarded_apps.appurls.regions`
+
+Read-Only:
+
+- `connoption` (String)
+- `endpoints` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls--regions--endpoints))
+- `id` (String)
+- `name` (String)
+- `regiontype` (String)
+
+<a id="nestedobjatt--onboarded_apps--appurls--regions--endpoints"></a>
+### Nested Schema for `onboarded_apps.appurls.regions.regiontype`
+
+Read-Only:
+
+- `appip` (String)
+- `appnetworkid` (String)
 
 

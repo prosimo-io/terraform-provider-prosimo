@@ -42,7 +42,7 @@ func resourceCloudCreds() *schema.Resource {
 				Description: "AWS options.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"preffered_auth": {
+						"preferred_auth": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice(client.GetAWSAuthTypes(), false),
@@ -206,7 +206,7 @@ func resourceCloudCredentialsCreate(ctx context.Context, d *schema.ResourceData,
 			awsConfig := v.([]interface{})
 			aws := awsConfig[0].(map[string]interface{})
 
-			prefferedAuth := aws["preffered_auth"].(string)
+			prefferedAuth := aws["preferred_auth"].(string)
 			if prefferedAuth == client.AWSIAMRoleAuth {
 
 				cloudCreds.KeyType = client.AWSIAMRoleAuth
@@ -251,8 +251,8 @@ func resourceCloudCredentialsCreate(ctx context.Context, d *schema.ResourceData,
 			} else {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Not a type of preffered auth for AWS",
-					Detail:   "Not a type of preffered auth for AWS",
+					Summary:  "Not a type of preferred auth for AWS",
+					Detail:   "Not a type of preferred auth for AWS",
 				})
 
 				return diags
@@ -340,10 +340,10 @@ func resourceCloudCredentialsUpdate(ctx context.Context, d *schema.ResourceData,
 			awsConfig := v.([]interface{})
 			aws := awsConfig[0].(map[string]interface{})
 
-			if d.HasChange("aws.0.preffered_auth") && !d.IsNewResource() {
+			if d.HasChange("aws.0.preferred_auth") && !d.IsNewResource() {
 				updateReq = true
 			}
-			prefferedAuth := aws["preffered_auth"].(string)
+			prefferedAuth := aws["preferred_auth"].(string)
 			if prefferedAuth == client.AWSIAMRoleAuth {
 				cloudCreds.KeyType = client.AWSIAMRoleAuth
 
@@ -557,7 +557,7 @@ func getAWSCreds(cloudCreds *client.CloudCreds) interface{} {
 
 		aws = []interface{}{
 			map[string]interface{}{
-				"preffered_auth": client.AWSIAMRoleAuth,
+				"preferred_auth": client.AWSIAMRoleAuth,
 				"iam_role":       iamRole,
 			},
 		}
@@ -571,7 +571,7 @@ func getAWSCreds(cloudCreds *client.CloudCreds) interface{} {
 
 		aws = []interface{}{
 			map[string]interface{}{
-				"preffered_auth": client.AWSAccessKeyAuth,
+				"preferred_auth": client.AWSAccessKeyAuth,
 				"access_keys":    accessKeys,
 			},
 		}

@@ -29,6 +29,16 @@ func resourceNetworkOnboarding() *schema.Resource {
 				Required:    true,
 				Description: "name for the application",
 			},
+			"network_exportable_policy": {
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Mark Network Exportable in Policy",
+			},
+			"namespace": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Assigned Namespace",
+			},
 			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -133,6 +143,12 @@ func resourceNetworkOnboarding() *schema.Resource {
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: "subnet cider list",
 									},
+									"service_insertion_endpoint_subnets": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validation.StringInSlice(client.GetServiceInsertionOptions(), false),
+										Description:  "Service Insertion Endpoint, applicable when connector is placed in Workload VPC",
+									},
 									"connector_settings": {
 										Type:     schema.TypeSet,
 										Optional: true,
@@ -152,6 +168,12 @@ func resourceNetworkOnboarding() *schema.Resource {
 													Type:        schema.TypeString,
 													Required:    true,
 													Description: "EX: t3.medium, t3.large",
+												},
+												"connector_subnets": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Elem:        &schema.Schema{Type: schema.TypeString},
+													Description: "connector subnet cider list ",
 												},
 											},
 										},
@@ -213,8 +235,14 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 	}
 
 	// CloudCredName := d.Get("app_name").(string)
+	nameSpace, err := prosimoClient.GetNamespaceByName(ctx, d.Get("namespace").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	networkOnboardops := &client.NetworkOnboardoptns{
-		Name: d.Get("name").(string),
+		Name:        d.Get("name").(string),
+		Exportable:  d.Get("network_exportable_policy").(bool),
+		NamespaceID: nameSpace.ID,
 	}
 
 	onboardresponse, err := prosimoClient.NetworkOnboard(ctx, networkOnboardops)
@@ -228,7 +256,7 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 	if d.Get("onboard_app").(bool) {
 		res, err2 := prosimoClient.OnboardNetworkDeployment(ctx, networkOnboardops.ID)
 		if err2 != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(err2)
 		}
 		if d.Get("wait_for_rollout").(bool) {
 			log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
@@ -271,7 +299,12 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 		})
 		return diags
 	}
-
+	if d.HasChange("network_exportable_policy") {
+		updateReq = true
+	}
+	if d.HasChange("namespace") {
+		updateReq = true
+	}
 	if d.HasChange("public_cloud") {
 		updateReq = true
 	}
@@ -290,10 +323,14 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 
 	if updateReq {
 		networkOnboardops := &client.NetworkOnboardoptns{
-			Name: d.Get("name").(string),
-			ID:   d.Id(),
+			Name:       d.Get("name").(string),
+			Exportable: d.Get("network_exportable_policy").(bool),
+			ID:         d.Id(),
 		}
+		nameSpace, _ := prosimoClient.GetNamespaceByName(ctx, d.Get("namespace").(string))
+		networkOnboardops.NamespaceID = nameSpace.ID
 		_, networkOnboardops = resourceNetworkOnboardingSettingsUpdate(ctx, d, meta, networkOnboardops)
+		log.Println("networkOnboardops", networkOnboardops)
 		if d.Get("decommission_app").(bool) {
 			onboardresponse, err := prosimoClient.OffboardNetworkDeployment(ctx, networkOnboardops.ID)
 			if err != nil {
@@ -331,7 +368,7 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 			} else {
 				res, err2 := prosimoClient.OnboardNetworkDeployment(ctx, networkOnboardops.ID)
 				if err2 != nil {
-					return diag.FromErr(err)
+					return diag.FromErr(err2)
 				}
 				if d.Get("wait_for_rollout").(bool) {
 					log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
@@ -363,6 +400,8 @@ func resourceNetworkOnboardingRead(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId(networkOnboardSettingsDbObj.ID)
 	d.Set("name", networkOnboardSettingsDbObj.Name)
+	d.Set("network_exportable_policy", networkOnboardSettingsDbObj.Exportable)
+	d.Set("namespace", d.Get("namespace").(string))
 	d.Set("pam_cname", networkOnboardSettingsDbObj.PamCname)
 	d.Set("deployed", networkOnboardSettingsDbObj.Deployed)
 	d.Set("status", networkOnboardSettingsDbObj.Status)
@@ -443,6 +482,22 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 				} else {
 					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vpc"].(string)
 				}
+				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions && cloudCreds.CloudType == client.AWSCloudType {
+					if v, ok := cloudNetworkConfig["service_insertion_endpoint_subnets"].(string); ok {
+						serviceSubnet := &client.ServiceSubnets{
+							Mode: v,
+						}
+						cloudNetworkInput.Servicesubnets = serviceSubnet
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "Missing Service Endpoint details",
+							Detail:   "Service Endpoint details are required if connector placement is in Infra or workload vpc and cloud type is AWS.",
+						})
+
+						return diags
+					}
+				}
 				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
 					if cloudCreds.CloudType == client.AWSCloudType {
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
@@ -451,6 +506,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 								Bandwidth:     connectorsettingConfig["bandwidth"].(string),
 								BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
 								InstanceType:  connectorsettingConfig["instance_type"].(string),
+								Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
 							}
 							cloudNetworkInput.Connectorsettings = connectorsettingInput
 						} else {
@@ -580,6 +636,22 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 				} else {
 					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vpc"].(string)
 				}
+				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions && cloudCreds.CloudType == client.AWSCloudType {
+					if v, ok := cloudNetworkConfig["service_insertion_endpoint_subnets"].(string); ok {
+						serviceSubnet := &client.ServiceSubnets{
+							Mode: v,
+						}
+						cloudNetworkInput.Servicesubnets = serviceSubnet
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "Missing Service Endpoint details",
+							Detail:   "Service Endpoint details are required if connector placement is in Infra or workload vpc and cloud type is AWS.",
+						})
+
+						return diags, nil
+					}
+				}
 				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
 					if cloudCreds.CloudType == client.AWSCloudType {
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
@@ -588,6 +660,7 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 								Bandwidth:     connectorsettingConfig["bandwidth"].(string),
 								BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
 								InstanceType:  connectorsettingConfig["instance_type"].(string),
+								Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
 							}
 							cloudNetworkInput.Connectorsettings = connectorsettingInput
 						} else {
@@ -646,9 +719,15 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 		networkOnboardops.PrivateCloud = privateCloudoptn
 	}
 
-	err1 := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
-	if err1 != nil {
-		return diag.FromErr(err1), nil
+	networkOnboardSettingsDbObj, err := prosimoClient.GetNetworkSettings(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(err), nil
+	}
+	if !networkOnboardSettingsDbObj.Deployed {
+		err1 := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
+		if err1 != nil {
+			return diag.FromErr(err1), nil
+		}
 	}
 
 	// Securirty policy configuration.
@@ -674,9 +753,11 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 		Security: policyList,
 	}
 
-	err2 := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
-	if err2 != nil {
-		return diag.FromErr(err2), nil
+	if !networkOnboardSettingsDbObj.Deployed {
+		err2 := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
+		if err2 != nil {
+			return diag.FromErr(err2), nil
+		}
 	}
 
 	return diags, networkOnboardops
