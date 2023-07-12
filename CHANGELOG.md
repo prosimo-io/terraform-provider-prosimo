@@ -1,3 +1,12 @@
+## 3.4.6(June 30 2023)
+### BugFix:
+-  Better handling of api error response for resource  `prosimo_network_onboarding`.The terraform execution flow would now stop once it receives error from api.
+        
+## 3.4.5(June 29 2023)
+### BugFix:
+-  Allow multiple protocol configuration using terraform for following resources.(Please refer docs for related examples)
+         `prosimo_app_onboarding_fqdn`
+         `prosimo_app_onboarding_ip`
 ## 3.4.4(June 24 2023)
 ### Features:
 - Terraform support for network namespaces and cloud gateway .

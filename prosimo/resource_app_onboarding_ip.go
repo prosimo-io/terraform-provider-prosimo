@@ -61,7 +61,6 @@ func resourceAppOnboarding_IP() *schema.Resource {
 						},
 						"protocols": {
 							Type:        schema.TypeSet,
-							MaxItems:    1,
 							Required:    true,
 							Description: "Protocol that prosimo edge uses to connect to App",
 							Elem: &schema.Resource{

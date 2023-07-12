@@ -27,6 +27,10 @@ resource "prosimo_app_onboarding_ip" "AgentlessAppOnboarding" {
             protocol = "tcp"
             port_list = ["443", "22"]
         }
+        protocols {
+            protocol = "tcp"
+            port_list = ["161", "162-200"] 
+        }
 
         cloud_config {
             connection_option = "private"
@@ -182,7 +186,7 @@ Required:
 
 - `app_fqdn` (String) Fqdn of the app that user would access after onboarding
 - `cloud_config` (Block Set, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--app_urls--cloud_config))
-- `protocols` (Block Set, Min: 1, Max: 1) Protocol that prosimo edge uses to connect to App (see [below for nested schema](#nestedblock--app_urls--protocols))
+- `protocols` (Block Set, Min: 1) Protocol that prosimo edge uses to connect to App (see [below for nested schema](#nestedblock--app_urls--protocols))
 
 Read-Only:
 

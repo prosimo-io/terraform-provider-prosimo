@@ -30,6 +30,10 @@ resource "prosimo_app_onboarding_fqdn" "AgentlessAppOnboarding" {
             protocol = "tcp"
             port_list = ["80", "90"]
         }
+        protocols {
+            protocol = "tcp"
+            port_list = ["161", "162-200"] 
+        }
 
         health_check_info {
           enabled = false
@@ -176,7 +180,7 @@ Required:
 - `cloud_config` (Block Set, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--app_urls--cloud_config))
 - `domain_type` (String) Type of Domain: e.g custom or prosimo
 - `health_check_info` (Block Set, Min: 1, Max: 1) Application health check config from edge (see [below for nested schema](#nestedblock--app_urls--health_check_info))
-- `protocols` (Block Set, Min: 1, Max: 1) Protocol that prosimo edge uses to connect to App (see [below for nested schema](#nestedblock--app_urls--protocols))
+- `protocols` (Block Set, Min: 1) Protocol that prosimo edge uses to connect to App (see [below for nested schema](#nestedblock--app_urls--protocols))
 
 Optional:
 

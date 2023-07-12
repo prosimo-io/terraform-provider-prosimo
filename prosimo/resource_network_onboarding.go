@@ -252,6 +252,9 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 	networkOnboardops.ID = onboardresponse.NetworkOnboardResponseData.ID
 
 	diags = resourceNetworkOnboardingSettings(ctx, d, meta, networkOnboardops)
+	if diags != nil {
+		return diags
+	}
 	d.SetId(networkOnboardops.ID)
 	if d.Get("onboard_app").(bool) {
 		res, err2 := prosimoClient.OnboardNetworkDeployment(ctx, networkOnboardops.ID)
@@ -329,8 +332,10 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 		}
 		nameSpace, _ := prosimoClient.GetNamespaceByName(ctx, d.Get("namespace").(string))
 		networkOnboardops.NamespaceID = nameSpace.ID
-		_, networkOnboardops = resourceNetworkOnboardingSettingsUpdate(ctx, d, meta, networkOnboardops)
-		log.Println("networkOnboardops", networkOnboardops)
+		diags, networkOnboardops = resourceNetworkOnboardingSettingsUpdate(ctx, d, meta, networkOnboardops)
+		if diags != nil {
+			return diags
+		}
 		if d.Get("decommission_app").(bool) {
 			onboardresponse, err := prosimoClient.OffboardNetworkDeployment(ctx, networkOnboardops.ID)
 			if err != nil {
@@ -499,7 +504,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 					}
 				}
 				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
-					if cloudCreds.CloudType == client.AWSCloudType {
+					if cloudCreds.CloudType == client.AWSCloudType || cloudCreds.CloudType == client.GCPCloudType {
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 							connectorsettingInput := &client.ConnectorSettings{
@@ -513,7 +518,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 							diags = append(diags, diag.Diagnostic{
 								Severity: diag.Error,
 								Summary:  "Missing Connector Active setting options",
-								Detail:   "Active setting options are required if connector placement is in Infra or workload vpc and cloud type is AWS.",
+								Detail:   "Active setting options are required if connector placement is in Workload VPC.",
 							})
 
 							return diags
@@ -570,9 +575,9 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 		}
 		networkOnboardops.PrivateCloud = privateCloudoptn
 	}
-	err1 := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
-	if err1 != nil {
-		return diag.FromErr(err1)
+	err := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	// Securirty policy configuration.
 	networkPolicyList := []client.Policyops{}
@@ -587,17 +592,18 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 			networkPolicy.ID = policyDbObj.ID
 			networkPolicyList = append(networkPolicyList, networkPolicy)
 		}
+		policyList := &client.Security{
+			Policies: networkPolicyList,
+		}
+		securityInput := &client.NetworkSecurityInput{
+			Security: policyList,
+		}
+		err := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
-	policyList := &client.Security{
-		Policies: networkPolicyList,
-	}
-	securityInput := &client.NetworkSecurityInput{
-		Security: policyList,
-	}
-	err2 := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
-	if err2 != nil {
-		return diag.FromErr(err2)
-	}
+
 	return diags
 }
 
@@ -724,9 +730,9 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err), nil
 	}
 	if !networkOnboardSettingsDbObj.Deployed {
-		err1 := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
-		if err1 != nil {
-			return diag.FromErr(err1), nil
+		err := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
+		if err != nil {
+			return diag.FromErr(err), nil
 		}
 	}
 
@@ -754,9 +760,9 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 	}
 
 	if !networkOnboardSettingsDbObj.Deployed {
-		err2 := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
-		if err2 != nil {
-			return diag.FromErr(err2), nil
+		err := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
+		if err != nil {
+			return diag.FromErr(err), nil
 		}
 	}
 
