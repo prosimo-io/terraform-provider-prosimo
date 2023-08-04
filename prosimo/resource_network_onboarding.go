@@ -504,32 +504,23 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 					}
 				}
 				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
-					if cloudCreds.CloudType == client.AWSCloudType || cloudCreds.CloudType == client.GCPCloudType {
-						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
-							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-							connectorsettingInput := &client.ConnectorSettings{
-								Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-								BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
-								InstanceType:  connectorsettingConfig["instance_type"].(string),
-								Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
-							}
-							cloudNetworkInput.Connectorsettings = connectorsettingInput
-						} else {
-							diags = append(diags, diag.Diagnostic{
-								Severity: diag.Error,
-								Summary:  "Missing Connector Active setting options",
-								Detail:   "Active setting options are required if connector placement is in Workload VPC.",
-							})
-
-							return diags
-						}
-					} else if cloudCreds.CloudType == client.AzureCloudType {
+					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 						connectorsettingInput := &client.ConnectorSettings{
-							Bandwidth:     client.AzureBandwidth,
-							BandwidthName: client.AzureBandwidthName,
-							InstanceType:  client.AzureInstanceType,
+							Bandwidth:     connectorsettingConfig["bandwidth"].(string),
+							BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
+							InstanceType:  connectorsettingConfig["instance_type"].(string),
+							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
 						}
 						cloudNetworkInput.Connectorsettings = connectorsettingInput
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "Missing Connector Active setting options",
+							Detail:   "Active setting options are required if connector placement is in Workload VPC.",
+						})
+
+						return diags
 					}
 				}
 				cloudNetworkInputList = append(cloudNetworkInputList, *cloudNetworkInput)
@@ -659,32 +650,23 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 					}
 				}
 				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
-					if cloudCreds.CloudType == client.AWSCloudType {
-						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
-							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-							connectorsettingInput := &client.ConnectorSettings{
-								Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-								BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
-								InstanceType:  connectorsettingConfig["instance_type"].(string),
-								Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
-							}
-							cloudNetworkInput.Connectorsettings = connectorsettingInput
-						} else {
-							diags = append(diags, diag.Diagnostic{
-								Severity: diag.Error,
-								Summary:  "Missing Connector Active setting options",
-								Detail:   "Active setting options are required if connector placement is in Infra or workload vpc and cloud type is AWS.",
-							})
-
-							return diags, nil
-						}
-					} else if cloudCreds.CloudType == client.AzureCloudType {
+					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 						connectorsettingInput := &client.ConnectorSettings{
-							Bandwidth:     client.AzureBandwidth,
-							BandwidthName: client.AzureBandwidthName,
-							InstanceType:  client.AzureInstanceType,
+							Bandwidth:     connectorsettingConfig["bandwidth"].(string),
+							BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
+							InstanceType:  connectorsettingConfig["instance_type"].(string),
+							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
 						}
 						cloudNetworkInput.Connectorsettings = connectorsettingInput
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "Missing Connector Active setting options",
+							Detail:   "Active setting options are required if connector placement is in Infra or workload vpc and cloud type is AWS.",
+						})
+
+						return diags, nil
 					}
 				}
 				cloudNetworkInputList = append(cloudNetworkInputList, *cloudNetworkInput)

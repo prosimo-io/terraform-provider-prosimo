@@ -77,7 +77,7 @@ Required:
 
 Required:
 
-- `name` (String) Name of source VPC.
+- `name` (String) Name of source VPC/VNET.
 
 
 

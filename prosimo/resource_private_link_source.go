@@ -60,7 +60,7 @@ func resourcePrivateLinkSource() *schema.Resource {
 									"name": {
 										Type:        schema.TypeString,
 										Required:    true,
-										Description: "Name of source VPC.",
+										Description: "Name of source VPC/VNET.",
 									},
 								},
 							},

@@ -32,6 +32,12 @@ func resourceServiceInsertion() *schema.Resource {
 				Computed:    true,
 				Description: "Resource ID",
 			},
+			"namespace": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "default",
+				Description: "Policy Namespace, Defaults to default",
+			},
 			"service_name": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -42,6 +48,17 @@ func resourceServiceInsertion() *schema.Resource {
 				Optional:    true,
 				Default:     "FWPolicy_IP",
 				Description: "Service Insertion Type",
+			},
+			"prosimo_managed_routing": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "TRUE if you would like Prosimo to update Firewal VNET Roue Table",
+			},
+			"route_tables": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of Route Table ID",
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -253,6 +270,37 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		Target:       target,
 		IpRules:      &ipRulesConfigInputList,
 	}
+	nameSpaceDetails, err := prosimoClient.GetNamespaceByName(ctx, d.Get("namespace").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	serviceInsertionInput.NameSpaceID = nameSpaceDetails.ID
+
+	if ss.Region.CloudType == client.AzureCloudType {
+		if v, ok := d.GetOk("prosimo_managed_routing"); ok {
+			serviceInsertionInput.ProsimoManagedRouting = v.(bool)
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Missing Prosimo managed Routing options",
+				Detail:   "Missing Prosimo managed Routing options",
+			})
+			return diags
+		}
+		if serviceInsertionInput.ProsimoManagedRouting {
+			if v, ok := d.GetOk("route_tables"); ok {
+				serviceInsertionInput.RouteTable = expandStringList(v.([]interface{}))
+			} else {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Missing Route Table ID details",
+					Detail:   "Missing Route Table ID details",
+				})
+				return diags
+			}
+
+		}
+	}
 	siRes, err := prosimoClient.CreateServiceInsertion(ctx, serviceInsertionInput)
 	if err != nil {
 		return diag.FromErr(err)
@@ -415,6 +463,36 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			SharedServiceCreds: ss.Region.CloudKeyID,
 			GwLoadbalancerID:   ss.Region.GwLoadBalancerID,
 			ServiceID:          ss.ID,
+		}
+		nameSpaceDetails, err := prosimoClient.GetNamespaceByName(ctx, d.Get("namespace").(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		serviceInsertionInput.NameSpaceID = nameSpaceDetails.ID
+		if ss.Region.CloudType == client.AzureCloudType {
+			if v, ok := d.GetOk("prosimo_managed_routing"); ok {
+				serviceInsertionInput.ProsimoManagedRouting = v.(bool)
+			} else {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Missing Prosimo managed Routing options",
+					Detail:   "Missing Prosimo managed Routing options",
+				})
+				return diags
+			}
+			if serviceInsertionInput.ProsimoManagedRouting {
+				if v, ok := d.GetOk("route_tables"); ok {
+					serviceInsertionInput.RouteTable = expandStringList(v.([]interface{}))
+				} else {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Missing Route Table ID details",
+						Detail:   "Missing Route Table ID details",
+					})
+					return diags
+				}
+
+			}
 		}
 		putRes, err := prosimoClient.UpdateServiceInsertion(ctx, serviceInsertionInput)
 		if err != nil {

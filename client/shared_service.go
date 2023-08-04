@@ -23,6 +23,7 @@ type Region struct {
 	CloudKeyID       string `json:"cloudKeyID,omitempty"`
 	CloudType        string `json:"cloudType,omitempty"`
 	CloudZones       string `json:"cloudZones,omitempty"`
+	ResourceGrp      string `json:"resourceGroup,omitempty"` 
 
 }
 

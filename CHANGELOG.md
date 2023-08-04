@@ -1,3 +1,8 @@
+## 3.5.7(July 24 2023)
+### Features:
+- Terraform support for AZURE cloud in `prosimo_shared_service` and `prosimo_service_insertion` resources.Ref docs for examples.
+### BugFix:
+- Allow Connector Setting inputs for AZURE and GCP Cloud in resource `prosimo_network_onboarding`.
 ## 3.4.6(June 30 2023)
 ### BugFix:
 -  Better handling of api error response for resource  `prosimo_network_onboarding`.The terraform execution flow would now stop once it receives error from api.

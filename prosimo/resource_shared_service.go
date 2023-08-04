@@ -66,6 +66,11 @@ func resourceSharedServices() *schema.Resource {
 							Required:    true,
 							Description: "cloud account under which application is hosted",
 						},
+						"resource_group": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Resource group name, applicable only for AZURE",
+						},
 					},
 				},
 			},
@@ -157,6 +162,19 @@ func resourceSSCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 			CloudType:        cloudCreds.CloudType,
 			GwLoadBalancerID: regionConfig["gateway_lb"].(string),
 			CloudZones:       "",
+		}
+		if regionInput.CloudType == client.AzureCloudType {
+			if v, ok := regionConfig["resource_group"]; ok {
+				regionInput.ResourceGrp = v.(string)
+			} else {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Missing Resource Grp Details",
+					Detail:   fmt.Sprintln("ResourceGrp field is required if cloud type is AZURE "),
+				})
+
+				return diags
+			}
 		}
 	} else {
 		diags = append(diags, diag.Diagnostic{
@@ -316,6 +334,19 @@ func resourceSSUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 					CloudType:        cloudCreds.CloudType,
 					GwLoadBalancerID: regionConfig["gateway_lb"].(string),
 					CloudZones:       "",
+				}
+				if regionInput.CloudType == client.AzureCloudType {
+					if v, ok := regionConfig["resource_group"]; ok {
+						regionInput.ResourceGrp = v.(string)
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "Missing Resource Grp Details",
+							Detail:   fmt.Sprintln("ResourceGrp field is required if cloud type is AZURE "),
+						})
+
+						return diags
+					}
 				}
 			} else {
 				diags = append(diags, diag.Diagnostic{

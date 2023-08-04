@@ -7,20 +7,23 @@ import (
 )
 
 type Service_Insertion struct {
-	Name               string    `json:"name,omitempty"`
-	Type               string    `json:"type,omitempty"`
-	Service_name       string    `json:"serviceName,omitempty"`
-	RegionID           string    `json:"regionId,omitempty"`
-	ID                 string    `json:"id,omitempty"`
-	Source             *Source   `json:"source,omitempty"`
-	Target             *Target   `json:"target,omitempty"`
-	IpRules            *[]IpRule `json:"ipRules,omitempty"`
-	Status             string    `json:"status,omitempty"`
-	CloudType          string    `json:"cloudType,omitempty"`
-	CloudRegion        string    `json:"cloudRegion,omitempty"`
-	ServiceID          string    `json:"serviceId,omitempty"`
-	GwLoadbalancerID   string    `json:"gwLoadbalancerID,omitempty"`
-	SharedServiceCreds string    `json:"sharedServiceCreds,omitempty"`
+	Name                  string    `json:"name,omitempty"`
+	Type                  string    `json:"type,omitempty"`
+	Service_name          string    `json:"serviceName,omitempty"`
+	RegionID              string    `json:"regionId,omitempty"`
+	ID                    string    `json:"id,omitempty"`
+	Source                *Source   `json:"source,omitempty"`
+	Target                *Target   `json:"target,omitempty"`
+	IpRules               *[]IpRule `json:"ipRules,omitempty"`
+	Status                string    `json:"status,omitempty"`
+	CloudType             string    `json:"cloudType,omitempty"`
+	CloudRegion           string    `json:"cloudRegion,omitempty"`
+	ServiceID             string    `json:"serviceId,omitempty"`
+	GwLoadbalancerID      string    `json:"gwLoadbalancerID,omitempty"`
+	SharedServiceCreds    string    `json:"sharedServiceCreds,omitempty"`
+	ProsimoManagedRouting bool      `json:"prosimoManagedRouting,omitempty"`
+	RouteTable            []string  `json:"routeTable,omitempty"`
+	NameSpaceID           string    `json:"namespaceID,omitempty"`
 }
 
 type Service_Insertion_Res struct {
@@ -95,7 +98,6 @@ func (prosimoClient *ProsimoClient) UpdateServiceInsertion(ctx context.Context, 
 	return resourcePostResponseData, nil
 
 }
-
 
 func (prosimoClient *ProsimoClient) DeleteServiceInsertion(ctx context.Context, serviceIinsertionID string) (*SI_Response, error) {
 
