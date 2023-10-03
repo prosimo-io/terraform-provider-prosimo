@@ -148,6 +148,12 @@ func GetAppProtocolsLFQDN() []string {
 	return fqdnappProtocols
 }
 
+func GetServiceIPType() []string {
+	serviceIpType := make([]string, 2)
+	serviceIpType[0] = AutoServiceIP
+	serviceIpType[1] = ManualServiceIP
+	return serviceIpType
+}
 func GetCloudConnectionOptions() []string {
 	connectionOptions := make([]string, 2)
 	connectionOptions[0] = PublicCloudConnectionOption
@@ -169,6 +175,46 @@ func GetServiceInsertionOptions() []string {
 	ServiceInsertionOptions[1] = NoneServiceInsertionOptions
 	ServiceInsertionOptions[2] = ManualServiceInsertionOptions
 	return ServiceInsertionOptions
+}
+
+func GetConnectorBandwidthOptions() []string {
+	ConnectorBandwidthOptions := make([]string, 4)
+	ConnectorBandwidthOptions[0] = LessThan1GBPS
+	ConnectorBandwidthOptions[1] = OneToFiveGBPS
+	ConnectorBandwidthOptions[2] = FiveToTenGBPS
+	ConnectorBandwidthOptions[3] = MoreThanTenGBPS
+	return ConnectorBandwidthOptions
+}
+
+
+func GetVPCSourceOptions() []string {
+	VPCSourceOptions := make([]string, 2)
+	VPCSourceOptions[0] = ExistingVPCSource
+	VPCSourceOptions[1] = ProsimoVPCSource
+	return VPCSourceOptions
+}
+
+func GetConnectorInstanceOptions() []string {
+	ConnectorInstanceOptions := make([]string, 18)
+	ConnectorInstanceOptions[0] = AWST3Medium
+	ConnectorInstanceOptions[1] = AWsT3aMedium
+	ConnectorInstanceOptions[2] = AWSC5Large
+	ConnectorInstanceOptions[3] = AWSC5aLarge
+	ConnectorInstanceOptions[4] = AWSC5xLarge
+	ConnectorInstanceOptions[5] = AWSC5axLarge
+	ConnectorInstanceOptions[6] = AWSC5nxLarge
+	ConnectorInstanceOptions[7] = AWSC5a8xLarge
+	ConnectorInstanceOptions[8] = AWSC59xLarge
+	ConnectorInstanceOptions[9] = AWSC5n9xLarge
+	ConnectorInstanceOptions[10] = AWSC5a16xLarge
+	ConnectorInstanceOptions[11] = AWSC518xLarge
+	ConnectorInstanceOptions[12] = AWSC5n18xLarge
+	ConnectorInstanceOptions[13] = GCPE2Standard2
+	ConnectorInstanceOptions[14] = GCPE2Standard4
+	ConnectorInstanceOptions[15] = GCPE2Standard8
+	ConnectorInstanceOptions[16] = GCPE2Standard16
+	ConnectorInstanceOptions[17] = GCPECStandard16
+	return ConnectorInstanceOptions
 }
 
 func GetCloudTypeOptions() []string {
@@ -414,4 +460,31 @@ func GetGroupingTypes() []string {
 	GroupingTypes[4] = TypeIP_RANGE
 	GroupingTypes[5] = TypeGEO
 	return GroupingTypes
+}
+func GetTransitTgwActionTypes() []string {
+	transitTgwActionTypes := make([]string, 3)
+	transitTgwActionTypes[0] = AddTgwAction
+	transitTgwActionTypes[1] = ModTgwAction
+	transitTgwActionTypes[2] = DelTgwAction
+	return transitTgwActionTypes
+}
+
+func GetTransitTgwConnectionTypes() []string {
+	transitTgwConnectionTypes := make([]string, 2)
+	transitTgwConnectionTypes[0] = EdgeTgwConnection
+	transitTgwConnectionTypes[1] = VPCTgwConnection
+	return transitTgwConnectionTypes
+}
+
+func GetTransitVhubConnectionTypes() []string {
+	transitVhubConnectionTypes := make([]string, 2)
+	transitVhubConnectionTypes[0] = EdgeTgwConnection
+	transitVhubConnectionTypes[1] = VNETTgwConnection
+	return transitVhubConnectionTypes
+}
+func GetTransitVpcActionTypes() []string {
+	transitVpcActionTypes := make([]string, 2)
+	transitVpcActionTypes[0] = AddTgwAction
+	transitVpcActionTypes[1] = DelTgwAction
+	return transitVpcActionTypes
 }

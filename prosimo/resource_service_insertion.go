@@ -17,7 +17,7 @@ func resourceServiceInsertion() *schema.Resource {
 		DeleteContext: resourceSIDelete,
 		ReadContext:   resourceSIRead,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

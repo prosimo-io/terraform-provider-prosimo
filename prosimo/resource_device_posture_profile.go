@@ -20,7 +20,7 @@ func resourceDPProfile() *schema.Resource {
 		DeleteContext: resourceDPProfileDelete,
 		// UpdateContext: resourceEdrProfileUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"inprofile_list": {

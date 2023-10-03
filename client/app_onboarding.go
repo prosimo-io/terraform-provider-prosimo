@@ -79,6 +79,8 @@ type AppURLOpts struct {
 	InternalDomain    string                     `json:"internalDomain,omitempty"`
 	DomainType        string                     `json:"domainType,omitempty"`
 	AppFqdn           string                     `json:"appFqdn,omitempty"`
+	ServiceIpType     string                     `json:"serviceIPType,omitempty"`
+	ServiceIp         string                     `json:"serviceIP,omitempty"`
 	SubdomainIncluded bool                       `json:"subdomainIncluded,omitempty"`
 	Protocols         []*AppProtocol             `json:"protocols,omitempty"`
 	ExtProtocols      []*AppProtocol             `json:"extProtocols,omitempty"`
@@ -110,6 +112,8 @@ func (appURLOpts *AppURLOpts) GetAppURL() *AppURL {
 	appURL.InternalDomain = appURLOpts.InternalDomain
 	appURL.DomainType = appURLOpts.DomainType
 	appURL.AppFqdn = appURLOpts.AppFqdn
+	appURL.ServiceIpType = appURLOpts.ServiceIpType
+	appURL.ServiceIp = appURLOpts.ServiceIp
 	appURL.SubdomainIncluded = appURLOpts.SubdomainIncluded
 	appURL.Protocols = appURLOpts.Protocols
 	appURL.ExtProtocols = appURLOpts.ExtProtocols
@@ -176,6 +180,8 @@ type AppURL struct {
 	InternalDomain    string              `json:"internalDomain,omitempty"`
 	DomainType        string              `json:"domainType,omitempty"`
 	AppFqdn           string              `json:"appFqdn,omitempty"`
+	ServiceIpType     string              `json:"serviceIPType,omitempty"`
+	ServiceIp         string              `json:"serviceIP,omitempty"`
 	SubdomainIncluded bool                `json:"subdomainIncluded,omitempty"`
 	Protocols         []*AppProtocol      `json:"protocols,omitempty"`
 	ExtProtocols      []*AppProtocol      `json:"extProtocols,omitempty"`

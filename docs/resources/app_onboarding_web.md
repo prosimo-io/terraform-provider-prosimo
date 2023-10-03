@@ -303,7 +303,7 @@ Required:
 Optional:
 
 - `cache_rule` (String) Cache Rules for your App Domains
-- `dns_custom` (Block Set, Max: 1) Custom dns configuration. (see [below for nested schema](#nestedblock--app_urls--dns_custom))
+- `dns_custom` (Block Set, Max: 1) Custom DNS setup (see [below for nested schema](#nestedblock--app_urls--dns_custom))
 - `dns_service` (Block Set, Max: 1) In order to enable users to access an application using the external domain via the Prosimo fabric, you need to set up a new canonical name (CNAME) record redirect in your origin domain name system (DNS) record. (see [below for nested schema](#nestedblock--app_urls--dns_service))
 - `ssl_cert` (Block Set, Max: 1) set up secure communication between the user and the application via the fabric, there are 3 options: Upload a Certificate, Generate a new certificate or Use an existing certificate (see [below for nested schema](#nestedblock--app_urls--ssl_cert))
 - `subdomain_included` (Boolean) Set True to onboard subdomains of the application else False
@@ -381,9 +381,9 @@ Read-Only:
 
 Optional:
 
-- `dns_app` (String) DNS app details
-- `dns_server` (List of String) DNS server details
-- `is_healthcheck_enabled` (Boolean)
+- `dns_app` (String) DNS App name
+- `dns_server` (List of String) DNS Server List
+- `is_healthcheck_enabled` (Boolean) Health check to ensure application domains being resolved by dns servers
 
 
 <a id="nestedblock--app_urls--dns_service"></a>

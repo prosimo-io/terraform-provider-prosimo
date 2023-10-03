@@ -17,7 +17,7 @@ func resourceGeoLocation() *schema.Resource {
 		DeleteContext: resourceGeoLocationDelete,
 		UpdateContext: resourceGeoLocationUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

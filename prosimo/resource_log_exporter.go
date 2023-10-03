@@ -17,7 +17,7 @@ func resourceLogConfig() *schema.Resource {
 		DeleteContext: resourceLogConfigDelete,
 		UpdateContext: resourceLogConfigUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

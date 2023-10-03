@@ -19,7 +19,7 @@ func resourceNamespace() *schema.Resource {
 		DeleteContext: resourceNSDelete,
 		ReadContext:   resourceNSRead,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

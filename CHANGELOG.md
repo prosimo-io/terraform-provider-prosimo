@@ -1,3 +1,20 @@
+## 3.8.7(Septemeber 30   2023)
+    ### Features:
+    - Terraform support for Latest API changes for edge bringup.
+      Introduced a new field names `ip_range`, `deploy_edge`, `decommission_edge` similar to app onboarding.
+## 3.7.7(Septemeber 06 2023)
+    ### Features:
+    - Terraform support for Visual Transit.
+    Resource name `prosimo_visual_transit`. Refer documentation for more details.
+    - Resource `prosimo_network_onboarding` enhancements: As part this change connector setting fields have been updated as per latest UI. 
+        - filed `bandwidth_name` has been removed, now used need to share the required bandwidth and instance type fields.
+        - Doc improvements around connector setting options. 
+## 3.6.7(August 23 2023)
+### Features:
+- Terraform support for IP-based Service Core: As part of this feature resource `prosimo_app_onboarding_ip` has been renamed to  `prosimo_app_onboarding_dns`. In addition there are couple fields being added.
+`service_ip_type`: Select if the target needs to be assigned a specific IP address or it could be auto-generated. Even if manually assigned, the address needs to be from the service core IP pool. Default method is to auto generate an IP address from the service core pool.
+`service_ip`: ` Service Ip Address.
+  
 ## 3.5.7(July 24 2023)
 ### Features:
 - Terraform support for AZURE cloud in `prosimo_shared_service` and `prosimo_service_insertion` resources.Ref docs for examples.

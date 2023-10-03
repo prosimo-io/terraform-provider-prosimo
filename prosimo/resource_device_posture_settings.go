@@ -20,7 +20,7 @@ func resourceDPSettings() *schema.Resource {
 		DeleteContext: resourceDPSettingsDelete,
 		// UpdateContext: resourceEdrProfileUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"enable_dp_feature": {

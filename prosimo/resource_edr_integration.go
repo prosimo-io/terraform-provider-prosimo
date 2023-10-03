@@ -20,7 +20,7 @@ func resourceEdrIntegration() *schema.Resource {
 		DeleteContext: resourceEdrProfileDelete,
 		// UpdateContext: resourceEdrProfileUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"crowdstrike": {

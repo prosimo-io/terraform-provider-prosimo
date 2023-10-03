@@ -20,7 +20,7 @@ func resourceAppOnboarding_CloudSVC() *schema.Resource {
 		DeleteContext: resourceAppOnboarding_CloudSVC_Delete,
 		ReadContext:   resourceAppOnboarding_CloudSVC_Read,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -182,17 +182,18 @@ func resourceAppOnboarding_CloudSVC() *schema.Resource {
 									"dns_app": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Description: "DNS app details",
+										Description: "DNS App name",
 									},
 									"dns_server": {
 										Type:        schema.TypeList,
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
-										Description: "DNS server details",
+										Description: "DNS Server List",
 									},
 									"is_healthcheck_enabled": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Health check to ensure application domains being resolved by dns servers ",
 									},
 								},
 							},

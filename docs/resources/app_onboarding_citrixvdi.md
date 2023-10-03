@@ -245,9 +245,9 @@ Optional:
 - `backend_ip_address_dns` (Boolean)
 - `backend_ip_address_manual` (List of String) Pass endpoints manually.
 - `conn_option` (String) Connection option for private connection: e.g: peering/transitGateway/awsPrivateLink/azurePrivateLink/azureTransitVnet/vwanHub
-- `region_name` (String) Name of the region where app is available
+- `region_name` (String) Name of the region where app is available, e.g: us-west2, westus etc
 - `region_type` (String) Type of region: e.g:active, backup etc
-- `tgw_app_routetable` (String)
+- `tgw_app_routetable` (String) Available options, MAINTAIN & MODIFY
 
 
 
@@ -283,9 +283,9 @@ Read-Only:
 
 Optional:
 
-- `dns_app` (String)
-- `dns_server` (List of String)
-- `is_healthcheck_enabled` (Boolean)
+- `dns_app` (String) DNS App name
+- `dns_server` (List of String) DNS Server List
+- `is_healthcheck_enabled` (Boolean) Health check to ensure application domains being resolved by dns servers
 
 
 <a id="nestedblock--app_urls--dns_service"></a>

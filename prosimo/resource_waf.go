@@ -21,7 +21,7 @@ func resourceWAF() *schema.Resource {
 		ReadContext:   resourceWafRead,
 		DeleteContext: resourceWafDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

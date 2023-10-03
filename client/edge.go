@@ -17,6 +17,11 @@ type Edge struct {
 	Status           string             `json:"status,omitempty"`
 	Subnet           string             `json:"subnet,omitempty"`
 	TeamID           string             `json:"teamID,omitempty"`
+	Byoresource      *ByoResource		`json:"byoResourceDetails,omitempty"`
+}
+
+type ByoResource struct {
+	VpcID string `json:"vpcId,omitempty"`
 }
 
 type EdgeList struct {
@@ -104,6 +109,45 @@ func (prosimoClient *ProsimoClient) DeleteAppDeployment(ctx context.Context, edg
 	deleteAppDeploymentEndpt := fmt.Sprintf("%s/%s", AppDeploymentEndpoint, edgeId)
 
 	req, err := prosimoClient.api_client.NewRequest("DELETE", deleteAppDeploymentEndpt, &Edge{})
+	if err != nil {
+		return nil, err
+	}
+
+	resourcePostResponseData := &ResourcePostResponseData{}
+	_, err = prosimoClient.api_client.Do(ctx, req, resourcePostResponseData)
+	if err != nil {
+		return nil, err
+	}
+
+	return resourcePostResponseData, nil
+
+}
+
+
+func (prosimoClient *ProsimoClient) PatchSubnetRange(ctx context.Context, edgeId string, patchSubnet *Edge) error {
+
+	patchAppDeploymentEndpt := fmt.Sprintf("%s/%s", PatchEdgeSubnetEndpoint, edgeId)
+
+	req, err := prosimoClient.api_client.NewRequest("PATCH", patchAppDeploymentEndpt, patchSubnet)
+	if err != nil {
+		return err
+	}
+
+	// resourcePostResponseData := &ResourcePostResponseData{}
+	_, err = prosimoClient.api_client.Do(ctx, req, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (prosimoClient *ProsimoClient) UpdateEdge(ctx context.Context, edgeId string, edge *Edge) (*ResourcePostResponseData, error) {
+
+	patchAppDeploymentEndpt := fmt.Sprintf("%s/%s", PatchEdgeEndpoint, edgeId)
+
+	req, err := prosimoClient.api_client.NewRequest("PATCH", patchAppDeploymentEndpt, edge)
 	if err != nil {
 		return nil, err
 	}

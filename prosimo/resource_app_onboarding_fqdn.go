@@ -21,7 +21,7 @@ func resourceAppOnboarding_FQDN() *schema.Resource {
 		DeleteContext: resourceAppOnboarding_FQDN_Delete,
 		ReadContext:   resourceAppOnboarding_FQDN_Read,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -223,23 +223,27 @@ func resourceAppOnboarding_FQDN() *schema.Resource {
 													Default:  false,
 												},
 												"dns_custom": {
-													Type:     schema.TypeSet,
-													MaxItems: 1,
-													Optional: true,
+													Type:        schema.TypeSet,
+													MaxItems:    1,
+													Optional:    true,
+													Description: "Custom DNS setup",
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"dns_app": {
-																Type:     schema.TypeString,
-																Optional: true,
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: "DNS App name",
 															},
 															"dns_server": {
-																Type:     schema.TypeList,
-																Optional: true,
-																Elem:     &schema.Schema{Type: schema.TypeString},
+																Type:        schema.TypeList,
+																Optional:    true,
+																Elem:        &schema.Schema{Type: schema.TypeString},
+																Description: "DNS Server List",
 															},
 															"is_healthcheck_enabled": {
-																Type:     schema.TypeBool,
-																Optional: true,
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: "Health check to ensure application domains being resolved by dns servers ",
 															},
 														},
 													},

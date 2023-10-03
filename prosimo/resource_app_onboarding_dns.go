@@ -12,13 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceAppOnboarding_JumpBox() *schema.Resource {
+func resourceAppOnboarding_DNS() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Use this resource to onboard Jumpbox  apps.",
-		CreateContext: resourceAppOnboarding_JumpBox_Create,
-		UpdateContext: resourceAppOnboarding_JumpBox_Update,
-		DeleteContext: resourceAppOnboarding_JumpBox_Delete,
-		ReadContext:   resourceAppOnboarding_JumpBox_Read,
+		Description:   "Use this resource to onboard IP Endpoint apps.",
+		CreateContext: resourceAppOnboarding_DNS_Create,
+		UpdateContext: resourceAppOnboarding_DNS_Update,
+		DeleteContext: resourceAppOnboarding_DNS_Delete,
+		ReadContext:   resourceAppOnboarding_DNS_Read,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -54,45 +54,56 @@ func resourceAppOnboarding_JumpBox() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"internal_domain": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "server domain name or IP",
-						},
-						"domain_type": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice(client.GetAppDomainTypes(), false),
-							Default:      "custom",
-							Description:  "Type of Domain: e.g custom or prosimo",
-						},
 						"app_fqdn": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "Fqdn of the app that user would access after onboarding ",
 						},
-						"subdomain_included": {
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-							Description: "Set True to onboard subdomains of the application else False",
+						"service_ip_type": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice(client.GetServiceIPType(), false),
+							Description:  "Select if the target needs to be assigned a specific IP address or it could be auto-generated. Even if manually assigned, the address needs to be from the service core IP pool. Default method is to auto generate an IP address from the service core pool.",
 						},
-						"health_check_info": {
-							Type:        schema.TypeSet,
-							MaxItems:    1,
+						"service_ip": {
+							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Application health check config from edge",
+							Description: "Service Ip Address ",
+						},
+						"protocols": {
+							Type:        schema.TypeSet,
+							Required:    true,
+							Description: "Protocol that prosimo edge uses to connect to App",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"enabled": {
-										Type:     schema.TypeBool,
-										Optional: true,
+									"protocol": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validation.StringInSlice(client.GetAppProtocolsLFQDN(), false),
+										Default:      "dns",
+										Description:  "Protocol type, e.g: “http”, “https”, “ssh”, “vnc”, or “rdp",
 									},
-									"endpoint": {
-										Type:     schema.TypeString,
-										Optional: true,
-										// Default:     "/",
-										Description: "HealthCheck Endpoints",
+									"port_list": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "target port number",
+									},
+									"web_socket_enabled": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+										Description: "Set to true if tou would like prosimo edges to communicate with app via websocket",
+									},
+									"is_valid_protocol_port": {
+										Type:     schema.TypeBool,
+										Computed: true,
+									},
+									"paths": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "Customized websocket paths",
 									},
 								},
 							},
@@ -112,14 +123,14 @@ func resourceAppOnboarding_JumpBox() *schema.Resource {
 									},
 									"connection_option": {
 										Type:         schema.TypeString,
-										Optional:     true,
+										Required:     true,
 										ValidateFunc: validation.StringInSlice(client.GetCloudConnectionOptions(), false),
-										Description:  "Public, if the app domain has a public IP address / DNS A record on the internet currently, and the Prosimo Edge should connect to the application using a public connection.Private, if the application only has a private IP address, and Edge should connect to it over a private connection. ",
+										Description:  "Public, if the app domain has a public IP address / DNS A record on the internet currently, and the Prosimo Edge should connect to the application using a public connection.Private, if the application only has a private IP address, and Edge should connect to it over a private connection.",
 									},
 									"cloud_creds_name": {
 										Type:        schema.TypeString,
 										Required:    true,
-										Description: "cloud application account name",
+										Description: "cloud account under which application is hosted",
 									},
 									"dc_app_ip": {
 										Type:        schema.TypeString,
@@ -146,33 +157,22 @@ func resourceAppOnboarding_JumpBox() *schema.Resource {
 													Optional:    true,
 													Description: "Name of the region where app is available",
 												},
-												"region_type": {
-													Type:         schema.TypeString,
-													Optional:     true,
-													ValidateFunc: validation.StringInSlice(client.AppOnboardRegionType(), false),
-													Description:  "Type of region: e.g:active, backup etc",
-												},
 												"conn_option": {
 													Type:         schema.TypeString,
 													Optional:     true,
 													ValidateFunc: validation.StringInSlice(client.AppOnboardConnOptn(), false),
 													Description:  "Connection option for private connection: e.g: peering/transitGateway/awsPrivateLink/azurePrivateLink/azureTransitVnet/vwanHub",
 												},
+												"region_type": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													ValidateFunc: validation.StringInSlice(client.AppOnboardRegionType(), false),
+													Description:  "Type of region: e.g:active, backup etc",
+												},
 												"tgw_app_routetable": {
 													Type:         schema.TypeString,
 													Optional:     true,
 													ValidateFunc: validation.StringInSlice(client.GetTgwAppRoutetableType(), false),
-												},
-												"backend_ip_address_discover": {
-													Type:        schema.TypeBool,
-													Required:    true,
-													Description: "if Set to true, auto discovers available endpoints",
-												},
-												"backend_ip_address_manual": {
-													Type:        schema.TypeList,
-													Optional:    true,
-													Elem:        &schema.Schema{Type: schema.TypeString},
-													Description: "Pass endpoints manually.",
 												},
 												"app_network_id": {
 													Type:        schema.TypeString,
@@ -184,89 +184,18 @@ func resourceAppOnboarding_JumpBox() *schema.Resource {
 													Optional:    true,
 													Description: "Attach Point id details",
 												},
+												// "backend_ip_address_discover": {
+												// 	Type:     schema.TypeBool,
+												// 	Optional: true,
+												// },
 											},
 										},
 									},
 								},
 							},
-						},
-						"dns_service": {
-							Type:        schema.TypeSet,
-							MaxItems:    1,
-							Optional:    true,
-							Description: "In order to enable users to access an application using the external domain via the Prosimo fabric, you need to set up a new canonical name (CNAME) record redirect in your origin domain name system (DNS) record.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"type": {
-										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validation.StringInSlice(client.GetDNSServiceTypes(), false),
-										Description:  "Type of DNS service: e.g: Manual, Route 53, Prosimo",
-									},
-									"aws_route53_cloud_creds_name": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Cloud creds for route 53",
-									},
-								},
-							},
-						},
-						"ssl_cert": {
-							Type:        schema.TypeSet,
-							MaxItems:    1,
-							Optional:    true,
-							Description: "set up secure communication between the user and the application via the fabric, there are 3 options: Upload a Certificate, Generate a new certificate or Use an existing certificate ",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"generate_cert": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: "Set this to true if you want prosimo to generate new certificates ",
-									},
-									"existing_cert": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Select from already existing certificates(In Certificate TAB)",
-									},
-									"upload_cert": {
-										Type:        schema.TypeSet,
-										Optional:    true,
-										Description: "Upload the certificate if the certificates are already available for application",
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"cert_path": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Path to certificate",
-												},
-												"private_key_path": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Path to private key",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						"cache_rule": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Cache Rules for your App Domains",
-						},
-						"waf_policy_name": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "WAF Policies for your App Domains, applicable when the Edge to App Protocol is either HTTP or HTTPS.",
 						},
 					},
 				},
-			},
-			"client_cert": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Client Cert details",
 			},
 			"optimization_option": {
 				Type:         schema.TypeString,
@@ -282,7 +211,7 @@ func resourceAppOnboarding_JumpBox() *schema.Resource {
 			"policy_name": {
 				Type:        schema.TypeList,
 				Required:    true,
-				Description: "Select policy name.e.g: ALLOW-ALL-USERS, DENY-ALL-USERS or CUSTOMIZE.Conditional access policies and Web Application Firewall policies for the application",
+				Description: " Select policy name.e.g: ALLOW-ALL-USERS, DENY-ALL-USERS or CUSTOMIZE.Conditional access policies and Web Application Firewall policies for the application",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"customize_policy": {
@@ -323,7 +252,7 @@ func resourceAppOnboarding_JumpBox() *schema.Resource {
 	}
 }
 
-func resourceAppOnboarding_JumpBox_Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAppOnboarding_DNS_Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
@@ -347,7 +276,7 @@ func resourceAppOnboarding_JumpBox_Create(ctx context.Context, d *schema.Resourc
 		}
 	}
 
-	appOnboardObjOpts, diags := getAppOnboardConfigObj_JumpBox(d)
+	appOnboardObjOpts, diags := getAppOnboardConfigObj_IP(d)
 	if diags != nil {
 		return diags
 	}
@@ -380,25 +309,13 @@ func resourceAppOnboarding_JumpBox_Create(ctx context.Context, d *schema.Resourc
 		return diags
 	}
 
-	// Step 3: create dns service
-	diags = createAppOnboardDNSService(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// Step 4: create ssl cert
-	diags = createAppOnboardSSLCert(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// Step 5: create optimization option
+	// Step 3: create optimization option
 	diags = createAppOnboardOptOption(ctx, d, meta, appOnboardObjOpts)
 	if diags != nil {
 		return diags
 	}
 
-	// Step 6: create waf and policy
+	// Step 4: create waf and policy
 	diags = createAppOnboardSecurity(ctx, d, meta, appOnboardObjOpts)
 	if diags != nil {
 		return diags
@@ -412,18 +329,18 @@ func resourceAppOnboarding_JumpBox_Create(ctx context.Context, d *schema.Resourc
 
 	// resourceAppOnboardingRead(ctx, d, meta)
 
-	// Step 7: onboard app
+	// Step 5: onboard app
 	diags = onboardApp(ctx, d, meta, appOnboardObjOpts)
 	if diags != nil {
 		return diags
 	}
 
-	resourceAppOnboarding_CloudSVC_Read(ctx, d, meta)
+	resourceAppOnboarding_DNS_Read(ctx, d, meta)
 
 	return diags
 }
 
-func resourceAppOnboarding_JumpBox_Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAppOnboarding_DNS_Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
@@ -439,7 +356,7 @@ func resourceAppOnboarding_JumpBox_Update(ctx context.Context, d *schema.Resourc
 		return diags
 	}
 
-	appOnboardObjOpts, diags, flag := getAppOnboardConfigObj_JumpBox_Update(d)
+	appOnboardObjOpts, diags, flag := getAppOnboardConfigObj_IP_Update(d)
 	if diags != nil {
 		return diags
 	}
@@ -516,25 +433,13 @@ func resourceAppOnboarding_JumpBox_Update(ctx context.Context, d *schema.Resourc
 				log.Println("[DEBUG] Skipping Cloud config changes.Can't modify cloud config for a deployed app.")
 			}
 
-			// Step 3: create dns service
-			diags = createAppOnboardDNSService(ctx, d, meta, appOnboardObjOpts)
-			if diags != nil {
-				return diags
-			}
-
-			// Step 4: create ssl cert
-			diags = createAppOnboardSSLCert(ctx, d, meta, appOnboardObjOpts)
-			if diags != nil {
-				return diags
-			}
-
-			// Step 5: create optimization option
+			// Step 3: create optimization option
 			diags = createAppOnboardOptOption(ctx, d, meta, appOnboardObjOpts)
 			if diags != nil {
 				return diags
 			}
 
-			// Step 6: create waf and policy
+			// Step 4: create waf and policy
 			diags = createAppOnboardSecurity(ctx, d, meta, appOnboardObjOpts)
 			if diags != nil {
 				return diags
@@ -551,25 +456,23 @@ func resourceAppOnboarding_JumpBox_Update(ctx context.Context, d *schema.Resourc
 				return diag.FromErr(err)
 			}
 
-			// Step 7: onboard app
+			// Step 5: onboard app
 			diags = onboardApp(ctx, d, meta, appOnboardObjOpts)
 			if diags != nil {
 				return diags
 			}
 		}
 	}
-
-	resourceAppOnboarding_CloudSVC_Read(ctx, d, meta)
+	resourceAppOnboarding_DNS_Read(ctx, d, meta)
 
 	return diags
 }
 
-func resourceAppOnboarding_JumpBox_Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAppOnboarding_DNS_Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
 	prosimoClient := meta.(*client.ProsimoClient)
-	// log.Printf("resourceAppOnboardingRead %s", d.Id())
 	appOnboardSettingsDbObj, err := prosimoClient.GetAppOnboardSettings(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -588,7 +491,7 @@ func resourceAppOnboarding_JumpBox_Read(ctx context.Context, d *schema.ResourceD
 
 }
 
-func resourceAppOnboarding_JumpBox_Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAppOnboarding_DNS_Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	prosimoClient := meta.(*client.ProsimoClient)
@@ -623,10 +526,11 @@ func resourceAppOnboarding_JumpBox_Delete(ctx context.Context, d *schema.Resourc
 
 }
 
-func getAppOnboardConfigObj_JumpBox(d *schema.ResourceData) (*client.AppOnboardSettingsOpts, diag.Diagnostics) {
+func getAppOnboardConfigObj_IP(d *schema.ResourceData) (*client.AppOnboardSettingsOpts, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	appURLsOptsConfig := d.Get("app_urls").(*schema.Set).List()
 	appURLsOptsList := []*client.AppURLOpts{}
+	// dnsCustomOpts := &client.AppOnboardDnsCustom{}
 
 	for _, appURLOptsList := range appURLsOptsConfig {
 		appURLOptsValues := appURLOptsList.(map[string]interface{})
@@ -644,10 +548,10 @@ func getAppOnboardConfigObj_JumpBox(d *schema.ResourceData) (*client.AppOnboardS
 				RegionType: edgeRegionValues["region_type"].(string),
 			}
 			ConnOptns := edgeRegionValues["conn_option"].(string)
-			cloudConfigRegionOpts.ConnOption = ConnOptns
+			// cloudConfigRegionOpts.ConnOption = ConnOptns
 			if ConnOptns == client.Optnpeering {
 				cloudConfigRegionOpts.ConnOption = client.OptnpeeringInput
-			} else if ConnOptns == client.OptntransitGateway || ConnOptns == client.OptnvwanHub {
+			} else if ConnOptns == client.OptntransitGateway || ConnOptns == client.OptnvwanHub || ConnOptns == client.OptnazureTransitVnet {
 				cloudConfigRegionOpts.ConnOption = ConnOptns
 				if ConnOptns == client.OptntransitGateway {
 					cloudConfigRegionOpts.ModifyTgwAppRouteTable = edgeRegionValues["tgw_app_routetable"].(string)
@@ -660,18 +564,7 @@ func getAppOnboardConfigObj_JumpBox(d *schema.ResourceData) (*client.AppOnboardS
 			} else {
 				cloudConfigRegionOpts.ConnOption = ConnOptns
 			}
-
-			ipAddressDiscover := edgeRegionValues["backend_ip_address_discover"].(bool)
-			if ipAddressDiscover {
-				cloudConfigRegionOpts.BackendIPAddressDiscover = ipAddressDiscover
-			} else {
-				if v, ok := edgeRegionValues["backend_ip_address_manual"]; ok {
-					ipAddressList := v.([]interface{})
-					if len(ipAddressList) > 0 {
-						cloudConfigRegionOpts.BackendIPAddressEntry = expandStringList(v.([]interface{}))
-					}
-				}
-			}
+			cloudConfigRegionOpts.BackendIPAddressDiscover = true
 			regionOptsList = append(regionOptsList, cloudConfigRegionOpts)
 		}
 
@@ -690,80 +583,41 @@ func getAppOnboardConfigObj_JumpBox(d *schema.ResourceData) (*client.AppOnboardS
 			appOnboardCloudConfigOpts.DCAappIP = cloudConfig["dc_app_ip"].(string)
 		}
 
-		// app dns service config
-		dnsServiceOpts := &client.DNSServiceOpts{}
-		if appURLOptsValues["domain_type"].(string) == client.ProsimoAppDomain {
+		// app protocols
+		protocols := []*client.AppProtocol{}
+		inprotocolsValues := appURLOptsValues["protocols"].(*schema.Set)
+		for _, protocolsValues := range inprotocolsValues.List() {
+			formatedrotocolsValues := protocolsValues.(map[string]interface{})
 
-			dnsServiceOpts = &client.DNSServiceOpts{
-				Type: client.ProsimoDNSServiceType,
+			appProtocol := &client.AppProtocol{
+				Protocol: formatedrotocolsValues["protocol"].(string),
+				// PortList:            expandStringList(formatedrotocolsValues["port_list"].([]interface{})),
+				WebSocketEnabled:    formatedrotocolsValues["web_socket_enabled"].(bool),
+				IsValidProtocolPort: formatedrotocolsValues["web_socket_enabled"].(bool),
 			}
-
-		} else {
-			if v, ok := appURLOptsValues["dns_service"].(*schema.Set); ok && v.Len() > 0 {
-				dnsConfig := v.List()[0].(map[string]interface{})
-
-				dnsServiceOpts = &client.DNSServiceOpts{
-					Type: dnsConfig["type"].(string),
-				}
-
-				if v, ok := dnsConfig["aws_route53_cloud_creds_name"]; ok {
-					awsDNSCloudCredsName := v.(string)
-					if awsDNSCloudCredsName != "" {
-						dnsServiceOpts.CloudCredsName = awsDNSCloudCredsName
-					} else {
-						log.Println("[ERROR]: Missing aws_route53 credentials")
+			if appProtocol.Protocol == client.DNSfqdnAppProtocol {
+				appProtocol.PortList = []string{"53"}
+			} else {
+				appProtocol.PortList = expandStringList(formatedrotocolsValues["port_list"].([]interface{}))
+			}
+			if appProtocol.WebSocketEnabled {
+				if v, ok := formatedrotocolsValues["paths"]; ok {
+					pathList := v.([]interface{})
+					if len(pathList) > 0 {
+						appProtocol.Paths = expandStringList(v.([]interface{}))
 					}
 				}
-			} else {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  "Missing dns configuration",
-					Detail:   "Dns config required for custom domain type",
-				})
-				return nil, diags
 			}
-		}
-
-		// app ssl config
-		sslCertOpts := &client.SSLCertOpts{}
-		if appURLOptsValues["domain_type"].(string) != client.ProsimoAppDomain {
-			if v, ok := appURLOptsValues["ssl_cert"].(*schema.Set); ok && v.Len() > 0 {
-				sslCertConfig := v.List()[0].(map[string]interface{})
-
-				sslCertOpts = &client.SSLCertOpts{
-					GenerateCert: sslCertConfig["generate_cert"].(bool),
-					ExistingCert: sslCertConfig["existing_cert"].(string),
-				}
-
-				if v, ok := sslCertConfig["upload_cert"].(*schema.Set); ok && v.Len() > 0 {
-					UploadCertDetails := v.List()[0].(map[string]interface{})
-					uploadCert := &client.UploadCert{
-						CertPath: UploadCertDetails["cert_path"].(string),
-						KeyPath:  UploadCertDetails["private_key_path"].(string),
-					}
-					sslCertOpts.UploadCert = uploadCert
-				}
-			} else {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  "Missing ssl configuration",
-					Detail:   "SSL config required for custom domain type",
-				})
-				return nil, diags
-			}
+			protocols = append(protocols, appProtocol)
 		}
 
 		//App Url Config
 		appURLOpts := &client.AppURLOpts{
-			InternalDomain:    appURLOptsValues["internal_domain"].(string),
-			DomainType:        appURLOptsValues["domain_type"].(string),
-			AppFqdn:           appURLOptsValues["app_fqdn"].(string),
-			SubdomainIncluded: appURLOptsValues["subdomain_included"].(bool),
-			CloudConfigOpts:   appOnboardCloudConfigOpts,
-			DNSServiceOpts:    dnsServiceOpts,
-			SSLCertOpts:       sslCertOpts,
-			CacheRuleName:     appURLOptsValues["cache_rule"].(string),
-			WafPolicyName:     appURLOptsValues["waf_policy_name"].(string),
+			AppFqdn:         appURLOptsValues["app_fqdn"].(string) + "/32",
+			ServiceIpType:   appURLOptsValues["service_ip_type"].(string),
+			ServiceIp:       appURLOptsValues["service_ip"].(string),
+			Protocols:       protocols,
+			CloudConfigOpts: appOnboardCloudConfigOpts,
 		}
 		appURLsOptsList = append(appURLsOptsList, appURLOpts)
 
@@ -771,20 +625,21 @@ func getAppOnboardConfigObj_JumpBox(d *schema.ResourceData) (*client.AppOnboardS
 
 	//App Onboard Config
 	appOnboardSettingsOpts := &client.AppOnboardSettingsOpts{
-		App_Name:         d.Get("app_name").(string),
-		AppOnboardType:   client.TypeJumpBox,
-		AppURLsOpts:      appURLsOptsList,
-		OptOption:        d.Get("optimization_option").(string),
-		ClientCert:       d.Get("client_cert").(string),
+		App_Name:       d.Get("app_name").(string),
+		AppOnboardType: client.TypeIP,
+		AppURLsOpts:    appURLsOptsList,
+		OptOption:      d.Get("optimization_option").(string),
+		// AppSamlRewrite:   appSamlRewrite,
 		EnableMultiCloud: d.Get("enable_multi_cloud_access").(bool),
 		PolicyName:       expandStringList(d.Get("policy_name").([]interface{})),
 		OnboardApp:       d.Get("onboard_app").(bool),
 		DecommissionApp:  d.Get("decommission_app").(bool),
 	}
+
 	return appOnboardSettingsOpts, diags
 }
 
-func getAppOnboardConfigObj_JumpBox_Update(d *schema.ResourceData) (*client.AppOnboardSettingsOpts, diag.Diagnostics, bool) {
+func getAppOnboardConfigObj_IP_Update(d *schema.ResourceData) (*client.AppOnboardSettingsOpts, diag.Diagnostics, bool) {
 	var diags diag.Diagnostics
 	appOnboardSettingsOpts := &client.AppOnboardSettingsOpts{}
 	updateReq := false
@@ -811,6 +666,7 @@ func getAppOnboardConfigObj_JumpBox_Update(d *schema.ResourceData) (*client.AppO
 	if d.HasChange("optimization_option") && !d.IsNewResource() {
 		updateReq = true
 	}
+
 	if d.HasChange("policy_name") && !d.IsNewResource() {
 		updateReq = true
 	}
@@ -820,7 +676,7 @@ func getAppOnboardConfigObj_JumpBox_Update(d *schema.ResourceData) (*client.AppO
 	}
 
 	if updateReq {
-		appOnboardObjOpts, diags := getAppOnboardConfigObj_JumpBox(d)
+		appOnboardObjOpts, diags := getAppOnboardConfigObj_IP(d)
 		if diags != nil {
 			return nil, diags, false
 		}
@@ -830,25 +686,23 @@ func getAppOnboardConfigObj_JumpBox_Update(d *schema.ResourceData) (*client.AppO
 	return appOnboardSettingsOpts, diags, updateReq
 }
 
-func getAppURL_U2A_AgentLess_JumpBox(i int, appURL *client.AppURL, prosimoClient *client.ProsimoClient, ctx context.Context, d *schema.ResourceData) interface{} {
+func getAppURL_IP(i int, appURL *client.AppURL, prosimoClient *client.ProsimoClient, ctx context.Context, d *schema.ResourceData) interface{} {
 
 	var appURLTF = make(map[string]interface{})
-	appOnboardObjOpts, diags := getAppOnboardConfigObj_JumpBox(d)
-	if diags != nil {
-		return diags
-	}
 
 	appURLTF["id"] = appURL.ID
 	appURLTF["internal_domain"] = appURL.InternalDomain
 	appURLTF["domain_type"] = appURL.DomainType
 	appURLTF["app_fqdn"] = appURL.AppFqdn
+	appURLTF["service_ip_type"] = appURL.ServiceIpType
+	appURLTF["service_ip"] = appURL.ServiceIp
 	appURLTF["subdomain_included"] = appURL.SubdomainIncluded
 
 	protocols := make([]map[string]interface{}, 0)
 	for _, appProtocol := range appURL.Protocols {
 		protocolTF := make(map[string]interface{})
 		protocolTF["protocol"] = appProtocol.Protocol
-		protocolTF["port"] = appProtocol.Port
+		protocolTF["port_list"] = flattenStringList(appProtocol.PortList)
 		if appProtocol.WebSocketEnabled {
 			protocolTF["web_socket_enabled"] = appProtocol.WebSocketEnabled
 			protocolTF["paths"] = flattenStringList(appProtocol.Paths)
@@ -900,33 +754,6 @@ func getAppURL_U2A_AgentLess_JumpBox(i int, appURL *client.AppURL, prosimoClient
 		cloudConfigTF["cloud_creds_name"] = cloudCreds.Nickname
 		cloudConfig = append(cloudConfig, cloudConfigTF)
 		appURLTF["cloud_config"] = cloudConfig
-	}
-
-	dnsService := make([]map[string]interface{}, 0)
-	dnsServiceTF := make(map[string]interface{})
-	if appURL.DNSService.Type != client.ProsimoDNSServiceType {
-		dnsServiceTF["type"] = appURL.DNSService.Type
-		if appURL.DNSService.ID != "" {
-			// get cloud name for cloud key id
-			// log.Println("appURL.DNSService.ID", appURL.DNSService.ID)
-			dnsCloudCreds, err := prosimoClient.GetCloudCredsById(ctx, appURL.DNSService.ID)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			dnsServiceTF["aws_route53_cloud_creds_name"] = dnsCloudCreds.Nickname
-		}
-	}
-
-	dnsService = append(dnsService, dnsServiceTF)
-	appURLTF["dns_service"] = dnsService
-
-	if appURL.CertID != "" {
-		sslCert := make([]map[string]interface{}, 0)
-		sslCertTF := make(map[string]interface{})
-		sslCertTF["generate_cert"] = true
-		sslCert = append(sslCert, sslCertTF)
-		// sslCert = append(sslCert, appOnboardObjOpts.AppURLsOpts[i].SSLCertOpts)
-		appURLTF["ssl_cert"] = appOnboardObjOpts.AppURLsOpts[i].SSLCertOpts
 	}
 
 	if appURL.CacheRuleID != "" {

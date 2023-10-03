@@ -39,7 +39,7 @@ func Provider() *schema.Provider {
 			"prosimo_idp":                      resourceIDP(),
 			"prosimo_app_onboarding_web":       resourceAppOnboarding_Web(),
 			"prosimo_app_onboarding_fqdn":      resourceAppOnboarding_FQDN(),
-			"prosimo_app_onboarding_ip":        resourceAppOnboarding_IP(),
+			"prosimo_app_onboarding_dns":       resourceAppOnboarding_DNS(),
 			"prosimo_app_onboarding_cloudsvc":  resourceAppOnboarding_CloudSVC(),
 			"prosimo_app_onboarding_jumpbox":   resourceAppOnboarding_JumpBox(),
 			"prosimo_app_onboarding_citrixvdi": resourceAppOnboarding_VDI(),
@@ -65,6 +65,7 @@ func Provider() *schema.Provider {
 			"prosimo_private_link_mapping":     resourcePrivateLinkMapping(),
 			"prosimo_namespace":                resourceNamespace(),
 			"prosimo_cloud_gateway":            resourceCloudGateway(),
+			"prosimo_visual_transit":           resourceVisualTransit(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

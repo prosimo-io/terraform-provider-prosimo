@@ -40,6 +40,7 @@ type CloudCreds struct {
 	CloudCredsDetails *CloudCredsDetails `json:"details,omitempty"`
 	ID                string             `json:"id,omitempty"`
 	ConectionType     string             `json:"connectionType,omitempty"`
+	AccountID         string 			 `json:"accountID,omitempty"`
 	//binaryCloudDetails *binaryCloudDetails
 }
 

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -74,7 +73,7 @@ func (c *api_client) doRequest(req *http.Request) ([]byte, error) {
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -103,12 +102,12 @@ func (c *api_client) NewRequest(method, urlStr string, body interface{}) (*http.
 			return nil, err
 		}
 	}
-	// log.Println("NewRequest", u.String(), buf)
+	log.Println("NewRequest", u.String(), buf)
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
 	}
-	// log.Println("response", req)
+	log.Println("response", req)
 
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -295,9 +294,9 @@ func (c *api_client) Do(ctx context.Context, req *http.Request, returnObj interf
 	defer resp.Body.Close()
 
 	response := newResponse(resp)
-	body, _ := ioutil.ReadAll(resp.Body)
-	// log.Printf("respBody   %s", string(body))
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	body, _ := io.ReadAll(resp.Body)
+	log.Printf("respBody   %s", string(body))
+	resp.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	err = CheckResponse(resp)
 	if err != nil {
@@ -414,7 +413,7 @@ func CheckResponse(r *http.Response) error {
 	}
 
 	errorResponse := &ErrorResponse{Response: r}
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err == nil && data != nil {
 		json.Unmarshal(data, errorResponse)
 	}

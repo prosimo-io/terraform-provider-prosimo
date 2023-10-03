@@ -20,6 +20,7 @@ This resource is usually used along with `terraform-provider-prosimo`.
 resource "prosimo_network_onboarding" "testapp-azure" {
 
     name = "demo_network_azure"
+    network_exportable_policy = false
     namespace = "default"
     public_cloud {
         cloud_type = "public"
@@ -48,116 +49,158 @@ resource "prosimo_network_onboarding" "testapp-azure" {
 }
 
 
-# # # Azure with VNET peering
+# GCP Workload Connector Placement
 resource "prosimo_network_onboarding" "testapp-s3" {
 
-    name = "demo_network_new"
-    namespace = "namespace1"
+    name = "demo_network_gcp"
+    network_exportable_policy = false
+    namespace = "default"
     public_cloud {
         cloud_type = "public"
         connection_option = "private"
-        cloud_creds_name = "prosimo-app"
-        region_name = "eastus"
+        cloud_creds_name = "prosimo-gcp-infra"
+        region_name = "us-west2"
         cloud_networks {
-          vnet = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/Gitlab/providers/Microsoft.Network/virtualNetworks/Gitlabvnet696"
-          # hub_id = "tgw-04db5eac6fe3de45e"
-           connector_placement = "Workload VPC"
-          connectivity_type = "vnet-peering"
-          subnets = ["10.3.7.0/24"]
+          vpc = "https://www.googleapis.com/compute/v1/projects/prosimo-test-infra/global/networks/default"
+          connector_placement = "Workload VPC"
+          connectivity_type = "vpc-peering"
+          subnets = ["10.168.0.0/20"]
+          connector_settings {
+            connector_subnets= ["10.168.0.0/20"]
+            bandwidth = "<1 Gbps"
+            instance_type = "e2-standard-2"
+          }
         }
         connect_type = "connector"
 
     }
-    policies = ["ProAccess-policy-tf"]
+    policies = ["ALLOW-ALL-NETWORKS"]
     onboard_app = false
     decommission_app = false
 }
 
-#AWS with transit gateway
-resource "prosimo_network_onboarding" "testapp-s4" {
+#Azure Workload Connector Placement
+resource "prosimo_network_onboarding" "testapp-azure-workload-vpc" {
 
     name = "demo_network_new"
-    namespace = "namespace1"
+    network_exportable_policy = false
+    namespace = "default"
     public_cloud {
         cloud_type = "public"
         connection_option = "private"
-        cloud_creds_name = "prosimo-aws-app-iam"
-        region_name = "us-west-2"
+        cloud_creds_name = "prosimo-infra"
+        region_name = "westus"
         cloud_networks {
-          vpc = "vpc-033019a1cab5c5086"
-          hub_id = "tgw-02b93ffe5733e94cd"
-          connector_placement = "Infra VPC"
-          connectivity_type = "transit-gateway"
-          subnets = ["10.11.0.0/20"]
+          vnet = "/subscriptions/77102da4-2e1f-4445-b74a-93e842dc8c3c/resourceGroups/DefaultResourceGroup-WUS/providers/Microsoft.Network/virtualNetworks/DefaultResourceGroupWUSvnet574"
+          connectivity_type = "vnet-peering"
+          connector_placement = "Workload VPC"
+          subnets = ["10.4.0.0/24"]
           connector_settings {
-            bandwidth = "small"
-            bandwidth_name = "<1 Gbps"
-            instance_type = "t3.medium"
+            connector_subnets= ["10.4.0.0/24"]
+          }
+        }
+        connect_type = "connector"
+
+    }
+    policies = ["ALLOW-ALL-NETWORKS"]
+    onboard_app = false
+    decommission_app = false
+}
+
+#Azure Infra Connector Placement
+resource "prosimo_network_onboarding" "testapp-azure-infra-vpc" {
+
+    name = "demo_network_new"
+    network_exportable_policy = false
+    namespace = "default"
+    public_cloud {
+        cloud_type = "public"
+        connection_option = "private"
+        cloud_creds_name = "prosimo-infra"
+        region_name = "westus"
+        cloud_networks {
+          vnet = "/subscriptions/77102da4-2e1f-4445-b74a-93e842dc8c3c/resourceGroups/DefaultResourceGroup-WUS/providers/Microsoft.Network/virtualNetworks/DefaultResourceGroupWUSvnet574"
+          connectivity_type = "vnet-peering"
+          connector_placement = "Infra VPC"
+          subnets = ["10.4.0.0/24"]
+        }
+        connect_type = "connector"
+
+    }
+    policies = ["ALLOW-ALL-NETWORKS"]
+    onboard_app = false
+    decommission_app = false
+}
+
+#AWS with transit gateway and workload vpc
+resource "prosimo_network_onboarding" "testapp-AWS-WorkLoad-vpc" {
+
+    name = "demo_network_aws"
+    namespace = "default"
+    network_exportable_policy = false
+    public_cloud {
+        cloud_type = "public"
+        connection_option = "private"
+        cloud_creds_name = "prosimo-aws-iam"
+        region_name = "us-east-2"
+        cloud_networks {
+          vpc = "vpc-a8892dc3"
+          hub_id = "tgw-04d69a6cd846cd26b"
+          connector_placement = "Workload VPC"
+          connectivity_type = "transit-gateway"
+          service_insertion_endpoint_subnets = "auto"
+          subnets = ["172.31.0.0/20"]
+          connector_settings {
+            bandwidth = "1-5 Gbps"
+            instance_type = "c5a.large"
+            connector_subnets = ["172.31.0.0/20"]
           }
         }
 
         connect_type = "connector"
 
     }
-    policies = ["DENY-ALL-NETWORKS"]
-    onboard_app = true
+    policies = ["ALLOW-ALL-NETWORKS"]
+    onboard_app = false
     decommission_app = false
 }
-#AWS with transit gateway and connector placement as none.
-resource "prosimo_network_onboarding" "aws_u2n_euspoke3" {
-  name = "aws-u2n-euspoke3-tf"
-  namespace = "default"
-  public_cloud {
-    cloud_type        = "public"
-    connection_option = "private"
-    cloud_creds_name  = "prosimo-aws-app-iam"
-    region_name       = "eu-west-1"
-    cloud_networks {
-      hub_id              = "tgw-06d2d8db5d344a1ed"
-      vpc                 = "vpc-02669f01859cd3545"
-      connectivity_type   = "transit-gateway"
-      connector_placement = "none"
-      subnets             = ["10.24.3.0/28","10.24.3.32/28"]
-    }
-  }
-  policies         = ["ALLOW-ALL-NETWORKS"]
-  onboard_app      = true
-  decommission_app = false
-}
 
-#AWS with transit gateway and connector placement in Infra VPC.
-resource "prosimo_network_onboarding" "sin-subnet-1" {
-  name = "sin-subnet-tf"
-  namespace = "namespace1"
-  public_cloud {
-    cloud_type        = "public"
-    connection_option = "private"
-    cloud_creds_name  = "prosimo-aws-app-iam"
-    region_name       = "ap-southeast-1"
-    cloud_networks {
-      vpc               = "vpc-01556b89470488af8" 
-      connectivity_type = "transit-gateway"
-      connector_placement = "Infra VPC"
-      subnets           = ["192.168.250.0/26"]
-      connector_settings {
-        bandwidth = "small"
-        bandwidth_name = "<1 Gbps"
-        instance_type = "t3.medium"
-      }
-    }
+#AWS with transit gateway and infra vpc
+resource "prosimo_network_onboarding" "testapp-AWS-Infra-vpc" {
 
- connect_type = "connector"
-  }
-  policies                = ["DENY-ALL-NETWORKS"]
-  onboard_app             = false
-  decommission_app        = false
+    name = "demo_network_aws"
+    namespace = "default"
+    network_exportable_policy = false
+    public_cloud {
+        cloud_type = "public"
+        connection_option = "private"
+        cloud_creds_name = "prosimo-aws-iam"
+        region_name = "us-east-2"
+        cloud_networks {
+          vpc = "vpc-a8892dc3"
+          hub_id = "tgw-04d69a6cd846cd26b"
+          connector_placement = "Infra VPC"
+          connectivity_type = "transit-gateway"
+          subnets = ["172.31.0.0/20"]
+          connector_settings {
+            bandwidth = "1-5 Gbps"
+            instance_type = "c5a.large"
+          }
+        }
+
+        connect_type = "connector"
+
+    }
+    policies = ["ALLOW-ALL-NETWORKS"]
+    onboard_app = false
+    decommission_app = false
 }
 
 
 #PrivateDC Network Onboarding
 resource "prosimo_network_onboarding" "privateDC" {
+  network_exportable_policy = false
   name = "private-network-test"
-  namespace = "default"
   private_cloud {
     cloud_creds_name  = "PrivateDC"
      subnets           = ["10.0.0.2/32"]
@@ -245,15 +288,11 @@ Optional:
 <a id="nestedblock--public_cloud--cloud_networks--connector_settings"></a>
 ### Nested Schema for `public_cloud.cloud_networks.connector_settings`
 
-Required:
-
-- `bandwidth` (String) EX: small, medium, large
-- `bandwidth_name` (String) EX: <1 Gbps, >1 Gbps
-- `instance_type` (String) EX: t3.medium, t3.large
-
 Optional:
 
-- `connector_subnets` (List of String) connector subnet cider list
+- `bandwidth` (String) Available Options: <1 Gbps, 1-5 Gbps, 5-10 Gbps, >10 Gbps
+- `connector_subnets` (List of String) connector subnet cider list, Applicable when connector placement is in workload VPC/VNET
+- `instance_type` (String) Available Options wrt cloud and bandwidth :Cloud_Provider: AWS:Bandwidth:  <1 Gbps, Available Options: t3.medium/t3a.medium/c5.largeBandwidth:  1-5 Gbps, Available Options: c5a.large/c5.xlarge/c5a.xlarge/c5n.xlargeBandwidth: 5-10 Gbps, Available Options: c5a.8xlarge/c5.9xlargeBandwidth: >10 Gbps, Available Options: c5n.9xlarge/c5a.16xlarge/c5.18xlarge/c5n.18xlargeCloud_Provider: AZURE:For AZURE Default Connector settings are used,hence user does not have to specify is explicitlyProvided values: Bandwidth: <1 Gbps, Instance Type: Standard_A2_v2Cloud_Provider: GCP:Bandwidth:  <1 Gbps, Available Options: e2-standard-2Bandwidth:  1-5 Gbps, Available Options: e2-standard-4Bandwidth: 5-10 Gbps, Available Options: e2-standard-8/e2-standard-16Bandwidth: >10 Gbps, Available Options: c2-standard-16
 
 
 

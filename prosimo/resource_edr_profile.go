@@ -18,7 +18,7 @@ func resourceEdrProfile() *schema.Resource {
 		DeleteContext: resourceEdrConfigDelete,
 		UpdateContext: resourceEdrConfigUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

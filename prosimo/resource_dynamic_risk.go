@@ -18,7 +18,7 @@ func resourceDynamicRisk() *schema.Resource {
 		DeleteContext: resourceDynamicRiskDelete,
 		UpdateContext: resourceDynamicRiskCreate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

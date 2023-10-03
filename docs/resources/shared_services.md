@@ -17,7 +17,7 @@ This resource is usually used along with `terraform-provider-prosimo`.
 
 ```terraform
 #AWS
-resource "prosimo_shared_services_AWS" "firewall" {
+resource "prosimo_shared_services" "firewall" {
     name = "firewall_svc"
     region {
         cloud_region = "us-west-2"
@@ -29,7 +29,7 @@ resource "prosimo_shared_services_AWS" "firewall" {
 }
 
 #AZURE
-resource "prosimo_shared_services_Azure" "firewall" {
+resource "prosimo_shared_services" "firewall-Azure" {
     name = "firewall_svc"
     region {
         cloud_region = "eastus2"

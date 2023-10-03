@@ -19,7 +19,7 @@ func resourceCloudCreds() *schema.Resource {
 		UpdateContext: resourceCloudCredentialsUpdate,
 		DeleteContext: resourceCloudCredentialsDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

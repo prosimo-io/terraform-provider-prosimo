@@ -21,7 +21,7 @@ func resourceAppOnboarding_Web() *schema.Resource {
 		DeleteContext: resourceAppOnboarding_Web_Delete,
 		ReadContext:   resourceAppOnboarding_Web_Read,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -237,23 +237,24 @@ func resourceAppOnboarding_Web() *schema.Resource {
 							Type:        schema.TypeSet,
 							MaxItems:    1,
 							Optional:    true,
-							Description: "Custom dns configuration.",
+							Description: "Custom DNS setup",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"dns_app": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Description: "DNS app details",
+										Description: "DNS App name",
 									},
 									"dns_server": {
 										Type:        schema.TypeList,
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
-										Description: "DNS server details",
+										Description: "DNS Server List",
 									},
 									"is_healthcheck_enabled": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Health check to ensure application domains being resolved by dns servers ",
 									},
 								},
 							},

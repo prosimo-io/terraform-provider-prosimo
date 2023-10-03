@@ -20,7 +20,7 @@ func resourceNetworkOnboarding() *schema.Resource {
 		DeleteContext: resourceNetworkOnboardingDelete,
 		UpdateContext: resourceNetworkOnboardingUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -150,30 +150,41 @@ func resourceNetworkOnboarding() *schema.Resource {
 										Description:  "Service Insertion Endpoint, applicable when connector is placed in Workload VPC",
 									},
 									"connector_settings": {
-										Type:     schema.TypeSet,
-										Optional: true,
+										Type:        schema.TypeSet,
+										Optional:    true,
+										Description: "",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"bandwidth": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "EX: small, medium, large",
-												},
-												"bandwidth_name": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "EX: <1 Gbps, >1 Gbps",
+													Type:         schema.TypeString,
+													Optional:     true,
+													Description:  " Available Options: <1 Gbps, 1-5 Gbps, 5-10 Gbps, >10 Gbps",
+													ValidateFunc: validation.StringInSlice(client.GetConnectorBandwidthOptions(), false),
 												},
 												"instance_type": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "EX: t3.medium, t3.large",
+													Type:         schema.TypeString,
+													Optional:     true,
+													ValidateFunc: validation.StringInSlice(client.GetConnectorInstanceOptions(), false),
+													Description: "Available Options wrt cloud and bandwidth :" +
+														"Cloud_Provider: AWS:" +
+														"Bandwidth:  <1 Gbps, Available Options: t3.medium/t3a.medium/c5.large" +
+														"Bandwidth:  1-5 Gbps, Available Options: c5a.large/c5.xlarge/c5a.xlarge/c5n.xlarge" +
+														"Bandwidth: 5-10 Gbps, Available Options: c5a.8xlarge/c5.9xlarge" +
+														"Bandwidth: >10 Gbps, Available Options: c5n.9xlarge/c5a.16xlarge/c5.18xlarge/c5n.18xlarge" +
+														"Cloud_Provider: AZURE:" +
+														"For AZURE Default Connector settings are used,hence user does not have to specify is explicitly" +
+														"Provided values: Bandwidth: <1 Gbps, Instance Type: Standard_A2_v2" +
+														"Cloud_Provider: GCP:" +
+														"Bandwidth:  <1 Gbps, Available Options: e2-standard-2" +
+														"Bandwidth:  1-5 Gbps, Available Options: e2-standard-4" +
+														"Bandwidth: 5-10 Gbps, Available Options: e2-standard-8/e2-standard-16" +
+														"Bandwidth: >10 Gbps, Available Options: c2-standard-16",
 												},
 												"connector_subnets": {
 													Type:        schema.TypeList,
 													Optional:    true,
 													Elem:        &schema.Schema{Type: schema.TypeString},
-													Description: "connector subnet cider list ",
+													Description: "connector subnet cider list, Applicable when connector placement is in workload VPC/VNET ",
 												},
 											},
 										},
@@ -503,25 +514,106 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 						return diags
 					}
 				}
-				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
+				switch cloudCreds.CloudType {
+				case client.AWSCloudType:
+					// if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
 					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 						connectorsettingInput := &client.ConnectorSettings{
-							Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-							BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
+							// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
+							BandwidthName: connectorsettingConfig["bandwidth"].(string),
 							InstanceType:  connectorsettingConfig["instance_type"].(string),
-							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
+						}
+						switch connectorsettingInput.BandwidthName {
+						case client.LessThan1GBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
+						case client.OneToFiveGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
+						case client.FiveToTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
+						case client.MoreThanTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
+						}
+
+						if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+							if v, ok := connectorsettingConfig["connector_subnets"]; ok {
+								if len(expandStringList(v.([]interface{}))) > 0 {
+									connectorsettingInput.Subnets = expandStringList(v.([]interface{}))
+								} else {
+									diags = append(diags, diag.Diagnostic{
+										Severity: diag.Error,
+										Summary:  "Missing Connector group Subnets",
+										Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+									})
+
+									return diags
+								}
+							}
 						}
 						cloudNetworkInput.Connectorsettings = connectorsettingInput
 					} else {
 						diags = append(diags, diag.Diagnostic{
 							Severity: diag.Error,
 							Summary:  "Missing Connector Active setting options",
-							Detail:   "Active setting options are required if connector placement is in Workload VPC.",
+							Detail:   "Active setting options are required if Cloud Type is AWS.",
 						})
 
 						return diags
 					}
+				case client.AzureCloudType:
+					log.Println("entering Azure block")
+					connectorsettingInput := &client.ConnectorSettings{
+						Bandwidth:     client.AzureBandwidth,
+						BandwidthName: client.AzureBandwidthName,
+						InstanceType:  client.AzureInstanceType,
+					}
+					if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+							connectorsettingInput.Subnets = expandStringList(connectorsettingConfig["connector_subnets"].([]interface{}))
+						} else {
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Error,
+								Summary:  "Missing Connector group Subnets",
+								Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+							})
+
+							return diags
+						}
+					}
+					log.Println("connectorsettingInput", connectorsettingInput)
+					cloudNetworkInput.Connectorsettings = connectorsettingInput
+
+				case client.GCPCloudType:
+					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+						connectorsettingInput := &client.ConnectorSettings{
+							// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
+							BandwidthName: connectorsettingConfig["bandwidth"].(string),
+							InstanceType:  connectorsettingConfig["instance_type"].(string),
+							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
+						}
+						switch connectorsettingInput.BandwidthName {
+						case client.LessThan1GBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
+						case client.OneToFiveGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
+						case client.FiveToTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
+						case client.MoreThanTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
+						}
+						cloudNetworkInput.Connectorsettings = connectorsettingInput
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "Missing Connector Active setting options",
+							Detail:   "Active setting options are required if Cloud Type is GCP.",
+						})
+
+						return diags
+					}
+
 				}
 				cloudNetworkInputList = append(cloudNetworkInputList, *cloudNetworkInput)
 			}
@@ -649,21 +741,99 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 						return diags, nil
 					}
 				}
-				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
+				switch cloudCreds.CloudType {
+				case client.AWSCloudType:
+					// if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions || cloudNetworkInput.ConnectorPlacement == client.InfraConnectorPlacementOptions {
 					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 						connectorsettingInput := &client.ConnectorSettings{
-							Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-							BandwidthName: connectorsettingConfig["bandwidth_name"].(string),
+							// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
+							BandwidthName: connectorsettingConfig["bandwidth"].(string),
 							InstanceType:  connectorsettingConfig["instance_type"].(string),
-							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
+						}
+						switch connectorsettingInput.BandwidthName {
+						case client.LessThan1GBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
+						case client.OneToFiveGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
+						case client.FiveToTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
+						case client.MoreThanTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
+						}
+
+						if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+							if v, ok := connectorsettingConfig["connector_subnets"]; ok {
+								if len(expandStringList(v.([]interface{}))) > 0 {
+									connectorsettingInput.Subnets = expandStringList(v.([]interface{}))
+								} else {
+									diags = append(diags, diag.Diagnostic{
+										Severity: diag.Error,
+										Summary:  "Missing Connector group Subnets",
+										Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+									})
+
+									return diags, nil
+								}
+							}
 						}
 						cloudNetworkInput.Connectorsettings = connectorsettingInput
 					} else {
 						diags = append(diags, diag.Diagnostic{
 							Severity: diag.Error,
 							Summary:  "Missing Connector Active setting options",
-							Detail:   "Active setting options are required if connector placement is in Infra or workload vpc and cloud type is AWS.",
+							Detail:   "Active setting options are required if Cloud Type is AWS.",
+						})
+
+						return diags, nil
+					}
+				case client.AzureCloudType:
+					connectorsettingInput := &client.ConnectorSettings{
+						Bandwidth:     client.AzureBandwidth,
+						BandwidthName: client.AzureBandwidthName,
+						InstanceType:  client.AzureInstanceType,
+					}
+					if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+							connectorsettingInput.Subnets = expandStringList(connectorsettingConfig["connector_subnets"].([]interface{}))
+						} else {
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Error,
+								Summary:  "Missing Connector group Subnets",
+								Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+							})
+
+							return diags, nil
+						}
+					}
+					cloudNetworkInput.Connectorsettings = connectorsettingInput
+
+				case client.GCPCloudType:
+					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+						connectorsettingInput := &client.ConnectorSettings{
+							// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
+							BandwidthName: connectorsettingConfig["bandwidth"].(string),
+							InstanceType:  connectorsettingConfig["instance_type"].(string),
+							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
+						}
+						switch connectorsettingInput.BandwidthName {
+						case client.LessThan1GBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
+						case client.OneToFiveGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
+						case client.FiveToTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
+						case client.MoreThanTenGBPS:
+							connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
+						}
+						cloudNetworkInput.Connectorsettings = connectorsettingInput
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "Missing Connector Active setting options",
+							Detail:   "Active setting options are required if Cloud Type is GCP.",
 						})
 
 						return diags, nil

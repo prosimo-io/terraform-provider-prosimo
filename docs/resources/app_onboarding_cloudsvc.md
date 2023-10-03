@@ -202,9 +202,9 @@ Optional:
 
 Optional:
 
-- `dns_app` (String) DNS app details
-- `dns_server` (List of String) DNS server details
-- `is_healthcheck_enabled` (Boolean)
+- `dns_app` (String) DNS App name
+- `dns_server` (List of String) DNS Server List
+- `is_healthcheck_enabled` (Boolean) Health check to ensure application domains being resolved by dns servers
 
 
 <a id="nestedblock--app_urls--dns_service"></a>

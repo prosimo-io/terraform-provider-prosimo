@@ -17,7 +17,7 @@ func resourceConnPlacement() *schema.Resource {
 		ReadContext:   resourceConnPlacementRead,
 		DeleteContext: resourceConnPlacementDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

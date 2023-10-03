@@ -1,13 +1,13 @@
 ---
-page_title: "prosimo_app_onboarding_fqdn Resource - terraform-provider-prosimo"
+page_title: "prosimo_app_onboarding_dns Resource - terraform-provider-prosimo"
 subcategory: ""
 description: |-
-  Use this resource to onboard TCP/UDP apps.
+  Use this resource to onboard IP Endpoint apps.
 ---
 
-# prosimo_app_onboarding_fqdn (Resource)
+# prosimo_app_onboarding_dns (Resource)
 
-Use this resource to onboard TCP/UDP apps.
+Use this resource to onboard IP Endpoint apps.
 
 This resource is usually used along with `terraform-provider-prosimo`.
 
@@ -16,44 +16,62 @@ This resource is usually used along with `terraform-provider-prosimo`.
 ## Example Usage
 
 ```terraform
-# Agent WEB access(subdomain_included = true, domain_type = "custom")
-resource "prosimo_app_onboarding_fqdn" "AgentlessAppOnboarding" {
+# Agent IP Address (AWS)
 
-    app_name = "common-app-agent-fqdn"
+resource "prosimo_app_onboarding_dns" "AgentlessAppOnboarding" {
+
+    app_name = "dns-pub"
+    app_urls {
+        app_fqdn = "10.1.1.1"
+        service_ip_type = "manual"
+        service_ip = "100.127.10.1"
+        protocols {
+            protocol = "dns"
+            port_list = ["53"]
+        }
+
+        cloud_config {
+            connection_option = "public"
+            cloud_creds_name = "prosimo-aws-iam"
+            edge_regions {
+                region_type = "active"
+                region_name = "us-west-1"
+                conn_option = "public"          
+            }
+        }
+    }
+    optimization_option = "PerformanceEnhanced"
+
+    policy_name = ["ALLOW-ALL-USERS"]
+
+    onboard_app = false
+    decommission_app = false
+}
+resource "prosimo_app_onboarding_ip" "AgentlessAppOnboarding" {
+
+    app_name = "agent-tgw"
     idp_name = "azure_ad"
     app_urls {
-        domain_type = "custom"
-        app_fqdn = "alex-app-101.abc.com"
-        subdomain_included = true
-
+        app_fqdn = "10.10.0.36/32"
+        service_ip_type = "auto"
         protocols {
-            protocol = "tcp"
-            port_list = ["80", "90"]
-        }
-        protocols {
-            protocol = "tcp"
-            port_list = ["161", "162-200"] 
-        }
-
-        health_check_info {
-          enabled = false
+            protocol = "dns"
+            port_list = ["53"]
         }
 
         cloud_config {
             connection_option = "private"
-            cloud_creds_name = "prosimo-gcp-infra"
+            cloud_creds_name = "prosimo-aws-app-iam"
             edge_regions {
-                backend_ip_address_discover = false
-                backend_ip_address_dns = false
-                dns_custom {                                   
-                    dns_server = ["8.8.8.8"]
-                    is_healthcheck_enabled = true
-                  }
+                region_type = "active"
+                region_name = "us-east-2"
+                conn_option = "transitGateway"
+                app_network_id = "vpc-067648a8b45cd2369"
+                attach_point_id = "tgw-02c98e2afd03758d7"
+                tgw_app_routetable = "MODIFY"
+                
             }
         }
-    }
-    saml_rewrite{
-      selected_auth_type = "oidc"
     }
     optimization_option = "PerformanceEnhanced"
 
@@ -64,80 +82,65 @@ resource "prosimo_app_onboarding_fqdn" "AgentlessAppOnboarding" {
 }
 
 
+# Agent IP Address (AZURE with AzureTransitVnet)
+resource "prosimo_app_onboarding_ip" "AgentlessAppOnboarding_TransitVnet" {
 
-# Agent WEB access(subdomain_included = false, domain_type = "custom", backend_ip_address_dns = true)
-resource "prosimo_app_onboarding_fqdn" "AgentlessAppOnboardingnew" {
-
-    app_name = "common-app-agent-fqdn"
+    app_name = "agent-transit-vnet-subnets-tf"
+    # ip_pool_cidr = "192.168.8.0/22"
     idp_name = "azure_ad"
     app_urls {
-        domain_type = "custom"
-        app_fqdn = "alex-app-101.abc.com"
-        subdomain_included = false
-
+        app_fqdn = "172.19.1.4"
+        service_ip_type = "auto"
         protocols {
-            protocol = "tcp"
-            port_list = ["80", "90"]
-        }
-
-        health_check_info {
-          enabled = false
+            protocol = "dns"
+            port_list = ["53"]
         }
 
         cloud_config {
-            connection_option = "public"
-            cloud_creds_name = "prosimo-gcp-infra"
+            connection_option = "private"
+            cloud_creds_name = "prosimo-app"
             edge_regions {
                 region_type = "active"
-                region_name = "us-west2"
-                conn_option = "public"
-                backend_ip_address_discover = false
-                backend_ip_address_manual = ["23.99.84.98"]
+                region_name = "eastus2"
+                conn_option = "azureTransitVnet"
+                app_network_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/qing_vtransit_eastus2_rg/providers/Microsoft.Network/virtualNetworks/qing_vtransit__eastus2_spoke1"
+                attach_point_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/qing_vtransit_eastus2_rg/providers/Microsoft.Network/virtualNetworks/qing_vtransit_eastus2_hub"
+                # tgw_app_routetable = "MODIFY"
+                
             }
         }
     }
-    saml_rewrite{
-      selected_auth_type = "oidc"
-    }
     optimization_option = "PerformanceEnhanced"
+    enable_multi_cloud_access = true
 
-    policy_name = ["ALLOW-ALL-USERS"]
+    policy_name = "ALLOW-ALL"
 
     onboard_app = false
     decommission_app = false
 }
 
-# Agent WEB access( app hosted in privateDC.)
-resource "prosimo_app_onboarding_fqdn" "private-dc" {
+# Agent IP Address(app hosted in privateDC.)
+resource "prosimo_app_onboarding_ip" "private-dc" {
 
     app_name = "common-app-private"
     app_urls {
-        domain_type = "custom"
-        app_fqdn = "alex-app-101.abc.com"
-        subdomain_included = false
-
+        app_fqdn = "10.0.0.1"
+        service_ip_type = "auto"
         protocols {
-            protocol = "tcp"
-            port_list = ["80", "90"]
-        }
-
-        health_check_info {
-          enabled = false
+            protocol = "dns"
+            port_list = ["53"]
         }
 
         cloud_config {
             app_hosted_type = "PRIVATE"
             connection_option = "public"
             cloud_creds_name = "PrivateDC"
-            dc_app_ip = "10.1.1.2"
+            dc_app_ip = "10.1.1.1"
         }
-    }
-    saml_rewrite{
-      selected_auth_type = "oidc"
     }
     optimization_option = "PerformanceEnhanced"
 
-    policy_name = ["DENY-ALL-USERS"]
+    policy_name = ["ALLOW-ALL-USERS"]
 
     onboard_app = false
     decommission_app = false
@@ -154,14 +157,13 @@ resource "prosimo_app_onboarding_fqdn" "private-dc" {
 - `decommission_app` (Boolean) Set this to true if you would like app to be offboarded from fabric
 - `onboard_app` (Boolean) Set this to true if you would like app to be onboarded to fabric
 - `optimization_option` (String) Optimization option for app: e.g: CostSaving, PerformanceEnhanced, FastLane
-- `policy_name` (List of String) Select policy name.e.g: ALLOW-ALL-USERS, DENY-ALL-USERS or CUSTOMIZE.Conditional access policies and Web Application Firewall policies for the application.
+- `policy_name` (List of String) Select policy name.e.g: ALLOW-ALL-USERS, DENY-ALL-USERS or CUSTOMIZE.Conditional access policies and Web Application Firewall policies for the application
 
 ### Optional
 
 - `customize_policy` (Block Set, Max: 1) Choose any custom policy created from the policy library or create one. (see [below for nested schema](#nestedblock--customize_policy))
 - `enable_multi_cloud_access` (Boolean) Setting this to true would leverage multi clouds to optimize the app performance
 - `idp_name` (String) IDP provider name.
-- `saml_rewrite` (Block Set, Max: 1) App authentication option while selecting prosimo domain (see [below for nested schema](#nestedblock--saml_rewrite))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `wait_for_rollout` (Boolean) Wait for the rollout of the task to complete. Defaults to true.
 
@@ -178,15 +180,12 @@ Required:
 
 - `app_fqdn` (String) Fqdn of the app that user would access after onboarding
 - `cloud_config` (Block Set, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--app_urls--cloud_config))
-- `domain_type` (String) Type of Domain: e.g custom or prosimo
-- `health_check_info` (Block Set, Min: 1, Max: 1) Application health check config from edge (see [below for nested schema](#nestedblock--app_urls--health_check_info))
 - `protocols` (Block Set, Min: 1) Protocol that prosimo edge uses to connect to App (see [below for nested schema](#nestedblock--app_urls--protocols))
+- `service_ip_type` (String) Select if the target needs to be assigned a specific IP address or it could be auto-generated. Even if manually assigned, the address needs to be from the service core IP pool. Default method is to auto generate an IP address from the service core pool.
 
 Optional:
 
-- `cache_rule` (String) Cache Rules for your App Domains
-- `subdomain_included` (Boolean) Set True to onboard subdomains of the application else False
-- `waf_policy_name` (String) WAF Policies for your App Domains, applicable when the Edge to App Protocol is either HTTP or HTTPS.
+- `service_ip` (String) Service Ip Address
 
 Read-Only:
 
@@ -211,54 +210,25 @@ Optional:
 <a id="nestedblock--app_urls--cloud_config--edge_regions"></a>
 ### Nested Schema for `app_urls.cloud_config.edge_regions`
 
-Required:
-
-- `backend_ip_address_discover` (Boolean) if Set to true, auto discovers available endpoints
-
 Optional:
 
 - `app_network_id` (String) App network id details
 - `attach_point_id` (String) Attach Point id details
-- `backend_ip_address_dns` (Boolean)
-- `backend_ip_address_manual` (List of String) Pass endpoints manually.
 - `conn_option` (String) Connection option for private connection: e.g: peering/transitGateway/awsPrivateLink/azurePrivateLink/azureTransitVnet/vwanHub
-- `dns_custom` (Block Set, Max: 1) Custom DNS setup (see [below for nested schema](#nestedblock--app_urls--cloud_config--edge_regions--dns_custom))
 - `region_name` (String) Name of the region where app is available
 - `region_type` (String) Type of region: e.g:active, backup etc
 - `tgw_app_routetable` (String)
 
-<a id="nestedblock--app_urls--cloud_config--edge_regions--dns_custom"></a>
-### Nested Schema for `app_urls.cloud_config.edge_regions.dns_custom`
-
-Optional:
-
-- `dns_app` (String) DNS App name
-- `dns_server` (List of String) DNS Server List
-- `is_healthcheck_enabled` (Boolean) Health check to ensure application domains being resolved by dns servers
-
-
-
-
-<a id="nestedblock--app_urls--health_check_info"></a>
-### Nested Schema for `app_urls.health_check_info`
-
-Optional:
-
-- `enabled` (Boolean)
-- `endpoint` (String) HealthCheck Endpoints
 
 
 <a id="nestedblock--app_urls--protocols"></a>
 ### Nested Schema for `app_urls.protocols`
 
-Required:
-
-- `port_list` (List of String) target port number
-- `protocol` (String) Protocol type, e.g: “http”, “https”, “ssh”, “vnc”, or “rdp
-
 Optional:
 
 - `paths` (List of String) Customized websocket paths
+- `port_list` (List of String) target port number
+- `protocol` (String) Protocol type, e.g: “http”, “https”, “ssh”, “vnc”, or “rdp
 - `web_socket_enabled` (Boolean) Set to true if tou would like prosimo edges to communicate with app via websocket
 
 Read-Only:
@@ -273,16 +243,6 @@ Read-Only:
 Optional:
 
 - `name` (String)
-
-
-<a id="nestedblock--saml_rewrite"></a>
-### Nested Schema for `saml_rewrite`
-
-Optional:
-
-- `metadata` (String) Required while selecting SAML based authentication
-- `metadata_url` (String) Required while selecting SAML based authentication
-- `selected_auth_type` (String) Type of authentication: e.g. SAML, OIDC, Others
 
 
 <a id="nestedblock--timeouts"></a>

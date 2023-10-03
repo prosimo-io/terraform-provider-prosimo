@@ -21,7 +21,7 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 		DeleteContext: resourceAppOnboarding_VDI_Delete,
 		ReadContext:   resourceAppOnboarding_VDI_Read,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -187,7 +187,7 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 												"region_name": {
 													Type:        schema.TypeString,
 													Optional:    true,
-													Description: "Name of the region where app is available",
+													Description: "Name of the region where app is available, e.g: us-west2, westus etc",
 												},
 												"conn_option": {
 													Type:         schema.TypeString,
@@ -206,6 +206,7 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 													Type:         schema.TypeString,
 													Optional:     true,
 													Default:      "MAINTAIN",
+													Description:  "Available options, MAINTAIN & MODIFY",
 													ValidateFunc: validation.StringInSlice(client.GetTgwAppRoutetableType(), false),
 												},
 												"app_network_id": {
@@ -249,17 +250,20 @@ func resourceAppOnboarding_VDI() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"dns_app": {
-										Type:     schema.TypeString,
-										Optional: true,
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "DNS App name",
 									},
 									"dns_server": {
-										Type:     schema.TypeList,
-										Optional: true,
-										Elem:     &schema.Schema{Type: schema.TypeString},
+										Type:        schema.TypeList,
+										Optional:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "DNS Server List",
 									},
 									"is_healthcheck_enabled": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Health check to ensure application domains being resolved by dns servers ",
 									},
 								},
 							},

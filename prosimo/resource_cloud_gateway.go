@@ -17,7 +17,7 @@ func resourceCloudGateway() *schema.Resource {
 		DeleteContext: resourceCloudGatewayDelete,
 		ReadContext:   resourceCloudGatewayRead,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
