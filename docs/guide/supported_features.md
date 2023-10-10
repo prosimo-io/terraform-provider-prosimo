@@ -31,7 +31,7 @@
   - **resource_geo_location**
   - **resource_grouping**
   - **resource_idp**
-  - **resource_ip_address**
+  - **resource_ip_address(Obsolated)**
   - **resource_ip_reputation**
   - **resource_log_exporter**
   - **resource_network_onboarding**

@@ -1,11 +1,11 @@
 ---
-page_title: "prosimo_ip_address Data Source - terraform-provider-prosimo"
+page_title: "prosimo_ip_address Data Source - terraform-provider-prosimo(Obsoleted in Version 3.8.8)"
 subcategory: ""
 description: |-
   Use this data source to get information on available ip ranges.
 ---
 
-# prosimo_ip_address (Data Source)
+# prosimo_ip_address (Data Source) - Obsoleted
 
 Use this data source to get information on available ip ranges.
 

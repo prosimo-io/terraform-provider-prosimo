@@ -66,7 +66,7 @@ func resourceServiceInsertion() *schema.Resource {
 				Description: "Service Insertion Deployment Status",
 			},
 			"source": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -87,7 +87,7 @@ func resourceServiceInsertion() *schema.Resource {
 				},
 			},
 			"target": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -177,68 +177,76 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	// serviceInsertionInput := client.Service_Insertion{}
 
 	sourceNetwork := &client.Source{}
+	sourceNetworkList := []client.Service_Input{}
 	if v, ok := d.GetOk("source"); ok {
-		sourceConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-		if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-			sourceNetworkList := []client.Service_Input{}
-			for i, val := range v.List() {
-				_ = val
+		for i, _ := range v.([]interface{}) {
+			sourceConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+			if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
+				
+				for i, val := range v.List() {
+					_ = val
 
-				networkConfig := v.List()[i].(map[string]interface{})
-				selectnetworkName := networkConfig["name"].(string)
-				selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
-				if err != nil {
-					return diag.FromErr(err)
+					networkConfig := v.List()[i].(map[string]interface{})
+					selectnetworkName := networkConfig["name"].(string)
+					selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+					serviceInput := client.Service_Input{
+						Name: selectnetworkName,
+						ID:   selectnetworkid,
+					}
+					sourceNetworkList = append(sourceNetworkList, serviceInput)
 				}
-				serviceInput := client.Service_Input{
-					Name: selectnetworkName,
-					ID:   selectnetworkid,
-				}
-				sourceNetworkList = append(sourceNetworkList, serviceInput)
+				sourceNetwork.Networks = sourceNetworkList
 			}
-			sourceNetwork.Networks = sourceNetworkList
 		}
 	}
 
 	target := &client.Target{}
+	targetNetworkList := []client.Service_Input{}
+	targetAppList := []client.Service_Input{}
 	if v, ok := d.GetOk("target"); ok {
-		targetConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-		if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-			targetNetworkList := []client.Service_Input{}
-			for i, val := range v.List() {
-				_ = val
+		for i, _ := range v.([]interface{}) {
+			targetConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+			if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
+				
+				for i, val := range v.List() {
+					_ = val
 
-				networkConfig := v.List()[i].(map[string]interface{})
-				selectnetworkName := networkConfig["name"].(string)
-				selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
-				if err != nil {
-					return diag.FromErr(err)
+					networkConfig := v.List()[i].(map[string]interface{})
+					selectnetworkName := networkConfig["name"].(string)
+					selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+					serviceInput := client.Service_Input{
+						Name: selectnetworkName,
+						ID:   selectnetworkid,
+					}
+					targetNetworkList = append(targetNetworkList, serviceInput)
 				}
-				serviceInput := client.Service_Input{
-					Name: selectnetworkName,
-					ID:   selectnetworkid,
-				}
-				targetNetworkList = append(targetNetworkList, serviceInput)
+				target.Networks = targetNetworkList
 			}
-			target.Networks = targetNetworkList
-		}
+		
 
-		if v, ok := targetConfig["apps"].(*schema.Set); ok && v.Len() > 0 {
-			targetAppList := []client.Service_Input{}
-			for i, _ := range v.List() {
-				appConfig := v.List()[i].(map[string]interface{})
-				selectappName := appConfig["name"].(string)
-				selectappid, err := prosimoClient.GetAppID(ctx, selectappName)
-				if err != nil {
-					return diag.FromErr(err)
+			if v, ok := targetConfig["apps"].(*schema.Set); ok && v.Len() > 0 {
+				
+				for i, _ := range v.List() {
+					appConfig := v.List()[i].(map[string]interface{})
+					selectappName := appConfig["name"].(string)
+					selectappid, err := prosimoClient.GetAppID(ctx, selectappName)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+					serviceInput := client.Service_Input{
+						Name: selectappName,
+						ID:   selectappid,
+					}
+					targetAppList = append(targetAppList, serviceInput)
 				}
-				serviceInput := client.Service_Input{
-					Name: selectappName,
-					ID:   selectappid,
-				}
-				targetAppList = append(targetAppList, serviceInput)
+				target.Apps = targetAppList
 			}
-			target.Apps = targetAppList
 		}
 	}
 	ipRulesConfigInputList := []client.IpRule{}
@@ -365,68 +373,75 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	if updateReq {
 		sourceNetwork := &client.Source{}
+		sourceNetworkList := []client.Service_Input{}
 		if v, ok := d.GetOk("source"); ok {
-			sourceConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-			if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-				sourceNetworkList := []client.Service_Input{}
-				for i, val := range v.List() {
-					_ = val
+			for i, _ := range v.([]interface{}) {
+				sourceConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+				if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
+					
+					for i, val := range v.List() {
+						_ = val
 
-					networkConfig := v.List()[i].(map[string]interface{})
-					selectnetworkName := networkConfig["name"].(string)
-					selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
-					if err != nil {
-						return diag.FromErr(err)
+						networkConfig := v.List()[i].(map[string]interface{})
+						selectnetworkName := networkConfig["name"].(string)
+						selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
+						if err != nil {
+							return diag.FromErr(err)
+						}
+						serviceInput := client.Service_Input{
+							Name: selectnetworkName,
+							ID:   selectnetworkid,
+						}
+						sourceNetworkList = append(sourceNetworkList, serviceInput)
 					}
-					serviceInput := client.Service_Input{
-						Name: selectnetworkName,
-						ID:   selectnetworkid,
-					}
-					sourceNetworkList = append(sourceNetworkList, serviceInput)
+					sourceNetwork.Networks = sourceNetworkList
 				}
-				sourceNetwork.Networks = sourceNetworkList
 			}
 		}
 
 		target := &client.Target{}
-		if v, ok := d.GetOk("target"); ok {
-			targetConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-			if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-				targetNetworkList := []client.Service_Input{}
-				for i, val := range v.List() {
-					_ = val
+		targetNetworkList := []client.Service_Input{}
+		targetAppList := []client.Service_Input{}
+		if v, ok := d.GetOk("target"); ok {		
+			for i, _ := range v.([]interface{}) {
+				targetConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+				if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
+					
+					for i, val := range v.List() {
+						_ = val
 
-					networkConfig := v.List()[i].(map[string]interface{})
-					selectnetworkName := networkConfig["name"].(string)
-					selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
-					if err != nil {
-						return diag.FromErr(err)
+						networkConfig := v.List()[i].(map[string]interface{})
+						selectnetworkName := networkConfig["name"].(string)
+						selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
+						if err != nil {
+							return diag.FromErr(err)
+						}
+						serviceInput := client.Service_Input{
+							Name: selectnetworkName,
+							ID:   selectnetworkid,
+						}
+						targetNetworkList = append(targetNetworkList, serviceInput)
 					}
-					serviceInput := client.Service_Input{
-						Name: selectnetworkName,
-						ID:   selectnetworkid,
-					}
-					targetNetworkList = append(targetNetworkList, serviceInput)
+					target.Networks = targetNetworkList
 				}
-				target.Networks = targetNetworkList
-			}
 
-			if v, ok := targetConfig["apps"].(*schema.Set); ok && v.Len() > 0 {
-				targetAppList := []client.Service_Input{}
-				for i, _ := range v.List() {
-					appConfig := v.List()[i].(map[string]interface{})
-					selectappName := appConfig["name"].(string)
-					selectappid, err := prosimoClient.GetAppID(ctx, selectappName)
-					if err != nil {
-						return diag.FromErr(err)
+				if v, ok := targetConfig["apps"].(*schema.Set); ok && v.Len() > 0 {
+					
+					for i, _ := range v.List() {
+						appConfig := v.List()[i].(map[string]interface{})
+						selectappName := appConfig["name"].(string)
+						selectappid, err := prosimoClient.GetAppID(ctx, selectappName)
+						if err != nil {
+							return diag.FromErr(err)
+						}
+						serviceInput := client.Service_Input{
+							Name: selectappName,
+							ID:   selectappid,
+						}
+						targetAppList = append(targetAppList, serviceInput)
 					}
-					serviceInput := client.Service_Input{
-						Name: selectappName,
-						ID:   selectappid,
-					}
-					targetAppList = append(targetAppList, serviceInput)
+					target.Apps = targetAppList
 				}
-				target.Apps = targetAppList
 			}
 		}
 		ipRulesConfigInputList := []client.IpRule{}

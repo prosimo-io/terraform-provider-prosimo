@@ -1,3 +1,9 @@
+
+## 3.8.8(October 06   2023)
+    ### Enhancements:
+    With latest changes in Edge Api resource `prosimo_ip_address` has been Obsolated. 
+    ### BugFix:
+    - for resource `prosimo_network_onboarding`, `connector_settings` field dependancy has been removed when connector placement type is "NONE".
 ## 3.8.7(Septemeber 30   2023)
     ### Features:
     - Terraform support for Latest API changes for edge bringup.

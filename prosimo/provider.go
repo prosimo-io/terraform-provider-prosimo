@@ -33,7 +33,6 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"prosimo_ip_addresses":             resourceIPAddresses(),
 			"prosimo_cloud_creds":              resourceCloudCreds(),
 			"prosimo_edge":                     resourceEdge(),
 			"prosimo_idp":                      resourceIDP(),
@@ -69,7 +68,6 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"prosimo_ip_address":          dataSourceIPAddresses(),
 			"prosimo_cloud_creds":         dataSourceCloudCreds(),
 			"prosimo_edge":                dataSourceEdge(),
 			"prosimo_idp":                 dataSourceIDP(),

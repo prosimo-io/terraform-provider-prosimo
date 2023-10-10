@@ -6,27 +6,27 @@ import (
 	"os"
 )
 
-func GetIPPoolfiltered(id string) (*IPPool, bool) {
+// func GetIPPoolfiltered(id string) (*IPPool, bool) {
 
-	ctx := context.Background()
+// 	ctx := context.Background()
 
-	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
-	if err != nil {
-		fmt.Printf("err - %s", err)
-	}
+// 	prosimo_client, err := NewProsimoClient(os.Getenv("PROSIMO_BASE_URL"), os.Getenv("PROSIMO_TOKEN"), true)
+// 	if err != nil {
+// 		fmt.Printf("err - %s", err)
+// 	}
 
-	getIPPool, err := prosimo_client.GetIPPool(ctx)
+// 	getIPPool, err := prosimo_client.GetIPPool(ctx)
 
-	if err != nil {
-		fmt.Printf("err - %s", err)
-	}
-	for _, v := range getIPPool.IPPools {
-		if v.ID == id {
-			return v, false
-		}
-	}
-	return nil, true
-}
+// 	if err != nil {
+// 		fmt.Printf("err - %s", err)
+// 	}
+// 	for _, v := range getIPPool.IPPools {
+// 		if v.ID == id {
+// 			return v, false
+// 		}
+// 	}
+// 	return nil, true
+// }
 
 func GetDynamicRiskfiltered(id string) (*Dynamic_Risk, bool) {
 

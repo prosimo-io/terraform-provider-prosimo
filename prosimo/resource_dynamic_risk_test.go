@@ -157,7 +157,7 @@ func testAccCheckDynamicRiskDestroy(s *terraform.State) error {
 		if rs.Type != "prosimo_dynamic_risk" {
 			continue
 		}
-		_, flag := client.GetIPPoolfiltered(rs.Primary.ID)
+		_, flag := client.GetDynamicRiskfiltered(rs.Primary.ID)
 		if !flag {
 			return fmt.Errorf("Resource still avaible in portal %s", rs.Primary.ID)
 		}

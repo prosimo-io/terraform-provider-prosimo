@@ -1,11 +1,11 @@
 ---
-page_title: "prosimo_ip_addresses Resource - terraform-provider-prosimo"
+page_title: "prosimo_ip_addresses Resource - terraform-provider-prosimo(Obsoleted in Version 3.8.8)"
 subcategory: ""
 description: |-
   Use this resource to create/modify ip ranges.
 ---
 
-# prosimo_ip_addresses (Resource)
+# prosimo_ip_addresses (Resource) - Obsoleted
 
 Use this resource to create/modify ip ranges.
 
