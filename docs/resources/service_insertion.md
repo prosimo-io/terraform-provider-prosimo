@@ -84,8 +84,8 @@ resource "prosimo_service_insertion_AZURE" "firewall" {
 - `namespace` (String) Policy Namespace, Defaults to default
 - `prosimo_managed_routing` (Boolean) TRUE if you would like Prosimo to update Firewal VNET Roue Table
 - `route_tables` (List of String) List of Route Table ID
-- `source` (Block Set) (see [below for nested schema](#nestedblock--source))
-- `target` (Block Set) (see [below for nested schema](#nestedblock--target))
+- `source` (Block List) (see [below for nested schema](#nestedblock--source))
+- `target` (Block List) (see [below for nested schema](#nestedblock--target))
 - `type` (String) Service Insertion Type
 
 ### Read-Only

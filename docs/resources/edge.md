@@ -34,10 +34,6 @@ resource "prosimo_edge" "edge_azure" {
   cloud_name        = "prosimo-infra"
   cloud_region = "westus"
   ip_range = "100.80.0.0/23"
-#   node_size_settings {
-#     bandwidth = "1-5 Gbps"
-#     instance_type = "c5a.large"
-#     }
   deploy_edge = true
   decommission_edge = false
 }

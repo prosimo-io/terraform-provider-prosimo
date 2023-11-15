@@ -45,7 +45,6 @@ resource "prosimo_namespace" "test" {
 - `export` (Block List) Export local networks to other namespace (see [below for nested schema](#nestedblock--export))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `wait_for_rollout` (Boolean) Wait for the rollout of the task to complete. Defaults to true.
-- `withdraw` (Block List) Withdraw exported networks from the namespaces (see [below for nested schema](#nestedblock--withdraw))
 
 ### Read-Only
 
@@ -75,13 +74,4 @@ Optional:
 
 - `create` (String)
 - `delete` (String)
-
-
-<a id="nestedblock--withdraw"></a>
-### Nested Schema for `withdraw`
-
-Optional:
-
-- `namespaces` (List of String) List of namespaces from where the network would be withdrawn
-- `source_network` (String) Name of the network to be withdrawn
 

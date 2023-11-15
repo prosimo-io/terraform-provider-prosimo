@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 )
 
 type NetworkDiscovery struct {
@@ -236,6 +237,34 @@ func (prosimoClient *ProsimoClient) OffboardNetworkDeployment(ctx context.Contex
 	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, appID)
 
 	req, err := prosimoClient.api_client.NewRequest("DELETE", PostOnboardNetworkDeploymentEndpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	onboardresponse := &NetworkDeploymentres{}
+	_, err = prosimoClient.api_client.Do(ctx, req, onboardresponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return onboardresponse, nil
+
+}
+
+func (prosimoClient *ProsimoClient) ForceOffboardNetworkDeployment(ctx context.Context, appID string) (*NetworkDeploymentres, error) {
+	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, appID)
+	u, err := url.Parse(PostOnboardNetworkDeploymentEndpoint)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+		return nil, err
+	}
+
+	// Add query parameters
+	q := u.Query()
+	q.Add("force", "true")
+	u.RawQuery = q.Encode()
+
+	req, err := prosimoClient.api_client.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}

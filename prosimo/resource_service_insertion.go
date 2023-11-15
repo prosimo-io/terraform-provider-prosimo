@@ -182,7 +182,7 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		for i, _ := range v.([]interface{}) {
 			sourceConfig := v.(*schema.Set).List()[i].(map[string]interface{})
 			if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-				
+
 				for i, val := range v.List() {
 					_ = val
 
@@ -210,7 +210,7 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		for i, _ := range v.([]interface{}) {
 			targetConfig := v.(*schema.Set).List()[i].(map[string]interface{})
 			if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-				
+
 				for i, val := range v.List() {
 					_ = val
 
@@ -228,10 +228,9 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 				}
 				target.Networks = targetNetworkList
 			}
-		
 
 			if v, ok := targetConfig["apps"].(*schema.Set); ok && v.Len() > 0 {
-				
+
 				for i, _ := range v.List() {
 					appConfig := v.List()[i].(map[string]interface{})
 					selectappName := appConfig["name"].(string)
@@ -378,7 +377,7 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			for i, _ := range v.([]interface{}) {
 				sourceConfig := v.(*schema.Set).List()[i].(map[string]interface{})
 				if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-					
+
 					for i, val := range v.List() {
 						_ = val
 
@@ -402,11 +401,11 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		target := &client.Target{}
 		targetNetworkList := []client.Service_Input{}
 		targetAppList := []client.Service_Input{}
-		if v, ok := d.GetOk("target"); ok {		
+		if v, ok := d.GetOk("target"); ok {
 			for i, _ := range v.([]interface{}) {
 				targetConfig := v.(*schema.Set).List()[i].(map[string]interface{})
 				if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
-					
+
 					for i, val := range v.List() {
 						_ = val
 
@@ -426,7 +425,7 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 				}
 
 				if v, ok := targetConfig["apps"].(*schema.Set); ok && v.Len() > 0 {
-					
+
 					for i, _ := range v.List() {
 						appConfig := v.List()[i].(map[string]interface{})
 						selectappName := appConfig["name"].(string)

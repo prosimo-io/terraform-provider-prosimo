@@ -133,9 +133,10 @@ func resourceNetworkOnboarding() *schema.Resource {
 										Description: "(Required if transit-gateway is selected) tgw-id",
 									},
 									"connectivity_type": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "transit-gateway, vpc-peering",
+										Type:         schema.TypeString,
+										Optional:     true,
+										Description:  "transit-gateway, vpc-peering & public(Only applicable if connector placement is in WorkLoad VPC)",
+										ValidateFunc: validation.StringInSlice(client.GetConnectivityType(), false),
 									},
 									"subnets": {
 										Type:        schema.TypeList,
@@ -222,6 +223,12 @@ func resourceNetworkOnboarding() *schema.Resource {
 				Default:     true,
 				Optional:    true,
 			},
+			"force_offboard": {
+				Type:        schema.TypeBool,
+				Description: "Force app offboarding incase of normal offboarding failure.",
+				Default:     true,
+				Optional:    true,
+			},
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -275,7 +282,7 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 		if d.Get("wait_for_rollout").(bool) {
 			log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
 			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-				retryUntilTaskCompleteNetwork(ctx, d, meta, res.NetworkDeploymentResops.TaskID, networkOnboardops))
+				retryUntilTaskCompleteNetworkOnboard(ctx, d, meta, res.NetworkDeploymentResops.TaskID, networkOnboardops))
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -355,7 +362,7 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 			if d.Get("wait_for_rollout").(bool) {
 				log.Printf("[DEBUG] Waiting for task id %s to complete", onboardresponse.NetworkDeploymentResops.TaskID)
 				err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-					retryUntilTaskComplete(ctx, d, meta, onboardresponse.NetworkDeploymentResops.TaskID))
+					retryUntilTaskCompleteNetworkOffboard(ctx, d, meta, onboardresponse.NetworkDeploymentResops.TaskID, networkOnboardops))
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -375,7 +382,7 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 				if d.Get("wait_for_rollout").(bool) {
 					log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
 					err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-						retryUntilTaskCompleteNetwork(ctx, d, meta, res.NetworkDeploymentResops.TaskID, networkOnboardops))
+						retryUntilTaskCompleteNetworkOnboard(ctx, d, meta, res.NetworkDeploymentResops.TaskID, networkOnboardops))
 					if err != nil {
 						return diag.FromErr(err)
 					}
@@ -389,7 +396,7 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 				if d.Get("wait_for_rollout").(bool) {
 					log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
 					err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-						retryUntilTaskCompleteNetwork(ctx, d, meta, res.NetworkDeploymentResops.TaskID, networkOnboardops))
+						retryUntilTaskCompleteNetworkOnboard(ctx, d, meta, res.NetworkDeploymentResops.TaskID, networkOnboardops))
 					if err != nil {
 						return diag.FromErr(err)
 					}
@@ -450,7 +457,7 @@ func resourceNetworkOnboardingDelete(ctx context.Context, d *schema.ResourceData
 		if d.Get("wait_for_rollout").(bool) {
 			log.Printf("[DEBUG] Waiting for task id %s to complete", appOffboardResData.NetworkDeploymentResops.TaskID)
 			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-				retryUntilTaskComplete(ctx, d, meta, appOffboardResData.NetworkDeploymentResops.TaskID))
+				retryUntilTaskCompleteNetworkOffboard(ctx, d, meta, appOffboardResData.NetworkDeploymentResops.TaskID, appSummary))
 			if err != nil {
 				return diag.FromErr(err)
 			}

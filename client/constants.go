@@ -222,6 +222,13 @@ const (
 	NoneServiceInsertionOptions   = "none"
 	ManualServiceInsertionOptions = "manual"
 
+	VpcPeeringConnectivityType = "vpc-peering"
+	TGWConnectivityType = "transit-gateway"
+	PublicConnectivityType = "public"
+	VnetPeeringConnectivityType = "vnet-peering"
+	VwanHubConnectivityType = "vwan-hub"
+
+
 	ManualDNSServiceType     = "manual"
 	AWSRoute53DNSServiceType = "aws_route53"
 	ProsimoDNSServiceType    = "prosimo"
@@ -378,4 +385,6 @@ const (
 	TransitSetupSummaryEndpoint     = APIPrefix + "network/transit/setup/summary"
 	DeleteTransitSetupEndpoint      = APIPrefix + "network/transit/setup/bulk-delete"
 	CreateTransitDeploymentEndpoint = APIPrefix + "network/transit/deployment"
+	CreateRouteEntryEndpoint        = APIPrefix + "route-entry"
+	GetRouteEntryEndpoint           = APIPrefix + "route-entry/search"
 )

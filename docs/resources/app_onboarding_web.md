@@ -277,6 +277,7 @@ resource "prosimo_app_onboarding_web" "private-dc" {
 - `client_cert` (String) Client Cert details
 - `customize_policy` (Block Set, Max: 1) Choose any custom policy created from the policy library or create one. (see [below for nested schema](#nestedblock--customize_policy))
 - `enable_multi_cloud_access` (Boolean) Setting this to true would leverage multi clouds to optimize the app performance
+- `force_offboard` (Boolean) Force app offboarding incase of normal offboarding failure.
 - `idp_name` (String) IDP provider name.
 - `saml_rewrite` (Block Set, Max: 1) App authentication option while selecting prosimo domain (see [below for nested schema](#nestedblock--saml_rewrite))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

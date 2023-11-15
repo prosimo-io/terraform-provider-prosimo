@@ -65,6 +65,37 @@ func retryUntilTaskComplete_appOnboard(ctx context.Context, d *schema.ResourceDa
 	}
 }
 
+func retryUntilTaskComplete_appOffboard(ctx context.Context, d *schema.ResourceData, meta interface{}, taskID string, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) resource.RetryFunc {
+	var diags diag.Diagnostics
+	prosimoClient := meta.(*client.ProsimoClient)
+	return func() *resource.RetryError {
+		getTaskStatus, err := prosimoClient.GetTaskStatus(ctx, taskID)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
+		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+			for _, subtask := range getTaskStatus.ItemList {
+				if subtask.Status == "FAILURE" {
+					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
+				}
+			}
+			if d.Get("force_offboard").(bool) {
+				resourceAppOnboardingRead(ctx, d, meta)
+				log.Println("[DEBUG]: Force offboarding app")
+				appOnboardSettingsOpts.ID = d.Id()
+				diags = forceOffboardApp(ctx, d, meta, appOnboardSettingsOpts)
+				if diags != nil {
+					return resource.NonRetryableError(err)
+				}
+			}
+
+		}
+		return nil
+	}
+}
+
 func createAppOnboardSettings(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
 
 	var diags diag.Diagnostics
@@ -663,6 +694,30 @@ func offboardApp(ctx context.Context, d *schema.ResourceData, meta interface{}, 
 	appOnboardSettingsID := appOnboardSettingsOpts.ID
 
 	appOffboardResData, err := prosimoClient.OffboardAppDeployment(ctx, appOnboardSettingsID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if d.Get("wait_for_rollout").(bool) {
+		log.Printf("[DEBUG] Waiting for task id %s to complete", appOffboardResData.ResourceData.ID)
+		err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+			retryUntilTaskComplete_appOffboard(ctx, d, meta, appOffboardResData.ResourceData.ID, appOnboardSettingsOpts))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		log.Printf("[DEBUG] task %s is successful", appOffboardResData.ResourceData.ID)
+	}
+
+	return diags
+}
+
+func forceOffboardApp(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	prosimoClient := meta.(*client.ProsimoClient)
+
+	appOnboardSettingsID := appOnboardSettingsOpts.ID
+
+	appOffboardResData, err := prosimoClient.ForceOffboardAppDeployment(ctx, appOnboardSettingsID)
 	if err != nil {
 		return diag.FromErr(err)
 	}

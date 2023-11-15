@@ -65,6 +65,7 @@ func Provider() *schema.Provider {
 			"prosimo_namespace":                resourceNamespace(),
 			"prosimo_cloud_gateway":            resourceCloudGateway(),
 			"prosimo_visual_transit":           resourceVisualTransit(),
+			"prosimo_regional_prefix":          resourceRegionalPrefix(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

@@ -66,3 +66,4 @@ func TestCreateCacheRule(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+	

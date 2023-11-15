@@ -223,6 +223,7 @@ resource "prosimo_network_onboarding" "privateDC" {
 
 ### Optional
 
+- `force_offboard` (Boolean) Force app offboarding incase of normal offboarding failure.
 - `namespace` (String) Assigned Namespace
 - `policies` (List of String) Select policy name.e.g: ALLOW-ALL-NETWORKS, DENY-ALL-NETWORKS or Custom Policies
 - `private_cloud` (Block Set) (see [below for nested schema](#nestedblock--private_cloud))
@@ -277,7 +278,7 @@ Required:
 
 Optional:
 
-- `connectivity_type` (String) transit-gateway, vpc-peering
+- `connectivity_type` (String) transit-gateway, vpc-peering & public(Only applicable if connector placement is in WorkLoad VPC)
 - `connector_settings` (Block Set) (see [below for nested schema](#nestedblock--public_cloud--cloud_networks--connector_settings))
 - `hub_id` (String) (Required if transit-gateway is selected) tgw-id
 - `service_insertion_endpoint_subnets` (String) Service Insertion Endpoint, applicable when connector is placed in Workload VPC

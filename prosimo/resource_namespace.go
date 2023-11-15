@@ -75,26 +75,26 @@ func resourceNamespace() *schema.Resource {
 					},
 				},
 			},
-			"withdraw": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: "Withdraw exported networks from the namespaces",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"source_network": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Name of the network to be withdrawn",
-						},
-						"namespaces": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Description: "List of namespaces from where the network would be withdrawn",
-						},
-					},
-				},
-			},
+			// 	"withdraw": {
+			// 		Type:        schema.TypeList,
+			// 		Optional:    true,
+			// 		Description: "Withdraw exported networks from the namespaces",
+			// 		Elem: &schema.Resource{
+			// 			Schema: map[string]*schema.Schema{
+			// 				"source_network": {
+			// 					Type:        schema.TypeString,
+			// 					Optional:    true,
+			// 					Description: "Name of the network to be withdrawn",
+			// 				},
+			// 				"namespaces": {
+			// 					Type:        schema.TypeList,
+			// 					Optional:    true,
+			// 					Elem:        &schema.Schema{Type: schema.TypeString},
+			// 					Description: "List of namespaces from where the network would be withdrawn",
+			// 				},
+			// 			},
+			// 		},
+			// 	},
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -213,53 +213,53 @@ func resourceNSCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 	}
 
-	if v, ok := d.GetOk("withdraw"); ok {
-		inexportList := []client.NetActNamespace{}
-		for _, value := range v.([]interface{}) {
-			exportinput := value.(map[string]interface{})
-			inExport := client.NetActNamespace{}
-			if v, ok := exportinput["source_network"]; ok {
-				sourceNetwork := v.(string)
-				onboardNetworkList, err := prosimoClient.SearchOnboardNetworks(ctx)
-				if err != nil {
-					return diag.FromErr(err)
-				}
-				for _, network := range onboardNetworkList.Data.Records {
-					if network.Name == sourceNetwork {
-						inExport.NetworkID = network.ID
-						break
-					}
-				}
-			}
-			if v, ok := exportinput["namespaces"]; ok {
-				namespaceList := expandStringList(v.([]interface{}))
-				innsList := []string{}
-				for _, namespace := range namespaceList {
-					namespaceRes, err := prosimoClient.GetNamespaceByName(ctx, namespace)
-					if err != nil {
-						return diag.FromErr(err)
-					}
-					innsList = append(innsList, namespaceRes.ID)
-				}
-				inExport.Namespaces = innsList
-			}
+	// if v, ok := d.GetOk("withdraw"); ok {
+	// 	inexportList := []client.NetActNamespace{}
+	// 	for _, value := range v.([]interface{}) {
+	// 		exportinput := value.(map[string]interface{})
+	// 		inExport := client.NetActNamespace{}
+	// 		if v, ok := exportinput["source_network"]; ok {
+	// 			sourceNetwork := v.(string)
+	// 			onboardNetworkList, err := prosimoClient.SearchOnboardNetworks(ctx)
+	// 			if err != nil {
+	// 				return diag.FromErr(err)
+	// 			}
+	// 			for _, network := range onboardNetworkList.Data.Records {
+	// 				if network.Name == sourceNetwork {
+	// 					inExport.NetworkID = network.ID
+	// 					break
+	// 				}
+	// 			}
+	// 		}
+	// 		if v, ok := exportinput["namespaces"]; ok {
+	// 			namespaceList := expandStringList(v.([]interface{}))
+	// 			innsList := []string{}
+	// 			for _, namespace := range namespaceList {
+	// 				namespaceRes, err := prosimoClient.GetNamespaceByName(ctx, namespace)
+	// 				if err != nil {
+	// 					return diag.FromErr(err)
+	// 				}
+	// 				innsList = append(innsList, namespaceRes.ID)
+	// 			}
+	// 			inExport.Namespaces = innsList
+	// 		}
 
-			inexportList = append(inexportList, inExport)
-		}
-		withdrawres, err := prosimoClient.WithdrawNetworkToNamespace(ctx, &inexportList, d.Id())
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if d.Get("wait_for_rollout").(bool) {
-			log.Printf("[DEBUG] Waiting for task id %s to complete", withdrawres.NamespaceResponse.TaskID)
-			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-				retryUntilTaskComplete(ctx, d, meta, withdrawres.NamespaceResponse.TaskID))
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			log.Printf("[INFO] task %s is successful", withdrawres.NamespaceResponse.TaskID)
-		}
-	}
+	// 		inexportList = append(inexportList, inExport)
+	// 	}
+	// 	withdrawres, err := prosimoClient.WithdrawNetworkToNamespace(ctx, &inexportList, d.Id())
+	// 	if err != nil {
+	// 		return diag.FromErr(err)
+	// 	}
+	// 	if d.Get("wait_for_rollout").(bool) {
+	// 		log.Printf("[DEBUG] Waiting for task id %s to complete", withdrawres.NamespaceResponse.TaskID)
+	// 		err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+	// 			retryUntilTaskComplete(ctx, d, meta, withdrawres.NamespaceResponse.TaskID))
+	// 		if err != nil {
+	// 			return diag.FromErr(err)
+	// 		}
+	// 		log.Printf("[INFO] task %s is successful", withdrawres.NamespaceResponse.TaskID)
+	// 	}
+	// }
 	resourceNSRead(ctx, d, meta)
 	return diags
 }
@@ -378,55 +378,55 @@ func resourceNSUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 	}
 
-	if d.HasChange("withdraw") && !d.IsNewResource() {
-		if v, ok := d.GetOk("withdraw"); ok {
-			inexportList := []client.NetActNamespace{}
-			for _, value := range v.([]interface{}) {
-				exportinput := value.(map[string]interface{})
-				inExport := client.NetActNamespace{}
-				if v, ok := exportinput["source_network"]; ok {
-					sourceNetwork := v.(string)
-					onboardNetworkList, err := prosimoClient.SearchOnboardNetworks(ctx)
-					if err != nil {
-						return diag.FromErr(err)
-					}
-					for _, network := range onboardNetworkList.Data.Records {
-						if network.Name == sourceNetwork {
-							inExport.NetworkID = network.ID
-							break
-						}
-					}
-				}
-				if v, ok := exportinput["namespaces"]; ok {
-					namespaceList := expandStringList(v.([]interface{}))
-					innsList := []string{}
-					for _, namespace := range namespaceList {
-						namespaceRes, err := prosimoClient.GetNamespaceByName(ctx, namespace)
-						if err != nil {
-							return diag.FromErr(err)
-						}
-						innsList = append(innsList, namespaceRes.ID)
-					}
-					inExport.Namespaces = innsList
-				}
+	// if d.HasChange("withdraw") && !d.IsNewResource() {
+	// 	if v, ok := d.GetOk("withdraw"); ok {
+	// 		inexportList := []client.NetActNamespace{}
+	// 		for _, value := range v.([]interface{}) {
+	// 			exportinput := value.(map[string]interface{})
+	// 			inExport := client.NetActNamespace{}
+	// 			if v, ok := exportinput["source_network"]; ok {
+	// 				sourceNetwork := v.(string)
+	// 				onboardNetworkList, err := prosimoClient.SearchOnboardNetworks(ctx)
+	// 				if err != nil {
+	// 					return diag.FromErr(err)
+	// 				}
+	// 				for _, network := range onboardNetworkList.Data.Records {
+	// 					if network.Name == sourceNetwork {
+	// 						inExport.NetworkID = network.ID
+	// 						break
+	// 					}
+	// 				}
+	// 			}
+	// 			if v, ok := exportinput["namespaces"]; ok {
+	// 				namespaceList := expandStringList(v.([]interface{}))
+	// 				innsList := []string{}
+	// 				for _, namespace := range namespaceList {
+	// 					namespaceRes, err := prosimoClient.GetNamespaceByName(ctx, namespace)
+	// 					if err != nil {
+	// 						return diag.FromErr(err)
+	// 					}
+	// 					innsList = append(innsList, namespaceRes.ID)
+	// 				}
+	// 				inExport.Namespaces = innsList
+	// 			}
 
-				inexportList = append(inexportList, inExport)
-			}
-			withdrawres, err := prosimoClient.WithdrawNetworkToNamespace(ctx, &inexportList, d.Id())
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			if d.Get("wait_for_rollout").(bool) {
-				log.Printf("[DEBUG] Waiting for task id %s to complete", withdrawres.NamespaceResponse.TaskID)
-				err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-					retryUntilTaskComplete(ctx, d, meta, withdrawres.NamespaceResponse.TaskID))
-				if err != nil {
-					return diag.FromErr(err)
-				}
-				log.Printf("[INFO] task %s is successful", withdrawres.NamespaceResponse.TaskID)
-			}
-		}
-	}
+	// 			inexportList = append(inexportList, inExport)
+	// 		}
+	// 		withdrawres, err := prosimoClient.WithdrawNetworkToNamespace(ctx, &inexportList, d.Id())
+	// 		if err != nil {
+	// 			return diag.FromErr(err)
+	// 		}
+	// 		if d.Get("wait_for_rollout").(bool) {
+	// 			log.Printf("[DEBUG] Waiting for task id %s to complete", withdrawres.NamespaceResponse.TaskID)
+	// 			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+	// 				retryUntilTaskComplete(ctx, d, meta, withdrawres.NamespaceResponse.TaskID))
+	// 			if err != nil {
+	// 				return diag.FromErr(err)
+	// 			}
+	// 			log.Printf("[INFO] task %s is successful", withdrawres.NamespaceResponse.TaskID)
+	// 		}
+	// 	}
+	// }
 	resourcePVSRead(ctx, d, meta)
 	return diags
 }

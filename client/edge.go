@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 type Edge struct {
@@ -17,7 +18,7 @@ type Edge struct {
 	Status           string             `json:"status,omitempty"`
 	Subnet           string             `json:"subnet,omitempty"`
 	TeamID           string             `json:"teamID,omitempty"`
-	Byoresource      *ByoResource		`json:"byoResourceDetails,omitempty"`
+	Byoresource      *ByoResource       `json:"byoResourceDetails,omitempty"`
 }
 
 type ByoResource struct {
@@ -123,6 +124,34 @@ func (prosimoClient *ProsimoClient) DeleteAppDeployment(ctx context.Context, edg
 
 }
 
+func (prosimoClient *ProsimoClient) ForceDeleteAppDeployment(ctx context.Context, edgeId string) (*ResourcePostResponseData, error) {
+
+	deleteAppDeploymentEndpt := fmt.Sprintf("%s/%s", AppDeploymentEndpoint, edgeId)
+	u, err := url.Parse(deleteAppDeploymentEndpt)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+		return nil, err
+	}
+
+	// Add query parameters
+	q := u.Query()
+	q.Add("force", "true")
+	u.RawQuery = q.Encode()
+
+	req, err := prosimoClient.api_client.NewRequest("DELETE", u.String(), &Edge{})
+	if err != nil {
+		return nil, err
+	}
+
+	resourcePostResponseData := &ResourcePostResponseData{}
+	_, err = prosimoClient.api_client.Do(ctx, req, resourcePostResponseData)
+	if err != nil {
+		return nil, err
+	}
+
+	return resourcePostResponseData, nil
+
+}
 
 func (prosimoClient *ProsimoClient) PatchSubnetRange(ctx context.Context, edgeId string, patchSubnet *Edge) error {
 

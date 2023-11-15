@@ -341,6 +341,12 @@ func resourceAppOnboarding_FQDN() *schema.Resource {
 				Default:     true,
 				Optional:    true,
 			},
+			"force_offboard": {
+				Type:        schema.TypeBool,
+				Description: "Force app offboarding incase of normal offboarding failure.",
+				Default:     true,
+				Optional:    true,
+			},
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),

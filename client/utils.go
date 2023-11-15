@@ -169,6 +169,16 @@ func GetConnectorPlacementOptions() []string {
 	return ConnectorPlacementOptions
 }
 
+func GetConnectivityType() []string {
+	ConnectivityType := make([]string, 5)
+	ConnectivityType[0] = VpcPeeringConnectivityType
+	ConnectivityType[1] = TGWConnectivityType
+	ConnectivityType[2] = PublicConnectivityType
+	ConnectivityType[3] = VnetPeeringConnectivityType
+	ConnectivityType[4] = VwanHubConnectivityType
+	return ConnectivityType
+}
+
 func GetServiceInsertionOptions() []string {
 	ServiceInsertionOptions := make([]string, 3)
 	ServiceInsertionOptions[0] = AutoServiceInsertionOptions

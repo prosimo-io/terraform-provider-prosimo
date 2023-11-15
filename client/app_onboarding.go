@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+
 type AppOnboardSettingsOpts struct {
 	AppID                   string          `json:"appID,omitempty"`
 	App_Name                string          `json:"appName,omitempty"`
@@ -498,6 +499,15 @@ func (prosimoClient *ProsimoClient) OffboardAppDeployment(ctx context.Context, a
 	deleteOnboardAppDeploymentEndpoint := fmt.Sprintf(OnboardAppDeploymentEndpoint, appOnboardSettingsID)
 
 	return prosimoClient.api_client.AppOffboarding_DeleteRequest(ctx, deleteOnboardAppDeploymentEndpoint)
+
+}
+
+
+func (prosimoClient *ProsimoClient)ForceOffboardAppDeployment(ctx context.Context, appOnboardSettingsID string) (*ResourcePostResponseData, error) {
+
+	deleteOnboardAppDeploymentEndpoint := fmt.Sprintf(OnboardAppDeploymentEndpoint, appOnboardSettingsID)
+
+	return prosimoClient.api_client.AppOffboarding_Force_DeleteRequest(ctx, deleteOnboardAppDeploymentEndpoint)
 
 }
 

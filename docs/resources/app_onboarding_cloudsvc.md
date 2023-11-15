@@ -21,7 +21,6 @@ resource "prosimo_app_onboarding_cloudsvc" "testapp-s3" {
 
     app_name = "common-app-s3"
     cloud_svc = "amazon-s3"
-    ip_pool_cidr = "10.253.0.0/16"
     idp_name = "azure_ad"
     app_urls {
         internal_domain = "qingscnetworkers.info"
@@ -54,7 +53,6 @@ resource "prosimo_app_onboarding_cloudsvc" "testapp-s4" {
 
     app_name = "common-app-s3"
     # cloud_svc = "amazon-s3"
-    ip_pool_cidr = "192.168.0.0/22"
     idp_name = "azure_ad"
     app_urls {
         internal_domain = "qingscnetworkers.info"
@@ -136,6 +134,7 @@ resource "prosimo_app_onboarding_cloudsvc" "private-dc" {
 - `cloud_svc` (String) Cloud service platform, as of now default platform is amazon s3
 - `customize_policy` (Block Set, Max: 1) Choose any custom policy created from the policy library or create one (see [below for nested schema](#nestedblock--customize_policy))
 - `enable_multi_cloud_access` (Boolean) Setting this to true would leverage multi clouds to optimize the app performance
+- `force_offboard` (Boolean) Force app offboarding incase of normal offboarding failure.
 - `idp_name` (String) IDP provider name.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `wait_for_rollout` (Boolean) Wait for the rollout of the task to complete. Defaults to true.

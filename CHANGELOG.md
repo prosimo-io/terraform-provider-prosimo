@@ -1,4 +1,13 @@
 
+## 3.9.9(November 14   2023)
+    ###BugFix:
+    - Azure Network Onboarding fails with error "Invalid Connectivity Options
+## 3.9.8(October 30   2023)
+    ###Features:
+    - Terraform support for regional prefix. Created resource named `prosimo_regional_prefix`. 
+    - With latest ui changes, resource `"prosimo_namespace"` does not have withdraw field anymore, the withdrawal would be taken care with the help of export api.
+    - Terraform support for force decom of apps,networks and edges. With the new feature, optional field `force_offboard` has been    introduced  which enables force decom option. The value defaults to "true" and can be overwritten. A of now force decom workflow would only be triggered if normal offboarding has failed.
+    Refer docs for more info and sample HQLs.
 ## 3.8.8(October 06   2023)
     ### Enhancements:
     With latest changes in Edge Api resource `prosimo_ip_address` has been Obsolated. 

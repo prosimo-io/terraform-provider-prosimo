@@ -65,7 +65,73 @@ func retryUntilTaskComplete(ctx context.Context, d *schema.ResourceData, meta in
 	}
 }
 
-func retryUntilTaskCompleteNetwork(ctx context.Context, d *schema.ResourceData, meta interface{}, taskID string, networkOnboardops *client.NetworkOnboardoptns) resource.RetryFunc {
+func retryUntilTaskComplete_edge_onboard(ctx context.Context, d *schema.ResourceData, meta interface{}, taskID string) resource.RetryFunc {
+	prosimoClient := meta.(*client.ProsimoClient)
+	return func() *resource.RetryError {
+		getTaskStatus, err := prosimoClient.GetTaskStatus(ctx, taskID)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
+		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+			for _, subtask := range getTaskStatus.ItemList {
+				if subtask.Status == "FAILURE" {
+					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
+				}
+			}
+			log.Println("[DEBUG]: decommisioning edge with id", d.Id())
+			appResponseData, err := prosimoClient.DeleteAppDeployment(ctx, d.Id())
+			if err != nil {
+				return resource.NonRetryableError(err)
+			}
+			log.Printf("[DEBUG] Waiting for task id %s to complete", appResponseData.ResourceData.ID)
+			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+				retryUntilTaskComplete_edge_Offboard(ctx, d, meta, appResponseData.ResourceData.ID))
+			if err != nil {
+				return resource.NonRetryableError(err)
+			}
+			log.Printf("[INFO] task %s is successful", appResponseData.ResourceData.ID)
+
+		}
+		return nil
+	}
+}
+
+func retryUntilTaskComplete_edge_Offboard(ctx context.Context, d *schema.ResourceData, meta interface{}, taskID string) resource.RetryFunc {
+	prosimoClient := meta.(*client.ProsimoClient)
+	return func() *resource.RetryError {
+		getTaskStatus, err := prosimoClient.GetTaskStatus(ctx, taskID)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
+		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+			for _, subtask := range getTaskStatus.ItemList {
+				if subtask.Status == "FAILURE" {
+					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
+				}
+			}
+			log.Println("[DEBUG]: force decommisioning edge with id", d.Id())
+			appResponseData, err := prosimoClient.ForceDeleteAppDeployment(ctx, d.Id())
+			if err != nil {
+				return resource.NonRetryableError(err)
+			}
+			log.Printf("[DEBUG] Waiting for task id %s to complete", appResponseData.ResourceData.ID)
+			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+				retryUntilTaskComplete(ctx, d, meta, appResponseData.ResourceData.ID))
+			if err != nil {
+				return resource.NonRetryableError(err)
+			}
+			log.Printf("[INFO] task %s is successful", appResponseData.ResourceData.ID)
+
+		}
+		return nil
+	}
+}
+
+func retryUntilTaskCompleteNetworkOnboard(ctx context.Context, d *schema.ResourceData, meta interface{}, taskID string, networkOnboardops *client.NetworkOnboardoptns) resource.RetryFunc {
 	prosimoClient := meta.(*client.ProsimoClient)
 	return func() *resource.RetryError {
 		getTaskStatus, err := prosimoClient.GetTaskStatus(ctx, taskID)
@@ -83,9 +149,52 @@ func retryUntilTaskCompleteNetwork(ctx context.Context, d *schema.ResourceData, 
 			// resourceNetworkOnboardingRead(ctx, d, meta)
 			log.Println("[DEBUG]: offboarding network", d.Id())
 			networkOnboardops.ID = d.Id()
-			_, err := prosimoClient.OffboardNetworkDeployment(ctx, networkOnboardops.ID)
+			res, err := prosimoClient.OffboardNetworkDeployment(ctx, networkOnboardops.ID)
 			if err != nil {
 				return resource.NonRetryableError(err)
+			}
+			log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
+			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+				retryUntilTaskCompleteNetworkOffboard(ctx, d, meta, res.NetworkDeploymentResops.TaskID, networkOnboardops))
+			if err != nil {
+				return resource.NonRetryableError(err)
+			}
+			log.Printf("[INFO] task %s is successful", res.NetworkDeploymentResops.TaskID)
+
+		}
+		return nil
+	}
+}
+
+func retryUntilTaskCompleteNetworkOffboard(ctx context.Context, d *schema.ResourceData, meta interface{}, taskID string, networkOnboardops *client.NetworkOnboardoptns) resource.RetryFunc {
+	prosimoClient := meta.(*client.ProsimoClient)
+	return func() *resource.RetryError {
+		getTaskStatus, err := prosimoClient.GetTaskStatus(ctx, taskID)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
+		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+			for _, subtask := range getTaskStatus.ItemList {
+				if subtask.Status == "FAILURE" {
+					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
+				}
+			}
+			// resourceNetworkOnboardingRead(ctx, d, meta)
+			if d.Get("force_offboard").(bool) {
+				log.Println("[DEBUG]: force offboarding network", d.Id())
+				networkOnboardops.ID = d.Id()
+				res, err := prosimoClient.ForceOffboardNetworkDeployment(ctx, networkOnboardops.ID)
+				if err != nil {
+					return resource.NonRetryableError(err)
+				}
+				log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
+				err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+					retryUntilTaskComplete(ctx, d, meta, res.NetworkDeploymentResops.TaskID))
+				if err != nil {
+					return resource.NonRetryableError(err)
+				}
 			}
 
 		}
