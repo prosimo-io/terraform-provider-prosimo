@@ -12,7 +12,7 @@ import (
 
 func resourceRegionalPrefix() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Use this resource to create/modify Private Link Sources.",
+		Description:   "Use this resource to create/modify Regional Prefixes.",
 		CreateContext: resourceRPCreate,
 		UpdateContext: resourceRPUpdate,
 		DeleteContext: resourceRPDelete,

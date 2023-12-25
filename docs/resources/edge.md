@@ -22,8 +22,10 @@ resource "prosimo_edge" "edge" {
   cloud_region = "us-west-1"
   ip_range = "100.190.0.0/23"
   node_size_settings {
-    bandwidth = "1-5 Gbps"
-    instance_type = "c5a.large"
+    bandwidth_range {
+        min = 7
+        max = 9
+    }
     }
   deploy_edge = true
   decommission_edge = false
@@ -73,8 +75,16 @@ resource "prosimo_edge" "edge_azure" {
 
 Optional:
 
-- `bandwidth` (String) Available Options: <1 Gbps, 1-5 Gbps, 5-10 Gbps, >10 Gbps
-- `instance_type` (String) Available Options wrt cloud and bandwidth :Cloud_Provider: AWS:Bandwidth:  <1 Gbps, Available Options: t3.medium/t3a.medium/c5.largeBandwidth:  1-5 Gbps, Available Options: c5a.large/c5.xlarge/c5a.xlarge/c5n.xlargeBandwidth: 5-10 Gbps, Available Options: c5a.8xlarge/c5.9xlargeBandwidth: >10 Gbps, Available Options: c5n.9xlarge/c5a.16xlarge/c5.18xlarge/c5n.18xlarge
+- `bandwidth_range` (Block Set) (see [below for nested schema](#nestedblock--node_size_settings--bandwidth_range))
+
+<a id="nestedblock--node_size_settings--bandwidth_range"></a>
+### Nested Schema for `node_size_settings.bandwidth_range`
+
+Required:
+
+- `max` (Number) Maximum Bandwidth Range
+- `min` (Number) Minimum Bandwidth Range
+
 
 
 <a id="nestedblock--timeouts"></a>

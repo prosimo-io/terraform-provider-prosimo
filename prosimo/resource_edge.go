@@ -58,27 +58,23 @@ func resourceEdge() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"bandwidth": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  " Available Options: <1 Gbps, 1-5 Gbps, 5-10 Gbps, >10 Gbps",
-							ValidateFunc: validation.StringInSlice(client.GetConnectorBandwidthOptions(), false),
-						},
-						// "bandwidth_name": {
-						// 	Type:        schema.TypeString,
-						// 	Required:    true,
-						// 	Description: "EX: <1 Gbps, >1 Gbps",
-						// },
-						"instance_type": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice(client.GetConnectorInstanceOptions(), false),
-							Description: "Available Options wrt cloud and bandwidth :" +
-								"Cloud_Provider: AWS:" +
-								"Bandwidth:  <1 Gbps, Available Options: t3.medium/t3a.medium/c5.large" +
-								"Bandwidth:  1-5 Gbps, Available Options: c5a.large/c5.xlarge/c5a.xlarge/c5n.xlarge" +
-								"Bandwidth: 5-10 Gbps, Available Options: c5a.8xlarge/c5.9xlarge" +
-								"Bandwidth: >10 Gbps, Available Options: c5n.9xlarge/c5a.16xlarge/c5.18xlarge/c5n.18xlarge",
+						"bandwidth_range": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"min": {
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: "Minimum Bandwidth Range",
+									},
+									"max": {
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: "Maximum Bandwidth Range",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -210,22 +206,20 @@ func resourceEdgeCreate(ctx context.Context, d *schema.ResourceData, meta interf
 			}
 		}
 		if v, ok := d.GetOk("node_size_settings"); ok {
+			log.Println("inside node_size_block")
+			nodesizesettingInput := &client.ConnectorSettings{}
 			nodesizesettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-			nodesizesettingInput := &client.ConnectorSettings{
-				// Bandwidth:     nodesizesettingConfig["bandwidth"].(string),
-				BandwidthName: nodesizesettingConfig["bandwidth"].(string),
-				InstanceType:  nodesizesettingConfig["instance_type"].(string),
+			if v, ok := nodesizesettingConfig["bandwidth_range"]; ok {
+				bandwidthRangeConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+				log.Println("bandwidth_range")
+				bandwidthConfig := &client.BandwidthRange{
+					Min: bandwidthRangeConfig["min"].(int),
+					Max: bandwidthRangeConfig["max"].(int),
+				}
+				log.Println("bandwidthConfig", bandwidthConfig)
+				nodesizesettingInput.BandwidthRange = bandwidthConfig
 			}
-			switch nodesizesettingInput.BandwidthName {
-			case client.LessThan1GBPS:
-				nodesizesettingInput.Bandwidth = client.ConnectorSizeSmall
-			case client.OneToFiveGBPS:
-				nodesizesettingInput.Bandwidth = client.ConnectorSizeMedium
-			case client.FiveToTenGBPS:
-				nodesizesettingInput.Bandwidth = client.ConnectorSizeLarge
-			case client.MoreThanTenGBPS:
-				nodesizesettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-			}
+
 			edge.NodeSizesettings = nodesizesettingInput
 		} else {
 			diags = append(diags, diag.Diagnostic{
@@ -236,6 +230,12 @@ func resourceEdgeCreate(ctx context.Context, d *schema.ResourceData, meta interf
 			return diags
 		}
 	}
+
+	reserr := prosimoClient.ValidateQuota(ctx, edge)
+	if reserr != nil {
+		return diag.FromErr(reserr)
+	}
+
 	edgeResponseData, err := prosimoClient.CreateEdge(ctx, edge)
 	if err != nil {
 		return diag.FromErr(err)
@@ -265,7 +265,7 @@ func resourceEdgeCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		log.Printf("[DEBUG] Deployed App for Edge - cloud name - %s, region - (%s)", cloudName, region)
 	}
 
-	resourceCloudCredentialsRead(ctx, d, meta)
+	resourceEdgeRead(ctx, d, meta)
 
 	return diags
 }
@@ -378,22 +378,17 @@ func resourceEdgeUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		//NodeSize Settings
 		if cloudCreds.CloudType == client.AWSCloudType {
 			if v, ok := d.GetOk("node_size_settings"); ok {
+				nodesizesettingInput := &client.ConnectorSettings{}
 				nodesizesettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-				nodesizesettingInput := &client.ConnectorSettings{
-					// Bandwidth:     nodesizesettingConfig["bandwidth"].(string),
-					BandwidthName: nodesizesettingConfig["bandwidth"].(string),
-					InstanceType:  nodesizesettingConfig["instance_type"].(string),
+				if v, ok := nodesizesettingConfig["bandwidth_range"]; ok {
+					bandwidthRangeConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+					bandwidthConfig := &client.BandwidthRange{
+						Min: bandwidthRangeConfig["min"].(int),
+						Max: bandwidthRangeConfig["max"].(int),
+					}
+					nodesizesettingInput.BandwidthRange = bandwidthConfig
 				}
-				switch nodesizesettingInput.BandwidthName {
-				case client.LessThan1GBPS:
-					nodesizesettingInput.Bandwidth = client.ConnectorSizeSmall
-				case client.OneToFiveGBPS:
-					nodesizesettingInput.Bandwidth = client.ConnectorSizeMedium
-				case client.FiveToTenGBPS:
-					nodesizesettingInput.Bandwidth = client.ConnectorSizeLarge
-				case client.MoreThanTenGBPS:
-					nodesizesettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-				}
+
 				edge.NodeSizesettings = nodesizesettingInput
 			} else {
 				diags = append(diags, diag.Diagnostic{
@@ -404,12 +399,16 @@ func resourceEdgeUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 				return diags
 			}
 		}
-		edgeResponseData, err := prosimoClient.UpdateEdge(ctx, edgeID, edge)
+		reserr := prosimoClient.ValidateQuota(ctx, edge)
+		if reserr != nil {
+			return diag.FromErr(reserr)
+		}
+		_, err := prosimoClient.UpdateEdge(ctx, edgeID, edge)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		d.SetId(edgeResponseData.ResourceData.ID)
+		// d.SetId(edgeResponseData.ResourceData.ID)
 	}
 
 	// deploy edge
@@ -432,7 +431,7 @@ func resourceEdgeUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		}
 	}
 
-	resourceCloudCredentialsRead(ctx, d, meta)
+	resourceEdgeRead(ctx, d, meta)
 
 	return diags
 }
@@ -482,6 +481,7 @@ func resourceEdgeRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	d.Set("reg_status", edge.RegStatus)
 	d.Set("status", edge.Status)
 	d.Set("team_id", edge.TeamID)
+	// d.Set("node_size_settings", edge.NodeSizesettings)
 
 	return diags
 }

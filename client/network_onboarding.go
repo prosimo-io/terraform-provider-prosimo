@@ -46,10 +46,16 @@ type NetworkOnboardSearchResponseData struct {
 	Data *NetworkOnboardSearchResponse `json:"data,omitempty"`
 }
 type ConnectorSettings struct {
-	Bandwidth     string   `json:"bandwidth,omitempty"`
-	BandwidthName string   `json:"bandwidthName,omitempty"`
-	InstanceType  string   `json:"instanceType,omitempty"`
-	Subnets       []string `json:"subnets,omitempty"`
+	Bandwidth      string          `json:"bandwidth,omitempty"`
+	BandwidthName  string          `json:"bandwidthName,omitempty"`
+	InstanceType   string          `json:"instanceType,omitempty"`
+	Subnets        []string        `json:"subnets,omitempty"`
+	BandwidthRange *BandwidthRange `json:"bandwidthRange,omitempty"`
+}
+
+type BandwidthRange struct {
+	Min int `json:"min,omitempty"`
+	Max int `json:"max,omitempty"`
 }
 type ServiceSubnets struct {
 	Mode string `json:"mode,omitempty"`
@@ -60,12 +66,17 @@ type CloudNetworkops struct {
 	CloudNetworkID     string             `json:"cloudNetworkID,omitempty"`
 	ConnectorGrpID     string             `json:"connectorGroupID,omitempty"`
 	EdgeConnectivityID string             `json:"edgeConnectivityID,omitempty"`
-	Subnets            []string           `json:"subnets,omitempty"`
+	Subnets            []InputSubnet         `json:"subnets,omitempty"`
 	HubID              string             `json:"hubID,omitempty"`
 	ConnectivityType   string             `json:"connectivityType,omitempty"`
 	ConnectorPlacement string             `json:"connectorPlacement,omitempty"`
 	Servicesubnets     *ServiceSubnets    `json:"serviceSubnets,omitempty"`
 	Connectorsettings  *ConnectorSettings `json:"connectorSettings,omitempty"`
+}
+
+type InputSubnet struct {
+	Subnet        string `json:"subnet,omitempty"`
+	VirtualSubnet string `json:"virtualSubnet,omitempty"`
 }
 
 type PublicCloud struct {

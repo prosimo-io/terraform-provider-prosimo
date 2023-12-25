@@ -138,11 +138,31 @@ func resourceNetworkOnboarding() *schema.Resource {
 										Description:  "transit-gateway, vpc-peering & public(Only applicable if connector placement is in WorkLoad VPC)",
 										ValidateFunc: validation.StringInSlice(client.GetConnectivityType(), false),
 									},
+									// "use_virtual_subnet": {
+									// 	Type:        schema.TypeBool,
+									// 	Optional:    true,
+									// 	Default: false,
+									// 	Description: "Use virtual subnets to create alias mappings for overlapping subnets: Defaults to False.",
+									// },
 									"subnets": {
 										Type:        schema.TypeList,
 										Optional:    true,
-										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: "subnet cider list",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"subnet": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "Ip Range",
+												},
+												"virtual_subnet": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Default:     false,
+													Description: "Virtual Subnet ",
+												},
+											},
+										},
 									},
 									"service_insertion_endpoint_subnets": {
 										Type:         schema.TypeString,
@@ -156,6 +176,25 @@ func resourceNetworkOnboarding() *schema.Resource {
 										Description: "",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
+												"bandwidth_range": {
+													Type:        schema.TypeSet,
+													Optional:    true,
+													Description: "Applicable for AWS",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"min": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: "Minimum Bandwidth Range",
+															},
+															"max": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: "Minimum Bandwidth Range",
+															},
+														},
+													},
+												},
 												"bandwidth": {
 													Type:         schema.TypeString,
 													Optional:     true,
@@ -487,10 +526,29 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 			cloudNetworkListConfig := v.(*schema.Set).List()
 			for _, cloudNetwork := range cloudNetworkListConfig {
 				cloudNetworkConfig := cloudNetwork.(map[string]interface{})
+				inputSubnetsConfigList := []client.InputSubnet{}
+				// virtualSubnetFlag := cloudNetworkConfig["use_virtual_subnet"].(bool)
+				if v, ok := cloudNetworkConfig["subnets"]; ok {
+					subnetsConfigList := v.([]interface{})
+					for _, subnetConfig := range subnetsConfigList {
+						inputSubnetConfig := subnetConfig.(map[string]interface{})
+						inputSubnet := client.InputSubnet{
+							Subnet: inputSubnetConfig["subnet"].(string),
+							// VirtualSubnet: inputSubnetConfig["virtual_subnet"].(string),
+						}
+						if v, ok := inputSubnetConfig["virtual_subnet"].(string); ok {
+							if v != "0" {
+								inputSubnet.VirtualSubnet = v
+							}
+						}
+						inputSubnetsConfigList = append(inputSubnetsConfigList, inputSubnet)
+					}
+				}
 				cloudNetworkInput := &client.CloudNetworkops{
-					ConnectivityType: cloudNetworkConfig["connectivity_type"].(string),
-					HubID:            cloudNetworkConfig["hub_id"].(string),
-					Subnets:          expandStringList(cloudNetworkConfig["subnets"].([]interface{})),
+					ConnectivityType:   cloudNetworkConfig["connectivity_type"].(string),
+					HubID:              cloudNetworkConfig["hub_id"].(string),
+					ConnectorPlacement: cloudNetworkConfig["connector_placement"].(string),
+					Subnets:            inputSubnetsConfigList,
 				}
 				connectorPlacement := cloudNetworkConfig["connector_placement"].(string)
 				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions {
@@ -526,21 +584,29 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-							connectorsettingInput := &client.ConnectorSettings{
-								// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-								BandwidthName: connectorsettingConfig["bandwidth"].(string),
-								InstanceType:  connectorsettingConfig["instance_type"].(string),
+							connectorsettingInput := &client.ConnectorSettings{}
+							if v, ok := connectorsettingConfig["bandwidth_range"]; ok {
+								bandwidthRangeConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+								bandwidthConfig := &client.BandwidthRange{
+									Min: bandwidthRangeConfig["min"].(int),
+									Max: bandwidthRangeConfig["max"].(int),
+								}
+								connectorsettingInput.BandwidthRange = bandwidthConfig
 							}
-							switch connectorsettingInput.BandwidthName {
-							case client.LessThan1GBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
-							case client.OneToFiveGBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
-							case client.FiveToTenGBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
-							case client.MoreThanTenGBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-							}
+							// 	// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
+							// 	BandwidthName: connectorsettingConfig["bandwidth"].(string),
+							// 	InstanceType:  connectorsettingConfig["instance_type"].(string),
+							// }
+							// switch connectorsettingInput.BandwidthName {
+							// case client.LessThan1GBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
+							// case client.OneToFiveGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
+							// case client.FiveToTenGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
+							// case client.MoreThanTenGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
+							// }
 
 							if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
 								if v, ok := connectorsettingConfig["connector_subnets"]; ok {
@@ -593,33 +659,34 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 					cloudNetworkInput.Connectorsettings = connectorsettingInput
 
 				case client.GCPCloudType:
-					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
-						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-						connectorsettingInput := &client.ConnectorSettings{
-							// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-							BandwidthName: connectorsettingConfig["bandwidth"].(string),
-							InstanceType:  connectorsettingConfig["instance_type"].(string),
-							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
-						}
-						switch connectorsettingInput.BandwidthName {
-						case client.LessThan1GBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
-						case client.OneToFiveGBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
-						case client.FiveToTenGBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
-						case client.MoreThanTenGBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-						}
-						cloudNetworkInput.Connectorsettings = connectorsettingInput
-					} else {
-						diags = append(diags, diag.Diagnostic{
-							Severity: diag.Error,
-							Summary:  "Missing Connector Active setting options",
-							Detail:   "Active setting options are required if Cloud Type is GCP.",
-						})
+					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {
+						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+							connectorsettingInput := &client.ConnectorSettings{
+								// BandwidthName: connectorsettingConfig["bandwidth"].(string),
+								// InstanceType:  connectorsettingConfig["instance_type"].(string),
+								Subnets: expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
+							}
+							// switch connectorsettingInput.BandwidthName {
+							// case client.LessThan1GBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
+							// case client.OneToFiveGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
+							// case client.FiveToTenGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
+							// case client.MoreThanTenGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
+							// }
+							cloudNetworkInput.Connectorsettings = connectorsettingInput
+						} else {
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Error,
+								Summary:  "Missing Connector Active setting options",
+								Detail:   "Active setting options are required if Cloud Type is GCP and connector placement is app.",
+							})
 
-						return diags
+							return diags
+						}
 					}
 
 				}
@@ -714,11 +781,27 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 			cloudNetworkListConfig := v.(*schema.Set).List()
 			for _, cloudNetwork := range cloudNetworkListConfig {
 				cloudNetworkConfig := cloudNetwork.(map[string]interface{})
+				inputSubnetsConfigList := []client.InputSubnet{}
+				if v, ok := cloudNetworkConfig["subnets"]; ok {
+					subnetsConfigList := v.([]interface{})
+					for _, subnetConfig := range subnetsConfigList {
+						inputSubnetConfig := subnetConfig.(map[string]interface{})
+						inputSubnet := client.InputSubnet{
+							Subnet: inputSubnetConfig["subnet"].(string),
+							// VirtualSubnet: inputSubnetConfig["virtual_subnet"].(string),
+						}
+						if v, ok := inputSubnetConfig["virtual_subnet"].(string); ok {
+							if v != "0" {
+								inputSubnet.VirtualSubnet = v
+							}
+						}
+						inputSubnetsConfigList = append(inputSubnetsConfigList, inputSubnet)
+					}
+				}
 				cloudNetworkInput := &client.CloudNetworkops{
-					ConnectivityType:   cloudNetworkConfig["connectivity_type"].(string),
-					HubID:              cloudNetworkConfig["hub_id"].(string),
-					ConnectorPlacement: cloudNetworkConfig["connector_placement"].(string),
-					Subnets:            expandStringList(cloudNetworkConfig["subnets"].([]interface{})),
+					ConnectivityType: cloudNetworkConfig["connectivity_type"].(string),
+					HubID:            cloudNetworkConfig["hub_id"].(string),
+					Subnets:          inputSubnetsConfigList,
 				}
 				connectorPlacement := cloudNetworkConfig["connector_placement"].(string)
 				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions {
@@ -754,22 +837,15 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-							connectorsettingInput := &client.ConnectorSettings{
-								// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-								BandwidthName: connectorsettingConfig["bandwidth"].(string),
-								InstanceType:  connectorsettingConfig["instance_type"].(string),
+							connectorsettingInput := &client.ConnectorSettings{}
+							if v, ok := connectorsettingConfig["bandwidth_range"]; ok {
+								bandwidthRangeConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+								bandwidthConfig := &client.BandwidthRange{
+									Min: bandwidthRangeConfig["min"].(int),
+									Max: bandwidthRangeConfig["max"].(int),
+								}
+								connectorsettingInput.BandwidthRange = bandwidthConfig
 							}
-							switch connectorsettingInput.BandwidthName {
-							case client.LessThan1GBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
-							case client.OneToFiveGBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
-							case client.FiveToTenGBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
-							case client.MoreThanTenGBPS:
-								connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-							}
-
 							if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
 								if v, ok := connectorsettingConfig["connector_subnets"]; ok {
 									if len(expandStringList(v.([]interface{}))) > 0 {
@@ -819,33 +895,34 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 					cloudNetworkInput.Connectorsettings = connectorsettingInput
 
 				case client.GCPCloudType:
-					if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
-						connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-						connectorsettingInput := &client.ConnectorSettings{
-							// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-							BandwidthName: connectorsettingConfig["bandwidth"].(string),
-							InstanceType:  connectorsettingConfig["instance_type"].(string),
-							Subnets:       expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
-						}
-						switch connectorsettingInput.BandwidthName {
-						case client.LessThan1GBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
-						case client.OneToFiveGBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
-						case client.FiveToTenGBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
-						case client.MoreThanTenGBPS:
-							connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-						}
-						cloudNetworkInput.Connectorsettings = connectorsettingInput
-					} else {
-						diags = append(diags, diag.Diagnostic{
-							Severity: diag.Error,
-							Summary:  "Missing Connector Active setting options",
-							Detail:   "Active setting options are required if Cloud Type is GCP.",
-						})
+					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {
+						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
+							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+							connectorsettingInput := &client.ConnectorSettings{
+								// BandwidthName: connectorsettingConfig["bandwidth"].(string),
+								// InstanceType:  connectorsettingConfig["instance_type"].(string),
+								Subnets: expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
+							}
+							// switch connectorsettingInput.BandwidthName {
+							// case client.LessThan1GBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
+							// case client.OneToFiveGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
+							// case client.FiveToTenGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
+							// case client.MoreThanTenGBPS:
+							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
+							// }
+							cloudNetworkInput.Connectorsettings = connectorsettingInput
+						} else {
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Error,
+								Summary:  "Missing Connector Active setting options",
+								Detail:   "Active setting options are required if Cloud Type is GCP.",
+							})
 
-						return diags, nil
+							return diags, nil
+						}
 					}
 				}
 				cloudNetworkInputList = append(cloudNetworkInputList, *cloudNetworkInput)

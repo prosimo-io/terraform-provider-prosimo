@@ -1,29 +1,56 @@
 
+## 3.10.9(November 14   2023)
+###Features:
+- Field `subnets` in resource `prosimo_network_onboarding` have been changed, the new value is a list of block with inclusion of `virtual_subnet` optional field.
+```hcl
+    subnets {
+    subnet = "10.4.0.0/24"
+    virtual_subnet = "10.4.0.0/24"
+    }
+```
+- Field `connector_settings` in resource `prosimo_network_onboarding` and field `node_size_settings` in resource `prosimo_edge` for cloud AWS have been modified.Here are the changes.
+```hcl   // For prosimo_edge
+ node_size_settings {
+    bandwidth_range {
+        min = 7
+        max = 9
+    }
+    }
+```
+```hcl     // For prosimo_network_onboarding
+    connector_settings {
+    bandwidth_range {
+        min = 3
+        max = 5
+    }
+    }
+```
+
 ## 3.9.9(November 14   2023)
-    ###BugFix:
-    - Azure Network Onboarding fails with error "Invalid Connectivity Options
+###BugFix:
+- Azure Network Onboarding fails with error "Invalid Connectivity Options
 ## 3.9.8(October 30   2023)
-    ###Features:
-    - Terraform support for regional prefix. Created resource named `prosimo_regional_prefix`. 
-    - With latest ui changes, resource `"prosimo_namespace"` does not have withdraw field anymore, the withdrawal would be taken care with the help of export api.
-    - Terraform support for force decom of apps,networks and edges. With the new feature, optional field `force_offboard` has been    introduced  which enables force decom option. The value defaults to "true" and can be overwritten. A of now force decom workflow would only be triggered if normal offboarding has failed.
-    Refer docs for more info and sample HQLs.
+###Features:
+- Terraform support for regional prefix. Created resource named `prosimo_regional_prefix`. 
+- With latest ui changes, resource `"prosimo_namespace"` does not have withdraw field anymore, the withdrawal would be taken care with the help of export api.
+- Terraform support for force decom of apps,networks and edges. With the new feature, optional field `force_offboard` has been    introduced  which enables force decom option. The value defaults to "true" and can be overwritten. A of now force decom workflow would only be triggered if normal offboarding has failed.
+Refer docs for more info and sample HQLs.
 ## 3.8.8(October 06   2023)
-    ### Enhancements:
-    With latest changes in Edge Api resource `prosimo_ip_address` has been Obsolated. 
-    ### BugFix:
-    - for resource `prosimo_network_onboarding`, `connector_settings` field dependancy has been removed when connector placement type is "NONE".
+### Enhancements:
+With latest changes in Edge Api resource `prosimo_ip_address` has been Obsolated. 
+### BugFix:
+- for resource `prosimo_network_onboarding`, `connector_settings` field dependancy has been removed when connector placement type is "NONE".
 ## 3.8.7(Septemeber 30   2023)
-    ### Features:
-    - Terraform support for Latest API changes for edge bringup.
-      Introduced a new field names `ip_range`, `deploy_edge`, `decommission_edge` similar to app onboarding.
+### Features:
+- Terraform support for Latest API changes for edge bringup.
+    Introduced a new field names `ip_range`, `deploy_edge`, `decommission_edge` similar to app onboarding.
 ## 3.7.7(Septemeber 06 2023)
-    ### Features:
-    - Terraform support for Visual Transit.
-    Resource name `prosimo_visual_transit`. Refer documentation for more details.
-    - Resource `prosimo_network_onboarding` enhancements: As part this change connector setting fields have been updated as per latest UI. 
-        - filed `bandwidth_name` has been removed, now used need to share the required bandwidth and instance type fields.
-        - Doc improvements around connector setting options. 
+### Features:
+- Terraform support for Visual Transit.
+Resource name `prosimo_visual_transit`. Refer documentation for more details.
+- Resource `prosimo_network_onboarding` enhancements: As part this change connector setting fields have been updated as per latest UI. 
+    - filed `bandwidth_name` has been removed, now used need to share the required bandwidth and instance type fields.
+    - Doc improvements around connector setting options. 
 ## 3.6.7(August 23 2023)
 ### Features:
 - Terraform support for IP-based Service Core: As part of this feature resource `prosimo_app_onboarding_ip` has been renamed to  `prosimo_app_onboarding_dns`. In addition there are couple fields being added.

@@ -51,6 +51,23 @@ func (prosimoClient *ProsimoClient) CreateEdge(ctx context.Context, edge *Edge) 
 
 }
 
+func (prosimoClient *ProsimoClient) ValidateQuota(ctx context.Context, edge *Edge) error {
+
+	req, err := prosimoClient.api_client.NewRequest("POST", QuotaEndpoint, edge)
+	if err != nil {
+		return err
+	}
+
+	// resourcePostResponseData := &ResourcePostResponseData{}
+	_, err = prosimoClient.api_client.Do(ctx, req, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (prosimoClient *ProsimoClient) GetEdge(ctx context.Context) (*EdgeList, error) {
 
 	req, err := prosimoClient.api_client.NewRequest("GET", EdgeEndpoint, nil)

@@ -2,12 +2,12 @@
 page_title: "prosimo_regional_prefix Resource - terraform-provider-prosimo"
 subcategory: ""
 description: |-
-  Use this resource to create/modify Private Link Sources.
+  Use this resource to create/modify Regional Prefixes.
 ---
 
 # prosimo_regional_prefix (Resource)
 
-Use this resource to create/modify Private Link Sources.
+Use this resource to create/modify Regional Prefixes.
 
 This resource is usually used along with `terraform-provider-prosimo`.
 
