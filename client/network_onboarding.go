@@ -19,17 +19,22 @@ type NetworkDiscoveryResponse struct {
 }
 
 type NetworkOnboardoptns struct {
-	ID           string        `json:"id,omitempty"`
-	Name         string        `json:"name,omitempty"`
-	Exportable   bool          `json:"exportable,omitempty"`
-	NamespaceID  string        `json:"namespaceID,omitempty"`
-	TeamID       string        `json:"teamID,omitempty"`
-	PamCname     string        `json:"pamCname,omitempty"`
-	Deployed     bool          `json:"deployed,omitempty"`
-	Status       string        `json:"status,omitempty"`
-	PublicCloud  *PublicCloud  `json:"publicCloud,omitempty"`
-	PrivateCloud *PrivateCloud `json:"privateCloud,omitempty"`
-	Security     *Security     `json:"security,omitempty"`
+	ID            string        `json:"id,omitempty"`
+	Name          string        `json:"name,omitempty"`
+	Exportable    bool          `json:"exportable,omitempty"`
+	NamespaceID   string        `json:"namespaceID,omitempty"`
+	NamespaceNID  int           `json:"namespaceNID,omitempty"`
+	TeamID        string        `json:"teamID,omitempty"`
+	PamCname      string        `json:"pamCname,omitempty"`
+	Deployed      bool          `json:"deployed,omitempty"`
+	Status        string        `json:"status,omitempty"`
+	CreatedTime   string        `json:"createdTime,omitempty"`
+	UpdatedTime   string        `json:"updatedTime,omitempty"`
+	PolicyUpdated bool          `json:"policyUpdated,omitempty"`
+	NamespaceName string        `json:"namespaceName,omitempty"`
+	PublicCloud   *PublicCloud  `json:"publicCloud,omitempty"`
+	PrivateCloud  *PrivateCloud `json:"privateCloud,omitempty"`
+	Security      *Security     `json:"security,omitempty"`
 }
 
 type NetworkOnboardRes struct {
@@ -48,6 +53,8 @@ type NetworkOnboardSearchResponseData struct {
 type ConnectorSettings struct {
 	Bandwidth      string          `json:"bandwidth,omitempty"`
 	BandwidthName  string          `json:"bandwidthName,omitempty"`
+	CloudNetworkID string          `json:"cloudNetworkId,omitempty"`
+	UpdateStatus   string          `json:"updateStatus,omitempty"`
 	InstanceType   string          `json:"instanceType,omitempty"`
 	Subnets        []string        `json:"subnets,omitempty"`
 	BandwidthRange *BandwidthRange `json:"bandwidthRange,omitempty"`
@@ -57,6 +64,7 @@ type BandwidthRange struct {
 	Min int `json:"min,omitempty"`
 	Max int `json:"max,omitempty"`
 }
+
 type ServiceSubnets struct {
 	Mode string `json:"mode,omitempty"`
 }
@@ -66,7 +74,7 @@ type CloudNetworkops struct {
 	CloudNetworkID     string             `json:"cloudNetworkID,omitempty"`
 	ConnectorGrpID     string             `json:"connectorGroupID,omitempty"`
 	EdgeConnectivityID string             `json:"edgeConnectivityID,omitempty"`
-	Subnets            []InputSubnet         `json:"subnets,omitempty"`
+	Subnets            []InputSubnet      `json:"subnets,omitempty"`
 	HubID              string             `json:"hubID,omitempty"`
 	ConnectivityType   string             `json:"connectivityType,omitempty"`
 	ConnectorPlacement string             `json:"connectorPlacement,omitempty"`

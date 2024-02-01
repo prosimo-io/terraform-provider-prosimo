@@ -102,12 +102,12 @@ func (c *api_client) NewRequest(method, urlStr string, body interface{}) (*http.
 			return nil, err
 		}
 	}
-	// log.Println("NewRequest", u.String(), buf)
+	log.Println("NewRequest", u.String(), buf)
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
 	}
-	// log.Println("response", req)
+	log.Println("response", req)
 
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -295,7 +295,7 @@ func (c *api_client) Do(ctx context.Context, req *http.Request, returnObj interf
 
 	response := newResponse(resp)
 	body, _ := io.ReadAll(resp.Body)
-	// log.Printf("respBody   %s", string(body))
+	log.Printf("respBody   %s", string(body))
 	resp.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	err = CheckResponse(resp)
@@ -375,7 +375,6 @@ func (c *api_client) AppOffboarding_Force_DeleteRequest(ctx context.Context, del
 		fmt.Println("Error parsing URL:", err)
 		return nil, err
 	}
-
 
 	// Add query parameters
 	q := u.Query()

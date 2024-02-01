@@ -32,7 +32,7 @@ resource "prosimo_network_onboarding" "testapp-azure" {
           hub_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/qing-vwan-rg/providers/Microsoft.Network/virtualHubs/qing-hub-useast-2"
           connectivity_type = "vwan-hub"
           connector_placement = "none"
-                    subnets {
+          subnets {
             subnet = "10.4.0.0/24"
           }
         }
@@ -41,7 +41,18 @@ resource "prosimo_network_onboarding" "testapp-azure" {
           hub_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/qing-vwan-rg/providers/Microsoft.Network/virtualHubs/qing-hub-useast-2"
           connectivity_type = "vwan-hub"
           connector_placement = "Workload VPC"
-          subnets = ["10.3.5.0/24"]
+          subnets {
+            subnet = "10.3.5.0/24"
+            virtual_subnet = "10.250.2.128/25"
+          }
+          connector_settings {
+            connector_subnets= ["10.99.0.0/24"]
+            bandwidth_range {
+                min = 3
+                max = 5
+            }
+          }
+          
         }
         connect_type = "connector"
 
@@ -60,13 +71,13 @@ resource "prosimo_network_onboarding" "testapp-s3" {
     public_cloud {
         cloud_type = "public"
         connection_option = "private"
-        cloud_creds_name = "prosimo-gcp-infra"
+        cloud_creds_name = "prosimo-gcp-app"
         region_name = "us-west2"
         cloud_networks {
           vpc = "https://www.googleapis.com/compute/v1/projects/prosimo-test-infra/global/networks/default"
           connector_placement = "Workload VPC"
           connectivity_type = "vpc-peering"
-                    subnets {
+          subnets {
             subnet = "10.4.0.0/24"
           }
           connector_settings {
@@ -100,12 +111,14 @@ resource "prosimo_network_onboarding" "testapp-azure-workload-vpc" {
           connector_placement = "Workload VPC"
           subnets {
             subnet = "10.4.0.0/24"
-          }
-          subnets {
-            subnet = "10.4.0.1/24"
+            virtual_subnet = "10.250.2.128/25"
           }
           connector_settings {
-            connector_subnets= ["10.4.0.0/24"]
+            connector_subnets = ["10.4.0.0/24"]
+            bandwidth_range {
+                min = 3
+                max = 5
+            }
           }
         }
         connect_type = "connector"
@@ -133,8 +146,15 @@ resource "prosimo_network_onboarding" "testapp-azure-infra-vpc" {
           connector_placement = "Infra VPC"
           subnets {
             subnet = "10.4.0.0/24"
-            virtual_subnet = "10.4.0.0/24"
+            virtual_subnet = "10.168.0.0/20"
           }
+          connector_settings {
+            bandwidth_range {
+                min = 3
+                max = 5
+            }
+          }
+          
         }
         connect_type = "connector"
 
@@ -163,9 +183,10 @@ resource "prosimo_network_onboarding" "testapp-AWS-WorkLoad-vpc" {
           service_insertion_endpoint_subnets = "auto"
           subnets {
             subnet = "10.250.2.128/25"
-            virtual_subnet = "10.250.2.128/25"
+            virtual_subnet = "10.168.0.0/20"
           }
           connector_settings {
+            connector_subnets = ["10.4.0.0/24"]
             bandwidth_range {
                 min = 3
                 max = 5
@@ -199,11 +220,11 @@ resource "prosimo_network_onboarding" "testapp-AWS-Infra-vpc" {
           connectivity_type = "transit-gateway"
           subnets {
             subnet = "10.250.2.128/25"
-            virtual_subnet = "10.250.2.128/25"
+            virtual_subnet = "10.168.0.0/20"
           }
           subnets {
             subnet = "10.250.3.128/25"
-            virtual_subnet = "10.250.3.128/25"
+            virtual_subnet = "10.168.1.0/20"
           }
           connector_settings {
             bandwidth_range {

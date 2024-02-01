@@ -593,20 +593,6 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 								}
 								connectorsettingInput.BandwidthRange = bandwidthConfig
 							}
-							// 	// Bandwidth:     connectorsettingConfig["bandwidth"].(string),
-							// 	BandwidthName: connectorsettingConfig["bandwidth"].(string),
-							// 	InstanceType:  connectorsettingConfig["instance_type"].(string),
-							// }
-							// switch connectorsettingInput.BandwidthName {
-							// case client.LessThan1GBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
-							// case client.OneToFiveGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
-							// case client.FiveToTenGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
-							// case client.MoreThanTenGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-							// }
 
 							if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
 								if v, ok := connectorsettingConfig["connector_subnets"]; ok {
@@ -636,27 +622,45 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 					}
 				case client.AzureCloudType:
 					log.Println("entering Azure block")
-					connectorsettingInput := &client.ConnectorSettings{
-						Bandwidth:     client.AzureBandwidth,
-						BandwidthName: client.AzureBandwidthName,
-						InstanceType:  client.AzureInstanceType,
-					}
-					if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-							connectorsettingInput.Subnets = expandStringList(connectorsettingConfig["connector_subnets"].([]interface{}))
+							connectorsettingInput := &client.ConnectorSettings{}
+							if v, ok := connectorsettingConfig["bandwidth_range"]; ok {
+								bandwidthRangeConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+								bandwidthConfig := &client.BandwidthRange{
+									Min: bandwidthRangeConfig["min"].(int),
+									Max: bandwidthRangeConfig["max"].(int),
+								}
+								connectorsettingInput.BandwidthRange = bandwidthConfig
+							}
+
+							if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+								if v, ok := connectorsettingConfig["connector_subnets"]; ok {
+									if len(expandStringList(v.([]interface{}))) > 0 {
+										connectorsettingInput.Subnets = expandStringList(v.([]interface{}))
+									} else {
+										diags = append(diags, diag.Diagnostic{
+											Severity: diag.Error,
+											Summary:  "Missing Connector group Subnets",
+											Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+										})
+
+										return diags
+									}
+								}
+							}
+							cloudNetworkInput.Connectorsettings = connectorsettingInput
 						} else {
 							diags = append(diags, diag.Diagnostic{
 								Severity: diag.Error,
-								Summary:  "Missing Connector group Subnets",
-								Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+								Summary:  "Missing Connector Active setting options",
+								Detail:   "Active setting options are required if Cloud Type is AZURE.",
 							})
 
 							return diags
 						}
 					}
-					log.Println("connectorsettingInput", connectorsettingInput)
-					cloudNetworkInput.Connectorsettings = connectorsettingInput
 
 				case client.GCPCloudType:
 					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {
@@ -873,26 +877,46 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 						}
 					}
 				case client.AzureCloudType:
-					connectorsettingInput := &client.ConnectorSettings{
-						Bandwidth:     client.AzureBandwidth,
-						BandwidthName: client.AzureBandwidthName,
-						InstanceType:  client.AzureInstanceType,
-					}
-					if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+					log.Println("entering Azure block")
+					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-							connectorsettingInput.Subnets = expandStringList(connectorsettingConfig["connector_subnets"].([]interface{}))
+							connectorsettingInput := &client.ConnectorSettings{}
+							if v, ok := connectorsettingConfig["bandwidth_range"]; ok {
+								bandwidthRangeConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+								bandwidthConfig := &client.BandwidthRange{
+									Min: bandwidthRangeConfig["min"].(int),
+									Max: bandwidthRangeConfig["max"].(int),
+								}
+								connectorsettingInput.BandwidthRange = bandwidthConfig
+							}
+
+							if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions {
+								if v, ok := connectorsettingConfig["connector_subnets"]; ok {
+									if len(expandStringList(v.([]interface{}))) > 0 {
+										connectorsettingInput.Subnets = expandStringList(v.([]interface{}))
+									} else {
+										diags = append(diags, diag.Diagnostic{
+											Severity: diag.Error,
+											Summary:  "Missing Connector group Subnets",
+											Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+										})
+
+										return diags, nil
+									}
+								}
+							}
+							cloudNetworkInput.Connectorsettings = connectorsettingInput
 						} else {
 							diags = append(diags, diag.Diagnostic{
 								Severity: diag.Error,
-								Summary:  "Missing Connector group Subnets",
-								Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
+								Summary:  "Missing Connector Active setting options",
+								Detail:   "Active setting options are required if Cloud Type is AZURE.",
 							})
 
 							return diags, nil
 						}
 					}
-					cloudNetworkInput.Connectorsettings = connectorsettingInput
 
 				case client.GCPCloudType:
 					if cloudNetworkInput.ConnectorPlacement != client.NoneConnectorPlacementOptions {

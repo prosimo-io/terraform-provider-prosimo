@@ -195,7 +195,7 @@ func resourceEdgeCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		Subnet:      d.Get("ip_range").(string),
 	}
 	//NodeSize Settings
-	if cloudCreds.CloudType == client.AWSCloudType {
+	if cloudCreds.CloudType == client.AWSCloudType || cloudCreds.CloudType == client.AzureCloudType {
 		if v, ok := d.GetOk("vpc_source"); ok {
 			vpcSource := v.(string)
 			if vpcSource == client.ExistingVPCSource {
@@ -206,12 +206,10 @@ func resourceEdgeCreate(ctx context.Context, d *schema.ResourceData, meta interf
 			}
 		}
 		if v, ok := d.GetOk("node_size_settings"); ok {
-			log.Println("inside node_size_block")
 			nodesizesettingInput := &client.ConnectorSettings{}
 			nodesizesettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 			if v, ok := nodesizesettingConfig["bandwidth_range"]; ok {
 				bandwidthRangeConfig := v.(*schema.Set).List()[0].(map[string]interface{})
-				log.Println("bandwidth_range")
 				bandwidthConfig := &client.BandwidthRange{
 					Min: bandwidthRangeConfig["min"].(int),
 					Max: bandwidthRangeConfig["max"].(int),
@@ -376,7 +374,7 @@ func resourceEdgeUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 			Subnet:      d.Get("ip_range").(string),
 		}
 		//NodeSize Settings
-		if cloudCreds.CloudType == client.AWSCloudType {
+		if cloudCreds.CloudType == client.AWSCloudType || cloudCreds.CloudType == client.AzureCloudType {
 			if v, ok := d.GetOk("node_size_settings"); ok {
 				nodesizesettingInput := &client.ConnectorSettings{}
 				nodesizesettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})

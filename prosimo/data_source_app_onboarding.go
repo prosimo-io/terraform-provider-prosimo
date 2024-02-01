@@ -286,6 +286,22 @@ func dataSourceAppOnboarding() *schema.Resource {
 								},
 							},
 						},
+						"deployed": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"onboardtype": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"dns_discovery": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"policy_updated": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -374,6 +390,10 @@ func flattenAppItemsData(AppItems []client.AppOnboardSettings) []interface{} {
 			oi["addresstype"] = AppItem.AddressType
 			appUrlItems := flattenAppUrlItemsData(AppItem.AppURLs)
 			oi["appurls"] = appUrlItems
+			oi["deployed"] = AppItem.Deployed
+			oi["onboardtype"] = AppItem.OnboardType
+			oi["dns_discovery"] = AppItem.Dns_Discovery
+			oi["policy_updated"] = AppItem.PolicyUpdated
 
 			ois[i] = oi
 		}

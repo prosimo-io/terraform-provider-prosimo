@@ -60,6 +60,22 @@ func dataSourceNetworkOnboarding() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"policy_updated": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"namespace_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"namespace_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"namespace_nid": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
 						"publiccloud": {
 							Type:     schema.TypeSet,
 							Computed: true,
@@ -119,13 +135,83 @@ func dataSourceNetworkOnboarding() *schema.Resource {
 													Computed: true,
 												},
 												"subnets": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Computed: true,
-													Elem:     &schema.Schema{Type: schema.TypeString},
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"subnet": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+															"virtual_subnet": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+														},
+													},
 												},
 												"connectorplacement": {
 													Type:     schema.TypeString,
 													Computed: true,
+												},
+												"connectorsettings": {
+													Type:     schema.TypeSet,
+													Computed: true,
+													// Optional: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"bandwidth": {
+																Type:     schema.TypeString,
+																Computed: true,
+																Optional: true,
+															},
+															"bandwidthname": {
+																Type:     schema.TypeString,
+																Computed: true,
+																Optional: true,
+															},
+															"instancetype": {
+																Type:     schema.TypeString,
+																Computed: true,
+																Optional: true,
+															},
+															"cloudnetworkid": {
+																Type:     schema.TypeString,
+																Computed: true,
+																Optional: true,
+															},
+															"updatestatus": {
+																Type:     schema.TypeString,
+																Computed: true,
+																Optional: true,
+															},
+															"subnets": {
+																Type:     schema.TypeList,
+																Computed: true,
+																Optional: true,
+																Elem: &schema.Schema{
+																	Type: schema.TypeString,
+																},
+															},
+															"bandwidthrange": {
+																Type:     schema.TypeSet,
+																Computed: true,
+																Optional: true,
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		"min": {
+																			Type:     schema.TypeInt,
+																			Computed: true,
+																		},
+																		"max": {
+																			Type:     schema.TypeInt,
+																			Computed: true,
+																		},
+																	},
+																},
+															},
+														},
+													},
 												},
 											},
 										},
@@ -219,12 +305,17 @@ func flattenNetworkItemsData(NetworkItems []client.NetworkOnboardoptns) []interf
 
 		for i, NetworkItem := range NetworkItems {
 			oi := make(map[string]interface{})
-
 			oi["name"] = NetworkItem.Name
 			oi["id"] = NetworkItem.ID
 			oi["teamid"] = NetworkItem.TeamID
 			oi["status"] = NetworkItem.Status
 			oi["pamcname"] = NetworkItem.PamCname
+			oi["createdtime"] = NetworkItem.CreatedTime
+			oi["updatedtime"] = NetworkItem.UpdatedTime
+			oi["policy_updated"] = NetworkItem.PolicyUpdated
+			oi["namespace_name"] = NetworkItem.NamespaceName
+			oi["namespace_id"] = NetworkItem.NamespaceID
+			oi["namespace_nid"] = NetworkItem.NamespaceNID
 			publicCloudItems := flattenPublicCloudItemsData(NetworkItem.PublicCloud)
 			oi["publiccloud"] = publicCloudItems
 			securityItems := flattenSecurityItemsData(NetworkItem.Security)
@@ -258,6 +349,7 @@ func flattenPublicCloudItemsData(PublicCloudItems *client.PublicCloud) interface
 	}
 	return make([]interface{}, 0)
 }
+
 func flattenCloudNetworksItemsData(CloudNetworkItems []client.CloudNetworkops) []interface{} {
 	if CloudNetworkItems != nil {
 		ois := make([]interface{}, len(CloudNetworkItems), len(CloudNetworkItems))
@@ -271,9 +363,48 @@ func flattenCloudNetworksItemsData(CloudNetworkItems []client.CloudNetworkops) [
 			oi["edgeconnectivityid"] = CloudNetworkItem.EdgeConnectivityID
 			oi["hubid"] = CloudNetworkItem.HubID
 			oi["connectivitytype"] = CloudNetworkItem.ConnectivityType
-			oi["subnets"] = CloudNetworkItem.Subnets
+			subnets := flattenSubnetItemsData(CloudNetworkItem.Subnets)
+			oi["subnets"] = subnets
 			oi["connectorplacement"] = CloudNetworkItem.ConnectorPlacement
 
+			connectorSettings := make([]map[string]interface{}, 0)
+			connectorSettingTF := make(map[string]interface{})
+			bandwithRange := make([]map[string]interface{}, 0)
+			bandwithRangeTF := make(map[string]interface{})
+			if CloudNetworkItem.Connectorsettings != nil {
+				connectorSettingTF["bandwidth"] = CloudNetworkItem.Connectorsettings.Bandwidth
+				connectorSettingTF["bandwidthname"] = CloudNetworkItem.Connectorsettings.BandwidthName
+				connectorSettingTF["instancetype"] = CloudNetworkItem.Connectorsettings.InstanceType
+				connectorSettingTF["cloudnetworkid"] = CloudNetworkItem.Connectorsettings.CloudNetworkID
+				connectorSettingTF["updatestatus"] = CloudNetworkItem.Connectorsettings.UpdateStatus
+				connectorSettingTF["subnets"] = CloudNetworkItem.Connectorsettings.Subnets
+				bandwidthRange := CloudNetworkItem.Connectorsettings.BandwidthRange
+				if bandwidthRange != nil {
+					bandwithRangeTF["min"] = bandwidthRange.Min
+					bandwithRangeTF["max"] = bandwidthRange.Max
+					bandwithRange = append(bandwithRange, bandwithRangeTF)
+				}
+				connectorSettingTF["bandwidthrange"] = bandwithRange
+				connectorSettings = append(connectorSettings, connectorSettingTF)
+			}
+			oi["connectorsettings"] = connectorSettings
+
+			ois[i] = oi
+		}
+
+		return ois
+	}
+	return make([]interface{}, 0)
+}
+
+func flattenSubnetItemsData(SubnetItems []client.InputSubnet) interface{} {
+	if SubnetItems != nil {
+		ois := make([]interface{}, len(SubnetItems), len(SubnetItems))
+
+		for i, subnetItem := range SubnetItems {
+			oi := make(map[string]interface{})
+			oi["subnet"] = subnetItem.Subnet
+			oi["virtual_subnet"] = subnetItem.VirtualSubnet
 			ois[i] = oi
 		}
 

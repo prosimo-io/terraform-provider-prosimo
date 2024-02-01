@@ -1,6 +1,25 @@
 
-## 3.10.9(November 14   2023)
-###Features:
+## 4.1.0(January 10   2024)
+### Features:
+- Field `connector_settings` in resource `prosimo_network_onboarding` and field `node_size_settings` in resource `prosimo_edge` for cloud AZURE have been modified.Here are the changes.
+```hcl   // For prosimo_edge
+ node_size_settings {
+    bandwidth_range {
+        min = 7
+        max = 9
+    }
+    }
+```
+```hcl     // For prosimo_network_onboarding
+    connector_settings {
+    bandwidth_range {
+        min = 3
+        max = 5
+    }
+    }
+```
+## 3.10.9(December 24   2023)
+### Features:
 - Field `subnets` in resource `prosimo_network_onboarding` have been changed, the new value is a list of block with inclusion of `virtual_subnet` optional field.
 ```hcl
     subnets {
@@ -27,10 +46,10 @@
 ```
 
 ## 3.9.9(November 14   2023)
-###BugFix:
+### BugFix:
 - Azure Network Onboarding fails with error "Invalid Connectivity Options
 ## 3.9.8(October 30   2023)
-###Features:
+### Features:
 - Terraform support for regional prefix. Created resource named `prosimo_regional_prefix`. 
 - With latest ui changes, resource `"prosimo_namespace"` does not have withdraw field anymore, the withdrawal would be taken care with the help of export api.
 - Terraform support for force decom of apps,networks and edges. With the new feature, optional field `force_offboard` has been    introduced  which enables force decom option. The value defaults to "true" and can be overwritten. A of now force decom workflow would only be triggered if normal offboarding has failed.
