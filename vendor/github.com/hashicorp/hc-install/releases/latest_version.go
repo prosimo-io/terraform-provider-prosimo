@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package releases
 
 import (
@@ -27,9 +24,6 @@ type LatestVersion struct {
 	InstallDir         string
 	Timeout            time.Duration
 	IncludePrereleases bool
-
-	// Enterprise indicates installation of enterprise version (leave nil for Community editions)
-	Enterprise *EnterpriseOptions
 
 	SkipChecksumVerification bool
 
@@ -64,10 +58,6 @@ func (lv *LatestVersion) Validate() error {
 
 	if !validators.IsBinaryNameValid(lv.Product.BinaryName()) {
 		return fmt.Errorf("invalid binary name: %q", lv.Product.BinaryName())
-	}
-
-	if err := validateEnterpriseOptions(lv.Enterprise); err != nil {
-		return err
 	}
 
 	return nil
@@ -129,11 +119,7 @@ func (lv *LatestVersion) Install(ctx context.Context) (string, error) {
 	if lv.apiBaseURL != "" {
 		d.BaseURL = lv.apiBaseURL
 	}
-	licenseDir := ""
-	if lv.Enterprise != nil {
-		licenseDir = lv.Enterprise.LicenseDir
-	}
-	zipFilePath, err := d.DownloadAndUnpack(ctx, versionToInstall, dstDir, licenseDir)
+	zipFilePath, err := d.DownloadAndUnpack(ctx, versionToInstall, dstDir)
 	if zipFilePath != "" {
 		lv.pathsToRemove = append(lv.pathsToRemove, zipFilePath)
 	}
@@ -167,7 +153,6 @@ func (lv *LatestVersion) Remove(ctx context.Context) error {
 }
 
 func (lv *LatestVersion) findLatestMatchingVersion(pvs rjson.ProductVersionsMap, vc version.Constraints) (*rjson.ProductVersion, bool) {
-	expectedMetadata := enterpriseVersionMetadata(lv.Enterprise)
 	versions := make(version.Collection, 0)
 	for _, pv := range pvs.AsSlice() {
 		if !lv.IncludePrereleases && pv.Version.Prerelease() != "" {
@@ -175,13 +160,7 @@ func (lv *LatestVersion) findLatestMatchingVersion(pvs rjson.ProductVersionsMap,
 			continue
 		}
 
-		if pv.Version.Metadata() != expectedMetadata {
-			continue
-		}
-
-		if vc.Check(pv.Version) {
-			versions = append(versions, pv.Version)
-		}
+		versions = append(versions, pv.Version)
 	}
 
 	if len(versions) == 0 {

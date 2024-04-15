@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package tfjson
 
 import (
@@ -86,9 +83,6 @@ type ProviderSchema struct {
 
 	// The schemas for any data sources in this provider.
 	DataSourceSchemas map[string]*Schema `json:"data_source_schemas,omitempty"`
-
-	// The definitions for any functions in this provider.
-	Functions map[string]*FunctionSignature `json:"functions,omitempty"`
 }
 
 // Schema is the JSON representation of a particular schema

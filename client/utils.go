@@ -162,10 +162,12 @@ func GetCloudConnectionOptions() []string {
 }
 
 func GetConnectorPlacementOptions() []string {
-	ConnectorPlacementOptions := make([]string, 3)
+	ConnectorPlacementOptions := make([]string, 5)
 	ConnectorPlacementOptions[0] = WorkloadVpcConnectorPlacementOptions
 	ConnectorPlacementOptions[1] = NoneConnectorPlacementOptions
 	ConnectorPlacementOptions[2] = InfraVPCConnectorPlacementOptions
+	ConnectorPlacementOptions[3] = WorkloadVNETConnectorPlacementOptions
+	ConnectorPlacementOptions[4] = InfraVNETConnectorPlacementOptions
 	return ConnectorPlacementOptions
 }
 

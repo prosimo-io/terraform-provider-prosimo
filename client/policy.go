@@ -135,10 +135,49 @@ func (prosimoClient *ProsimoClient) GetPolicy(ctx context.Context) ([]*Policy, e
 	return policyListData.Data.Records, nil
 
 }
+func (prosimoClient *ProsimoClient) GetInternetEgressControl(ctx context.Context) ([]*Policy, error) {
 
+	PolicySearchInput := Policy{}
+	req, err := prosimoClient.api_client.NewRequest("POST", GetIECEndpoint , PolicySearchInput)
+	if err != nil {
+		return nil, err
+	}
+
+	policyListData := &PolicyListDataResponse{}
+	_, err = prosimoClient.api_client.Do(ctx, req, policyListData)
+	if err != nil {
+		return nil, err
+	}
+
+	return policyListData.Data.Records, nil
+
+}
 func (prosimoClient *ProsimoClient) GetPolicyByName(ctx context.Context, policyName string) (*Policy, error) {
 
 	policyList, err := prosimoClient.GetPolicy(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var policy *Policy
+	for _, returnedPolicy := range policyList {
+		if returnedPolicy.Name == policyName {
+			policy = returnedPolicy
+			break
+		}
+	}
+
+	if policy == nil {
+		return nil, errors.New("Policy doesnt exists")
+	}
+
+	return policy, nil
+
+}
+
+func (prosimoClient *ProsimoClient) GetInternetEgressControlByName(ctx context.Context, policyName string) (*Policy, error) {
+
+	policyList, err := prosimoClient.GetInternetEgressControl(ctx)
 	if err != nil {
 		return nil, err
 	}

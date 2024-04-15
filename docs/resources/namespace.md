@@ -2,12 +2,12 @@
 page_title: "prosimo_namespace Resource - terraform-provider-prosimo"
 subcategory: ""
 description: |-
-  Use this resource to create/modify/Delete namespace policies for assigning/exporting/withdrawing networks.
+  Use this resource to create/modify/Delete namespace policies and assignment of networks.
 ---
 
 # prosimo_namespace (Resource)
 
-Use this resource to create/modify/Delete namespace policies for assigning/exporting/withdrawing networks.
+Use this resource to create/modify/Delete namespace policies and assignment of networks.
 
 This resource is usually used along with `terraform-provider-prosimo`.
 
@@ -17,17 +17,9 @@ This resource is usually used along with `terraform-provider-prosimo`.
 
 ```terraform
 resource "prosimo_namespace" "test" {
-    name = "test1"
+    name = "test-ns"
     assign {
-        source_networks = ["demo_network_new"]
-    }
-    export {
-        source_network = "demo_network_new"
-        namespaces = [ "namespace1" ]
-    }
-    withdraw {
-        source_network = "demo_network_new"
-        namespaces = [ "namespace1" ]
+        source_networks = ["test"]
     }
 }
 ```
@@ -42,7 +34,6 @@ resource "prosimo_namespace" "test" {
 ### Optional
 
 - `assign` (Block Set) Assign the network to the namespace (see [below for nested schema](#nestedblock--assign))
-- `export` (Block List) Export local networks to other namespace (see [below for nested schema](#nestedblock--export))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `wait_for_rollout` (Boolean) Wait for the rollout of the task to complete. Defaults to true.
 
@@ -56,15 +47,6 @@ resource "prosimo_namespace" "test" {
 Optional:
 
 - `source_networks` (List of String) Name of the networks to be assigned to the namespace
-
-
-<a id="nestedblock--export"></a>
-### Nested Schema for `export`
-
-Optional:
-
-- `namespaces` (List of String) List of namespaces where network would be exported
-- `source_network` (String) Name of the network to be exported to other namespace
 
 
 <a id="nestedblock--timeouts"></a>

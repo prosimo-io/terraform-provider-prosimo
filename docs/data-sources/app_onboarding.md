@@ -26,7 +26,11 @@ data "prosimo_app_onboarding" "test-app" {
 # filter = "id==8209c912-977e-48fe-9007-04e48b49aca6"
 # filter_app_fqdn = "sshtesting.access.myeveqingchen1657127431278.scnetworkers.info"
 # filter = "app_access_type==agent&status==CONFIGURING"
-filter = "name==us-west-1"
+# filter = "name==us-west-1"
+# filter = "app_name!=us-east10"
+# filter = "apponboardtype!=behind_fabric"
+filter = "status!=CONFIGURED"
+# filter = "status==CONFIGURED"
 }
 
 output "app_onboard_output" {
@@ -61,11 +65,15 @@ Read-Only:
 - `appsamlrewrite` (String)
 - `apptype` (String)
 - `appurls` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_apps--appurls))
+- `deployed` (Boolean)
+- `dns_discovery` (Boolean)
 - `enablemulticloud` (Boolean)
 - `idp_id` (String)
 - `interactiontype` (String)
+- `onboardtype` (String)
 - `optimize_app_experience` (Boolean)
 - `optoption` (String)
+- `policy_updated` (Boolean)
 - `policygroupid` (String)
 - `status` (String)
 - `team_id` (String)

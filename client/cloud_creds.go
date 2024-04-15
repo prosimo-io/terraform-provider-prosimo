@@ -40,7 +40,8 @@ type CloudCreds struct {
 	CloudCredsDetails *CloudCredsDetails `json:"details,omitempty"`
 	ID                string             `json:"id,omitempty"`
 	ConectionType     string             `json:"connectionType,omitempty"`
-	AccountID         string 			 `json:"accountID,omitempty"`
+	AccountID         string             `json:"accountID,omitempty"`
+	ExternalID        string             `json:"externalID,omitempty"`
 	//binaryCloudDetails *binaryCloudDetails
 }
 
@@ -311,4 +312,28 @@ func (prosimoClient *ProsimoClient) UpdateGcpCloudCreds(ctx context.Context, clo
 
 	return cloudCredsData, nil
 
+}
+
+func (prosimoClient *ProsimoClient) CreateBulkAcct(ctx context.Context, cloudCredsOpts *CloudCreds, Filepath string) (*CloudCredsData, error) {
+
+	fileUploadEdPt := fmt.Sprintf("%s/%s", CloudCredsEndpoint, cloudCredsOpts.ID)
+	updatefileUploadEdPt := fmt.Sprintf("%s/%s", fileUploadEdPt, "bulk")
+	meta_data := make(map[string]string)
+
+	meta_data["cloudType"] = cloudCredsOpts.CloudType
+	meta_data["keyType"] = cloudCredsOpts.KeyType
+	meta_data["externalID"] = cloudCredsOpts.Nickname
+	meta_data["accountID"] = cloudCredsOpts.AccountID
+	req, err := prosimoClient.api_client.ReqFileUpload("POST", updatefileUploadEdPt, meta_data, Filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudCredsData := &CloudCredsData{}
+	_, err = prosimoClient.api_client.Do(ctx, req, cloudCredsData)
+	if err != nil {
+		return nil, err
+	}
+
+	return cloudCredsData, nil
 }

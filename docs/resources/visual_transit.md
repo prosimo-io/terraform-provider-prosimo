@@ -39,6 +39,29 @@ resource "prosimo_visual_transit" "test" {
 deploy_transit_setup = true
 }
 
+#TransitSetup to create edge connection with TGW "tgw-ob9531fe31541c" and VPC pktest-1
+resource "prosimo_visual_transit" "test_tgwID" {
+    transit_input {
+    cloud_type   = "AWS"  
+    cloud_region = "us-east-2"
+    transit_deployment {
+        tgws {
+            id= "tgw-ob9531fe31541c"
+            action = "MOD"
+            connection {
+                type = "EDGE"
+                action = "ADD"
+            }
+        }
+        vpcs {
+            name = "pktest-1"
+            action = "ADD"
+        }
+    }
+  }
+deploy_transit_setup = true
+}
+
 #TransitSetup to create to create vHUB "test-vhub" and edge connection along with vNET "staging-agent-apps/stagingagentappsvnet146"
 resource "prosimo_visual_transit" "test1"{
  transit_input {
@@ -114,12 +137,13 @@ Optional:
 Required:
 
 - `action` (String) Action on TGW, e.g: ADD, MOD, DEL
-- `name` (String) Name of TGW
 
 Optional:
 
 - `account` (String) AWS account Details: Applicable while creating a new TGW
 - `connection` (Block List) TGW connection Details (see [below for nested schema](#nestedblock--transit_input--transit_deployment--tgws--connection))
+- `id` (String) TGW ID
+- `name` (String) Name of TGW
 
 <a id="nestedblock--transit_input--transit_deployment--tgws--connection"></a>
 ### Nested Schema for `transit_input.transit_deployment.tgws.connection`

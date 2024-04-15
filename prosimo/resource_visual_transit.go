@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
+	"git.prosimo.io/prosimoio/tools/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -60,8 +60,13 @@ func resourceVisualTransit() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"name": {
 													Type:        schema.TypeString,
-													Required:    true,
+													Optional:    true,
 													Description: "Name of TGW",
+												},
+												"id": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "TGW ID",
 												},
 												"action": {
 													Type:         schema.TypeString,
@@ -285,6 +290,7 @@ func resourceVisualTransitUpdate(ctx context.Context, d *schema.ResourceData, me
 									tgwinputList := []client.Constructs{}
 									for i, _ := range v.([]interface{}) {
 										tgwconfig := v.([]interface{})[i].(map[string]interface{})
+										tgwID := tgwconfig["id"].(string)
 										tgwname := tgwconfig["name"].(string)
 										tgwAction := tgwconfig["action"].(string)
 										connectionInputList := []client.Connection{}
@@ -341,6 +347,7 @@ func resourceVisualTransitUpdate(ctx context.Context, d *schema.ResourceData, me
 												return diags
 											}
 											tgw := &client.Constructs{
+												ID:          tgwID,
 												Action:      tgwAction,
 												Name:        tgwname,
 												AccountID:   cloudCreds.AccountID,
@@ -350,7 +357,7 @@ func resourceVisualTransitUpdate(ctx context.Context, d *schema.ResourceData, me
 										} else {
 											flag := false
 											for _, tgw := range inops.Operation.TGWS {
-												if tgw.Name == tgwname {
+												if tgw.ID == tgwID {
 													tgw.Action = tgwAction
 													tgw.Connections = connectionInputList
 													tgwinputList = append(tgwinputList, *tgw)

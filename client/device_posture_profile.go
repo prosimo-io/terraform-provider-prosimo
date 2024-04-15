@@ -3,7 +3,15 @@ package client
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
 )
+
+var backoffSchedule = []time.Duration{
+	1 * time.Second,
+	3 * time.Second,
+	10 * time.Second,
+}
 
 type DevicePosture_Settings struct {
 	Enabled bool `json:"enabled,omitempty"`
@@ -215,12 +223,23 @@ func (prosimoClient *ProsimoClient) UpdateDPProfilelow(ctx context.Context, dppr
 }
 
 func (prosimoClient *ProsimoClient) GetTaskStatus(ctx context.Context, taskID string) (*Task_Status, error) {
-
+	var taskResData *Task_Status_res
+	var err error
 	UpdatedTaskEndpoint := fmt.Sprintf("%s/%s", TaskEndpoint, taskID)
+	for _, backoff := range backoffSchedule {
+		taskResData, err = prosimoClient.api_client.GetRequest(ctx, UpdatedTaskEndpoint)
+		if err == nil {
+			break
+		}
 
-	taskResData, err := prosimoClient.api_client.GetRequest(ctx, UpdatedTaskEndpoint)
+		fmt.Fprintf(os.Stderr, "Request error: %+v\n", err)
+		fmt.Fprintf(os.Stderr, "Retrying in %v\n", backoff)
+		time.Sleep(backoff)
+	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	return taskResData.TaskStatusRes, nil
 }

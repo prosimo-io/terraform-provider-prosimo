@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package cmd
 
 import (
@@ -8,10 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/hashicorp/cli"
-	"github.com/mattn/go-colorable"
-
-	"github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs/build"
+	"github.com/mitchellh/cli"
 )
 
 type commonCmd struct {
@@ -57,19 +51,10 @@ func initCommands(ui cli.Ui) map[string]cli.CommandFactory {
 		}, nil
 	}
 
-	migrateFactory := func() (cli.Command, error) {
-		return &migrateCmd{
-			commonCmd: commonCmd{
-				ui: ui,
-			},
-		}, nil
-	}
-
 	return map[string]cli.CommandFactory{
 		"":         defaultFactory,
 		"generate": generateFactory,
 		"validate": validateFactory,
-		"migrate":  migrateFactory,
 		//"serve": serveFactory,
 	}
 }
@@ -111,17 +96,4 @@ func Run(name, version string, args []string, stdin io.Reader, stdout, stderr io
 		return 1
 	}
 	return exitCode
-}
-
-// Main has the required function signature for use with testscript
-func Main() int {
-
-	return Run(
-		"tfplugindocs",
-		build.GetVersion(),
-		os.Args[1:],
-		os.Stdin,
-		colorable.NewColorableStdout(),
-		colorable.NewColorableStderr(),
-	)
 }

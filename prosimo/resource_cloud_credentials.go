@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
+	"git.prosimo.io/prosimoio/tools/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -35,6 +35,13 @@ func resourceCloudCreds() *schema.Resource {
 				Required:    true,
 				Description: "Nickname of the cloud credential",
 			},
+			"bulk_onboard": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Flag for bulk upload, set it to true if want to bulk onboard accounts: defaults to false ",
+			},
+
 			"aws": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -173,6 +180,37 @@ func resourceCloudCreds() *schema.Resource {
 					},
 				},
 			},
+			"bulk": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Description: "Bulk Account Onboarding options.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"file_path": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							DefaultFunc:  schema.EnvDefaultFunc("HTTPFILEUPLOAD_FILE_PATH", nil),
+							Description:  "Path of GCP credential file to upload.",
+							ValidateFunc: validateFilePath,
+						},
+						"key_type": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Tenant ID",
+						},
+						"account_id": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"external_id": {
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -184,6 +222,8 @@ func resourceCloudCredentialsCreate(ctx context.Context, d *schema.ResourceData,
 	prosimoClient := meta.(*client.ProsimoClient)
 
 	cloudCreds := &client.CloudCreds{}
+	cloudCredsDetails := &client.CloudCredsDetails{}
+	var filePath string
 
 	if v, ok := d.GetOk("cloud_type"); ok {
 		cloudType := v.(string)
@@ -195,113 +235,136 @@ func resourceCloudCredentialsCreate(ctx context.Context, d *schema.ResourceData,
 		cloudCreds.Nickname = nickname
 	}
 
-	cloudCredsDetails := &client.CloudCredsDetails{}
-	var filePath string
+	if d.Get("bulk_onboard").(bool) {
+		if cloudCreds.CloudType != client.AWSCloudType {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Bulk Onboarding is only supported for AWS at the moment",
+				Detail:   "Bulk Onboarding is only supported for AWS at the moment",
+			})
 
-	switch cloudCreds.CloudType {
-	case client.AWSCloudType:
+			return diags
+		}
+		cloudCreds.KeyType = client.AWSBulkKeyType
+		if v, ok := d.GetOk("bulk"); ok {
+			bulkConfig := v.([]interface{})
+			bulk := bulkConfig[0].(map[string]interface{})
+			cloudCreds.AccountID = bulk["account_id"].(string)
+			cloudCreds.ExternalID = bulk["external_id"].(string)
+			filePath = bulk["file_path"].(string)
+		}
+		log.Printf("[DEBUG] Creating bulk Cloud Credentials for %v", cloudCreds)
+		createdCloudCreds, err := prosimoClient.CreateBulkAcct(ctx, cloudCreds, filePath)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(createdCloudCreds.CloudCreds.ID)
+	} else {
+		switch cloudCreds.CloudType {
+		case client.AWSCloudType:
 
-		if v, ok := d.GetOk("aws"); ok {
-			// awsConfig := v.(*schema.Set).List()
-			awsConfig := v.([]interface{})
-			aws := awsConfig[0].(map[string]interface{})
+			if v, ok := d.GetOk("aws"); ok {
+				// awsConfig := v.(*schema.Set).List()
+				awsConfig := v.([]interface{})
+				aws := awsConfig[0].(map[string]interface{})
 
-			prefferedAuth := aws["preferred_auth"].(string)
-			if prefferedAuth == client.AWSIAMRoleAuth {
+				prefferedAuth := aws["preferred_auth"].(string)
+				if prefferedAuth == client.AWSIAMRoleAuth {
 
-				cloudCreds.KeyType = client.AWSIAMRoleAuth
+					cloudCreds.KeyType = client.AWSIAMRoleAuth
 
-				if v, ok := aws["iam_role"].([]interface{}); ok {
-					// iamRoleConfig := aws["iam_role"].(*schema.Set).List()
-					// iamRoleConfig := aws["iam_role"].([]interface{})
-					iamRole := v[0].(map[string]interface{})
-					cloudCredsDetails.IAMRoleArn = iamRole["role_arn"].(string)
-					cloudCredsDetails.IAMExternalID = iamRole["external_id"].(string)
+					if v, ok := aws["iam_role"].([]interface{}); ok {
+						// iamRoleConfig := aws["iam_role"].(*schema.Set).List()
+						// iamRoleConfig := aws["iam_role"].([]interface{})
+						iamRole := v[0].(map[string]interface{})
+						cloudCredsDetails.IAMRoleArn = iamRole["role_arn"].(string)
+						cloudCredsDetails.IAMExternalID = iamRole["external_id"].(string)
+
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "AWS IAM Role preferred auth requires iam_role block",
+							Detail:   "AWS IAM Role preferred auth requires iam_role block",
+						})
+
+						return diags
+					}
+
+				} else if prefferedAuth == client.AWSAccessKeyAuth {
+
+					cloudCreds.KeyType = client.AWSAccessKeyAuth
+
+					if v, ok := aws["access_keys"].([]interface{}); ok {
+						// accessKeyConfig := aws["access_keys"].(*schema.Set).List()
+						// accessKeyConfig := aws["access_keys"].([]interface{})
+						accessKey := v[0].(map[string]interface{})
+						cloudCredsDetails.AccessKeyID = accessKey["access_key_id"].(string)
+						cloudCredsDetails.SecretKeyID = accessKey["secret_key_id"].(string)
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "AWS Access Keys preferred auth requires access_keys block",
+							Detail:   "AWS Access Keys  preferred auth requires access_keys block",
+						})
+
+						return diags
+					}
 
 				} else {
 					diags = append(diags, diag.Diagnostic{
 						Severity: diag.Error,
-						Summary:  "AWS IAM Role preferred auth requires iam_role block",
-						Detail:   "AWS IAM Role preferred auth requires iam_role block",
+						Summary:  "Not a type of preferred auth for AWS",
+						Detail:   "Not a type of preferred auth for AWS",
 					})
 
 					return diags
 				}
 
-			} else if prefferedAuth == client.AWSAccessKeyAuth {
+			}
 
-				cloudCreds.KeyType = client.AWSAccessKeyAuth
+		case client.AzureCloudType:
+			cloudCreds.KeyType = client.AzureKeyType
+			if v, ok := d.GetOk("azure"); ok {
+				// azureConfig := v.(*schema.Set).List()
+				azureConfig := v.([]interface{})
+				azure := azureConfig[0].(map[string]interface{})
 
-				if v, ok := aws["access_keys"].([]interface{}); ok {
-					// accessKeyConfig := aws["access_keys"].(*schema.Set).List()
-					// accessKeyConfig := aws["access_keys"].([]interface{})
-					accessKey := v[0].(map[string]interface{})
-					cloudCredsDetails.AccessKeyID = accessKey["access_key_id"].(string)
-					cloudCredsDetails.SecretKeyID = accessKey["secret_key_id"].(string)
-				} else {
-					diags = append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "AWS Access Keys preferred auth requires access_keys block",
-						Detail:   "AWS Access Keys  preferred auth requires access_keys block",
-					})
+				cloudCredsDetails.SubscriptionID = azure["subscription_id"].(string)
+				cloudCredsDetails.TenantID = azure["tenant_id"].(string)
+				cloudCredsDetails.ClientID = azure["client_id"].(string)
+				cloudCredsDetails.SecretID = azure["secret_id"].(string)
 
-					return diags
-				}
+			}
 
-			} else {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  "Not a type of preferred auth for AWS",
-					Detail:   "Not a type of preferred auth for AWS",
-				})
+		case client.GCPCloudType:
+			cloudCreds.KeyType = client.GCPKeyType
+			if v, ok := d.GetOk("gcp"); ok {
+				gcpConfig := v.([]interface{})
+				gcp := gcpConfig[0].(map[string]interface{})
 
-				return diags
+				filePath = gcp["file_path"].(string)
+
 			}
 
 		}
-
-	case client.AzureCloudType:
-		cloudCreds.KeyType = client.AzureKeyType
-		if v, ok := d.GetOk("azure"); ok {
-			// azureConfig := v.(*schema.Set).List()
-			azureConfig := v.([]interface{})
-			azure := azureConfig[0].(map[string]interface{})
-
-			cloudCredsDetails.SubscriptionID = azure["subscription_id"].(string)
-			cloudCredsDetails.TenantID = azure["tenant_id"].(string)
-			cloudCredsDetails.ClientID = azure["client_id"].(string)
-			cloudCredsDetails.SecretID = azure["secret_id"].(string)
-
+		if filePath == "" {
+			cloudCreds.CloudCredsDetails = cloudCredsDetails
+			log.Printf("[DEBUG] Creating Cloud Credentials for %v", cloudCreds)
+			createdCloudCreds, err := prosimoClient.CreateCloudCreds(ctx, cloudCreds)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			log.Printf("[DEBUG] Created Cloud Credentials for cloud type - %s, nickname - (%s), id - (%s)", cloudCreds.CloudType, cloudCreds.Nickname, createdCloudCreds.CloudCreds.ID)
+			d.SetId(createdCloudCreds.CloudCreds.ID)
+		} else {
+			log.Printf("[DEBUG] Creating Cloud Credentials for %v", cloudCreds)
+			createdCloudCreds, err := prosimoClient.UploadGcpCloudCreds(ctx, cloudCreds, filePath)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			log.Printf("[DEBUG] Created Cloud Credentials for cloud type - %s, nickname - (%s), id - (%s)", cloudCreds.CloudType, cloudCreds.Nickname, createdCloudCreds.CloudCreds.ID)
+			d.SetId(createdCloudCreds.CloudCreds.ID)
 		}
-
-	case client.GCPCloudType:
-		cloudCreds.KeyType = client.GCPKeyType
-		if v, ok := d.GetOk("gcp"); ok {
-			gcpConfig := v.([]interface{})
-			gcp := gcpConfig[0].(map[string]interface{})
-
-			filePath = gcp["file_path"].(string)
-
-		}
-
-	}
-	if filePath == "" {
-		cloudCreds.CloudCredsDetails = cloudCredsDetails
-		log.Printf("[DEBUG] Creating Cloud Credentials for %v", cloudCreds)
-		createdCloudCreds, err := prosimoClient.CreateCloudCreds(ctx, cloudCreds)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		log.Printf("[DEBUG] Created Cloud Credentials for cloud type - %s, nickname - (%s), id - (%s)", cloudCreds.CloudType, cloudCreds.Nickname, createdCloudCreds.CloudCreds.ID)
-		d.SetId(createdCloudCreds.CloudCreds.ID)
-	} else {
-		log.Printf("[DEBUG] Creating Cloud Credentials for %v", cloudCreds)
-		createdCloudCreds, err := prosimoClient.UploadGcpCloudCreds(ctx, cloudCreds, filePath)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		log.Printf("[DEBUG] Created Cloud Credentials for cloud type - %s, nickname - (%s), id - (%s)", cloudCreds.CloudType, cloudCreds.Nickname, createdCloudCreds.CloudCreds.ID)
-		d.SetId(createdCloudCreds.CloudCreds.ID)
 	}
 
 	resourceCloudCredentialsRead(ctx, d, meta)

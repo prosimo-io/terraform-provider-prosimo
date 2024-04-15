@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
+	"git.prosimo.io/prosimoio/tools/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -161,7 +161,7 @@ func resourceSSCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 			CloudKeyID:       cloudCreds.ID,
 			CloudType:        cloudCreds.CloudType,
 			GwLoadBalancerID: regionConfig["gateway_lb"].(string),
-			CloudZones:       "",
+			// CloudZones:       "",
 		}
 		if regionInput.CloudType == client.AzureCloudType {
 			if v, ok := regionConfig["resource_group"]; ok {
@@ -333,7 +333,7 @@ func resourceSSUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 					CloudKeyID:       cloudCreds.ID,
 					CloudType:        cloudCreds.CloudType,
 					GwLoadBalancerID: regionConfig["gateway_lb"].(string),
-					CloudZones:       "",
+					// CloudZones:       "",
 				}
 				if regionInput.CloudType == client.AzureCloudType {
 					if v, ok := regionConfig["resource_group"]; ok {

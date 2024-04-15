@@ -10,23 +10,131 @@ type PL_Source struct {
 	Name         string          `json:"name,omitempty"`
 	Region       string          `json:"region,omitempty"`
 	ID           string          `json:"id,omitempty"`
+	Deleted      bool            `json:"deleted,omitempty"`
+	InUse        bool            `json:"inUse,omitempty"`
+	TotalCount   int             `json:"totalCount,omitempty"`
 	Status       string          `json:"status,omitempty"`
 	CloudCredsID string          `json:"cloudCredsID,omitempty"`
+	Credentials  *Credentials    `json:"credentials,omitempty"`
 	CloudSources *[]Cloud_Source `json:"cloudSources,omitempty"`
+	Ports        *[]PL_Port      `json:"ports,omitempty"`
+	Edge         *PL_Edge        `json:"edge,omitempty"`
+	Policies     *[]PL_Policy    `json:"policies,omitempty"`
+	CreatedTime  string          `json:"createdTime,omitempty"`
+	UpdatedTime  string          `json:"updatedTime,omitempty"`
+}
+
+type Credentials struct {
+	ID          string `json:"id,omitempty"`
+	Cloud       string `json:"cloud,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Credentials string `json:"credentials,omitempty"`
 }
 
 type Cloud_Source struct {
-	ID           string         `json:"id,omitempty"`
-	CloudNetwork *Cloud_Network `json:"cloudNetwork,omitempty"`
-	Subnets      *[]Subnet      `json:"subnets,omitempty"`
+	ID           string                 `json:"id,omitempty"`
+	CloudNetwork *Cloud_Network         `json:"cloudNetwork,omitempty"`
+	Deleted      bool                   `json:"deleted,omitempty"`
+	Subnets      *[]Subnet              `json:"subnets,omitempty"`
+	HostedZones  *[]HostedZone          `json:"hostedzones,omitempty"`
+	Records      *[]Cloud_Source_Record `json:"records,omitempty"`
+	CreatedTime  string                 `json:"createdTime,omitempty"`
+	UpdatedTime  string                 `json:"updatedTime,omitempty"`
+}
+
+type PL_Port struct {
+	ID          string `json:"id,omitempty"`
+	TeamID      string `json:"teamID,omitempty"`
+	EdgeID      string `json:"edgeID,omitempty"`
+	Port        int    `json:"port,omitempty"`
+	Status      string `json:"status,omitempty"`
+	PlsID       string `json:"plsID,omitempty"`
+	DomainID    string `json:"domainID,omitempty"`
+	AppID       string `json:"appID,omitempty"`
+	CretedTime  string `json:"createdTime,omitempty"`
+	UpdatedTime string `json:"udpdatedTime,omitempty"`
+}
+
+type PL_Edge struct {
+	ID           string          `json:"id,omitempty"`
+	Domain       string          `json:"domain,omitempty"`
+	Cloud        string          `json:"cloud,omitempty"`
+	CloudCredsID string          `json:"cloudCredsID,omitempty"`
+	Name         string          `json:"name,omitempty"`
+	NetworkInfo  *PL_NetworkInfo `json:"networkInfo,omitempty"`
+	Region       string          `json:"region,omitempty"`
+}
+
+type PL_NetworkInfo struct {
+	VpcID  string `json:"vpcId,omitempty"`
+	IlbDns string `json:"ilbDns,omitempty"`
+}
+
+type PL_Policy struct {
+	ID     string `json:"id,omitempty"`
+	Status string `json:"status,omitempty"`
+	Target string `json:"target,omitempty"`
 }
 
 type Subnet struct {
-	Cidr               string `json:"cidr,omitempty"`
-	OnboardedASNetwork bool   `json:"onboardedAsNetwork,omitempty"`
+	ID                 string         `json:"id,omitempty"`
+	Cidr               string         `json:"cidr,omitempty"`
+	OnboardedASNetwork bool           `json:"onboardedAsNetwork,omitempty"`
+	Endpoints          *[]PL_Endpoint `json:"endpoints,omitempty"`
+	Deleted            bool           `json:"deleted,omitempty"`
+	CreatedTime        string         `json:"createdTime,omitempty"`
+	UpdatedTime        string         `json:"updatedTime,omitempty"`
 }
 
-type Subnet_res struct{
+type PL_Endpoint struct {
+	ID         string                   `json:"id,omitempty"`
+	Endpoint   string                   `json:"endpoint,omitempty"`
+	Name       string                   `json:"name,omitempty"`
+	DomainID   string                   `json:"domainID,omitempty"`
+	Domain     string                   `json:"domain,omitempty"`
+	PolicyID   string                   `json:"policyID,omitempty"`
+	AppID      string                   `json:"appID,omitempty"`
+	AppName    string                   `json:"appName,omitempty"`
+	Status     string                   `json:"status,omitempty"`
+	ProtoPorts *[]PL_Endpoint_ProtoPort `json:"protoPorts,omitempty"`
+}
+
+type PL_Endpoint_ProtoPort struct {
+	Protocol         string   `json:"protocol,omitempty"`
+	Port             int      `json:"port,omitempty"`
+	WebSocketEnabled bool     `json:"webSocketEnabled,omitempty"`
+	Paths            []string `json:"paths,omitempty"`
+	PortList         []string `json:"portList,omitempty"`
+}
+
+type HostedZone struct {
+	ID                 string `json:"id,omitempty"`
+	TeamID             string `json:"teamID,omitempty"`
+	CloudCredentialsID string `json:"cloudCredentialsID,omitempty"`
+	HostedZoneID       string `json:"hostedZoneID,omitempty"`
+	Name               string `json:"name,omitempty"`
+	VpcID              string `json:"vpcID,omitempty"`
+	Region             string `json:"region,omitempty"`
+	ProsimoManaged     bool   `json:"prosimoManaged,omitempty"`
+	Status             string `json:"status,omitempty"`
+	CreatedTime        string `json:"createdTime,omitempty"`
+	UpdatedTime        string `json:"updatedTime,omitempty"`
+}
+
+type Cloud_Source_Record struct {
+	ID           string `json:"id,omitempty"`
+	TeamID       string `json:"teamID,omitempty"`
+	Record       string `json:"record,omitempty"`
+	HostedZoneID string `json:"hostedZoneID,omitempty"`
+	Type         string `json:"type,omitempty"`
+	Target       string `json:"target,omitempty"`
+	Ttl          int    `json:"ttl,omitempty"`
+	Status       string `json:"status,omitempty"`
+	CreatedTime  string `json:"createdTime,omitempty"`
+	UpdatedTime  string `json:"updatedTime,omitempty"`
+}
+
+type Subnet_res struct {
 	Subnets []Subnet `json:"data,omitempty"`
 }
 type PL_Source_ResID struct {
@@ -38,7 +146,7 @@ type Cloud_Network struct {
 	Name string `json:"name,omitempty"`
 }
 
-type Cloud_Network_res struct{
+type Cloud_Network_res struct {
 	CloudNetworks []Cloud_Network `json:"data,omitempty"`
 }
 type PL_Source_Response struct {

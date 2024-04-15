@@ -3,7 +3,7 @@ package prosimo
 import (
 	"context"
 
-	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
+	"git.prosimo.io/prosimoio/tools/terraform-provider-prosimo.git/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -63,6 +63,7 @@ func Provider() *schema.Provider {
 			"prosimo_private_link_source":      resourcePrivateLinkSource(),
 			"prosimo_private_link_mapping":     resourcePrivateLinkMapping(),
 			"prosimo_namespace":                resourceNamespace(),
+			"prosimo_namespace_export":         resourceNamespaceExport(),
 			"prosimo_cloud_gateway":            resourceCloudGateway(),
 			"prosimo_visual_transit":           resourceVisualTransit(),
 			"prosimo_regional_prefix":          resourceRegionalPrefix(),
@@ -80,6 +81,8 @@ func Provider() *schema.Provider {
 			"prosimo_policy_transit":      datasourcePolicyTransit(),
 			"prosimo_network_onboarding":  dataSourceNetworkOnboarding(),
 			"prosimo_discovered_networks": dataSourceNetworkDiscovered(),
+			"prosimo_private_links":       dataSourcePrivateLink(),
+			"prosimo_service_insertion":   dataSourceServiceInsertion(),
 			// "prosimo_waf_policy":          dataSourceWAFPolicy(),
 		},
 

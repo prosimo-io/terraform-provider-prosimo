@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/client"
+	"git.prosimo.io/prosimoio/tools/terraform-provider-prosimo.git/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -125,7 +125,7 @@ func resourceNetworkOnboarding() *schema.Resource {
 										Type:         schema.TypeString,
 										Required:     true,
 										ValidateFunc: validation.StringInSlice(client.GetConnectorPlacementOptions(), false),
-										Description:  "Infra VPC, Workload VPC or none.",
+										Description:  "Infra VPC/Infra VNET, Workload VPC/Workload VNET or none.",
 									},
 									"hub_id": {
 										Type:        schema.TypeString,
@@ -246,6 +246,12 @@ func resourceNetworkOnboarding() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Select policy name.e.g: ALLOW-ALL-NETWORKS, DENY-ALL-NETWORKS or Custom Policies",
 			},
+			"internet_egress_controls": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Select list of internet egress control policies",
+			},
 			"onboard_app": {
 				Type:        schema.TypeBool,
 				Required:    true,
@@ -302,19 +308,18 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 		NamespaceID: nameSpace.ID,
 	}
 
-	onboardresponse, err := prosimoClient.NetworkOnboard(ctx, networkOnboardops)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	networkOnboardops.ID = onboardresponse.NetworkOnboardResponseData.ID
+	// onboardresponse, err := prosimoClient.NetworkOnboard(ctx, networkOnboardops)
+	// if err != nil {
+	// 	return diag.FromErr(err)
+	// }
+	// networkOnboardops.ID = onboardresponse.NetworkOnboardResponseData.ID
 
-	diags = resourceNetworkOnboardingSettings(ctx, d, meta, networkOnboardops)
+	diags, networkOnboardops = resourceNetworkOnboardingSettings(ctx, d, meta, networkOnboardops)
 	if diags != nil {
 		return diags
 	}
-	d.SetId(networkOnboardops.ID)
 	if d.Get("onboard_app").(bool) {
-		res, err2 := prosimoClient.OnboardNetworkDeployment(ctx, networkOnboardops.ID)
+		res, err2 := prosimoClient.OnboardNetworkDeploymentV2(ctx, networkOnboardops, client.ParamValueDeploy)
 		if err2 != nil {
 			return diag.FromErr(err2)
 		}
@@ -327,6 +332,13 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 			}
 			log.Printf("[INFO] task %s is successful", res.NetworkDeploymentResops.TaskID)
 		}
+		d.SetId(res.NetworkDeploymentResops.ID)
+	} else {
+		res, err2 := prosimoClient.OnboardNetworkDeploymentV2(ctx, networkOnboardops, client.ParamValueSave)
+		if err2 != nil {
+			return diag.FromErr(err2)
+		}
+		d.SetId(res.NetworkDeploymentResops.ID)
 	}
 
 	resourceNetworkOnboardingRead(ctx, d, meta)
@@ -374,6 +386,9 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 	if d.HasChange("policies") {
 		updateReq = true
 	}
+	if d.HasChange("internet_egress_controls") {
+		updateReq = true
+	}
 	if d.HasChange("onboard_app") && !d.IsNewResource() {
 		updateReq = true
 	}
@@ -413,7 +428,7 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 				return diag.FromErr(err)
 			}
 			if networkOnboardSettingsDbObj.Deployed {
-				res, err := prosimoClient.OnboardNetworkDeploymentPost(ctx, networkOnboardops)
+				res, err := prosimoClient.OnboardNetworkDeploymentV2(ctx, networkOnboardops, client.ParamValueReDeploy)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -428,7 +443,7 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 					log.Printf("[INFO] task %s is successful", res.NetworkDeploymentResops.TaskID)
 				}
 			} else {
-				res, err2 := prosimoClient.OnboardNetworkDeployment(ctx, networkOnboardops.ID)
+				res, err2 := prosimoClient.OnboardNetworkDeploymentV2(ctx, networkOnboardops, client.ParamValueDeploy)
 				if err2 != nil {
 					return diag.FromErr(err2)
 				}
@@ -441,6 +456,11 @@ func resourceNetworkOnboardingUpdate(ctx context.Context, d *schema.ResourceData
 					}
 					log.Printf("[INFO] task %s is successful", res.NetworkDeploymentResops.TaskID)
 				}
+			}
+		} else {
+			_, err := prosimoClient.OnboardNetworkDeploymentV2(ctx, networkOnboardops, client.ParamValueSave)
+			if err != nil {
+				return diag.FromErr(err)
 			}
 		}
 
@@ -468,6 +488,7 @@ func resourceNetworkOnboardingRead(ctx context.Context, d *schema.ResourceData, 
 	d.Set("deployed", networkOnboardSettingsDbObj.Deployed)
 	d.Set("status", networkOnboardSettingsDbObj.Status)
 	d.Set("policies", d.Get("policies").([]interface{}))
+	d.Set("internet_egress_controls", d.Get("internet_egress_controls").([]interface{}))
 	d.Set("onboard_app", networkOnboardSettingsDbObj.Deployed)
 	d.Set("decommission_app", d.Get("decommission_app").(bool))
 
@@ -510,7 +531,7 @@ func resourceNetworkOnboardingDelete(ctx context.Context, d *schema.ResourceData
 	return diags
 }
 
-func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceData, meta interface{}, networkOnboardops *client.NetworkOnboardoptns) diag.Diagnostics {
+func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceData, meta interface{}, networkOnboardops *client.NetworkOnboardoptns) (diag.Diagnostics, *client.NetworkOnboardoptns) {
 	prosimoClient := meta.(*client.ProsimoClient)
 	var diags diag.Diagnostics
 
@@ -519,7 +540,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 		publiccloudOptsConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 		cloudCreds, err := prosimoClient.GetCloudCredsByName(ctx, publiccloudOptsConfig["cloud_creds_name"].(string))
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(err), nil
 		}
 		cloudNetworkInputList := []client.CloudNetworkops{}
 		if v, ok := publiccloudOptsConfig["cloud_networks"]; ok && v.(*schema.Set).Len() > 0 {
@@ -545,15 +566,15 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 					}
 				}
 				cloudNetworkInput := &client.CloudNetworkops{
-					ConnectivityType:   cloudNetworkConfig["connectivity_type"].(string),
-					HubID:              cloudNetworkConfig["hub_id"].(string),
-					ConnectorPlacement: cloudNetworkConfig["connector_placement"].(string),
-					Subnets:            inputSubnetsConfigList,
+					ConnectivityType: cloudNetworkConfig["connectivity_type"].(string),
+					HubID:            cloudNetworkConfig["hub_id"].(string),
+					// ConnectorPlacement: cloudNetworkConfig["connector_placement"].(string),
+					Subnets: inputSubnetsConfigList,
 				}
 				connectorPlacement := cloudNetworkConfig["connector_placement"].(string)
-				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions {
+				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions || connectorPlacement == client.WorkloadVNETConnectorPlacementOptions {
 					cloudNetworkInput.ConnectorPlacement = client.AppConnectorPlacementOptions
-				} else if connectorPlacement == client.InfraVPCConnectorPlacementOptions {
+				} else if connectorPlacement == client.InfraVPCConnectorPlacementOptions || connectorPlacement == client.InfraVNETConnectorPlacementOptions {
 					cloudNetworkInput.ConnectorPlacement = client.InfraConnectorPlacementOptions
 				} else {
 					cloudNetworkInput.ConnectorPlacement = connectorPlacement
@@ -576,7 +597,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 							Detail:   "Service Endpoint details are required if connector placement is in Infra or workload vpc and cloud type is AWS.",
 						})
 
-						return diags
+						return diags, nil
 					}
 				}
 				switch cloudCreds.CloudType {
@@ -605,7 +626,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 											Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
 										})
 
-										return diags
+										return diags, nil
 									}
 								}
 							}
@@ -617,7 +638,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 								Detail:   "Active setting options are required if Cloud Type is AWS.",
 							})
 
-							return diags
+							return diags, nil
 						}
 					}
 				case client.AzureCloudType:
@@ -646,7 +667,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 											Detail:   "Connector group Subnets are required if connector placement is in Workload VPC.",
 										})
 
-										return diags
+										return diags, nil
 									}
 								}
 							}
@@ -658,7 +679,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 								Detail:   "Active setting options are required if Cloud Type is AZURE.",
 							})
 
-							return diags
+							return diags, nil
 						}
 					}
 
@@ -667,20 +688,8 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 							connectorsettingInput := &client.ConnectorSettings{
-								// BandwidthName: connectorsettingConfig["bandwidth"].(string),
-								// InstanceType:  connectorsettingConfig["instance_type"].(string),
 								Subnets: expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
 							}
-							// switch connectorsettingInput.BandwidthName {
-							// case client.LessThan1GBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
-							// case client.OneToFiveGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
-							// case client.FiveToTenGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
-							// case client.MoreThanTenGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-							// }
 							cloudNetworkInput.Connectorsettings = connectorsettingInput
 						} else {
 							diags = append(diags, diag.Diagnostic{
@@ -689,7 +698,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 								Detail:   "Active setting options are required if Cloud Type is GCP and connector placement is app.",
 							})
 
-							return diags
+							return diags, nil
 						}
 					}
 
@@ -702,7 +711,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 				Summary:  "Missing Cloud Network settings.",
 				Detail:   "Please provide cloud network details like vpc, vnet etc ",
 			})
-			return diags
+			return diags, nil
 		}
 		publicCloudoptn := &client.PublicCloud{
 			CloudType:        publiccloudOptsConfig["cloud_type"].(string),
@@ -728,7 +737,7 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 		cloudCredName := privatecloudOptsConfig["cloud_creds_name"].(string)
 		cloudCreds, err := prosimoClient.GetCloudCredsPrivate(ctx)
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(err), nil
 		}
 		for _, cloudCred := range cloudCreds.CloudCreds {
 			if cloudCred.Nickname == cloudCredName {
@@ -737,36 +746,40 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 		}
 		networkOnboardops.PrivateCloud = privateCloudoptn
 	}
-	err := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	// Securirty policy configuration.
 	networkPolicyList := []client.Policyops{}
+	internetEgressControlList := []client.Policyops{}
 	if v, ok := d.GetOk("policies"); ok {
 		inputPolicies := expandStringList(v.([]interface{}))
 		for _, inputpolicy := range inputPolicies {
 			networkPolicy := client.Policyops{}
 			policyDbObj, err := prosimoClient.GetPolicyByName(ctx, inputpolicy)
 			if err != nil {
-				return diag.FromErr(err)
+				return diag.FromErr(err), nil
 			}
 			networkPolicy.ID = policyDbObj.ID
 			networkPolicyList = append(networkPolicyList, networkPolicy)
 		}
-		policyList := &client.Security{
-			Policies: networkPolicyList,
-		}
-		securityInput := &client.NetworkSecurityInput{
-			Security: policyList,
-		}
-		err := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
-		if err != nil {
-			return diag.FromErr(err)
-		}
 	}
 
-	return diags
+	if v, ok := d.GetOk("internet_egress_controls"); ok {
+		inputPolicies := expandStringList(v.([]interface{}))
+		for _, inputpolicy := range inputPolicies {
+			networkPolicy := client.Policyops{}
+			policyDbObj, err := prosimoClient.GetInternetEgressControlByName(ctx, inputpolicy)
+			if err != nil {
+				return diag.FromErr(err), nil
+			}
+			networkPolicy.ID = policyDbObj.ID
+			internetEgressControlList = append(internetEgressControlList, networkPolicy)
+		}
+	}
+	policyList := &client.Security{
+		Policies:               networkPolicyList,
+		InternetEgressControls: internetEgressControlList,
+	}
+	networkOnboardops.Security = policyList
+
+	return diags, networkOnboardops
 }
 
 func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, networkOnboardops *client.NetworkOnboardoptns) (diag.Diagnostics, *client.NetworkOnboardoptns) {
@@ -792,7 +805,6 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 						inputSubnetConfig := subnetConfig.(map[string]interface{})
 						inputSubnet := client.InputSubnet{
 							Subnet: inputSubnetConfig["subnet"].(string),
-							// VirtualSubnet: inputSubnetConfig["virtual_subnet"].(string),
 						}
 						if v, ok := inputSubnetConfig["virtual_subnet"].(string); ok {
 							if v != "0" {
@@ -808,9 +820,9 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 					Subnets:          inputSubnetsConfigList,
 				}
 				connectorPlacement := cloudNetworkConfig["connector_placement"].(string)
-				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions {
+				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions || connectorPlacement == client.WorkloadVNETConnectorPlacementOptions {
 					cloudNetworkInput.ConnectorPlacement = client.AppConnectorPlacementOptions
-				} else if connectorPlacement == client.InfraVPCConnectorPlacementOptions {
+				} else if connectorPlacement == client.InfraVPCConnectorPlacementOptions || connectorPlacement == client.InfraVNETConnectorPlacementOptions {
 					cloudNetworkInput.ConnectorPlacement = client.InfraConnectorPlacementOptions
 				} else {
 					cloudNetworkInput.ConnectorPlacement = connectorPlacement
@@ -923,20 +935,8 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 						if v, ok := cloudNetworkConfig["connector_settings"]; ok && v.(*schema.Set).Len() > 0 {
 							connectorsettingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
 							connectorsettingInput := &client.ConnectorSettings{
-								// BandwidthName: connectorsettingConfig["bandwidth"].(string),
-								// InstanceType:  connectorsettingConfig["instance_type"].(string),
 								Subnets: expandStringList(connectorsettingConfig["connector_subnets"].([]interface{})),
 							}
-							// switch connectorsettingInput.BandwidthName {
-							// case client.LessThan1GBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeSmall
-							// case client.OneToFiveGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeMedium
-							// case client.FiveToTenGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeLarge
-							// case client.MoreThanTenGBPS:
-							// 	connectorsettingInput.Bandwidth = client.ConnectorSizeExtraLarge
-							// }
 							cloudNetworkInput.Connectorsettings = connectorsettingInput
 						} else {
 							diags = append(diags, diag.Diagnostic{
@@ -987,19 +987,9 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 		networkOnboardops.PrivateCloud = privateCloudoptn
 	}
 
-	networkOnboardSettingsDbObj, err := prosimoClient.GetNetworkSettings(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err), nil
-	}
-	if !networkOnboardSettingsDbObj.Deployed {
-		err := prosimoClient.NetworkOnboardCloud(ctx, networkOnboardops)
-		if err != nil {
-			return diag.FromErr(err), nil
-		}
-	}
-
 	// Securirty policy configuration.
 	networkPolicyList := []client.Policyops{}
+	internetEgressControlList := []client.Policyops{}
 	if v, ok := d.GetOk("policies"); ok {
 		inputPolicies := expandStringList(v.([]interface{}))
 		for _, inputpolicy := range inputPolicies {
@@ -1012,21 +1002,23 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 			networkPolicyList = append(networkPolicyList, networkPolicy)
 		}
 	}
-	policyList := &client.Security{
-		Policies: networkPolicyList,
-	}
-
-	networkOnboardops.Security = policyList
-	securityInput := &client.NetworkSecurityInput{
-		Security: policyList,
-	}
-
-	if !networkOnboardSettingsDbObj.Deployed {
-		err := prosimoClient.NetworkOnboardSecurity(ctx, securityInput, networkOnboardops.ID)
-		if err != nil {
-			return diag.FromErr(err), nil
+	if v, ok := d.GetOk("internet_egress_controls"); ok {
+		inputPolicies := expandStringList(v.([]interface{}))
+		for _, inputpolicy := range inputPolicies {
+			networkPolicy := client.Policyops{}
+			policyDbObj, err := prosimoClient.GetInternetEgressControlByName(ctx, inputpolicy)
+			if err != nil {
+				return diag.FromErr(err), nil
+			}
+			networkPolicy.ID = policyDbObj.ID
+			internetEgressControlList = append(internetEgressControlList, networkPolicy)
 		}
 	}
+	policyList := &client.Security{
+		Policies:               networkPolicyList,
+		InternetEgressControls: internetEgressControlList,
+	}
+	networkOnboardops.Security = policyList
 
 	return diags, networkOnboardops
 }

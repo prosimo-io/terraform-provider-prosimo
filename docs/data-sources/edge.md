@@ -43,14 +43,104 @@ output "app_onboard_output" {
 
 Read-Only:
 
+- `appnames` (List of String)
+- `appusedcount` (Number)
+- `byoresourcedetails` (Set of Object) (see [below for nested schema](#nestedobjatt--edges--byoresourcedetails))
+- `city` (String)
+- `cloudkeyid` (String)
 - `cloudregion` (String)
 - `cloudtype` (String)
 - `clustername` (String)
+- `clustertype` (String)
+- `country` (String)
+- `createdtime` (String)
+- `edgeconnectivitycount` (Number)
+- `fabricconnectinfo` (Set of Object) (see [below for nested schema](#nestedobjatt--edges--fabricconnectinfo))
+- `flavor` (String)
 - `id` (String)
+- `locationid` (String)
+- `networkinfo` (Set of Object) (see [below for nested schema](#nestedobjatt--edges--networkinfo))
+- `networknames` (List of String)
+- `networkusedcount` (Number)
+- `nickname` (String)
+- `nodesizesettings` (Set of Object) (see [below for nested schema](#nestedobjatt--edges--nodesizesettings))
 - `pappfqdn` (String)
+- `privateip` (String)
+- `privatelinksourcenames` (List of String)
+- `privatelinkusedcount` (Number)
+- `publicip` (String)
+- `ranchertoken` (String)
 - `regstatus` (String)
+- `sharedservicecount` (Number)
+- `sharedservicenames` (List of String)
+- `state` (String)
 - `status` (String)
 - `subnet` (String)
 - `teamid` (String)
+- `token` (String)
+- `tokenactivated` (Boolean)
+- `updatedtime` (String)
+- `wgexternalendpoint` (String)
+- `wginternalendpoint` (String)
+
+<a id="nestedobjatt--edges--byoresourcedetails"></a>
+### Nested Schema for `edges.byoresourcedetails`
+
+Read-Only:
+
+- `vpcid` (String)
+
+
+<a id="nestedobjatt--edges--fabricconnectinfo"></a>
+### Nested Schema for `edges.fabricconnectinfo`
+
+Read-Only:
+
+- `attachments` (List of Object) (see [below for nested schema](#nestedobjatt--edges--fabricconnectinfo--attachments))
+- `cloudtype` (String)
+- `haspublic` (Boolean)
+- `id` (String)
+- `name` (String)
+- `teamid` (String)
+
+<a id="nestedobjatt--edges--fabricconnectinfo--attachments"></a>
+### Nested Schema for `edges.fabricconnectinfo.attachments`
+
+Read-Only:
+
+- `attachtype` (String)
+- `conntype` (String)
+- `id` (String)
+- `pappfqdn` (String)
+- `weight` (Number)
+
+
+
+<a id="nestedobjatt--edges--networkinfo"></a>
+### Nested Schema for `edges.networkinfo`
+
+Read-Only:
+
+- `ilbdns` (String)
+- `vpcid` (String)
+
+
+<a id="nestedobjatt--edges--nodesizesettings"></a>
+### Nested Schema for `edges.nodesizesettings`
+
+Read-Only:
+
+- `bandwidth` (String)
+- `bandwidthname` (String)
+- `bandwidthrange` (Set of Object) (see [below for nested schema](#nestedobjatt--edges--nodesizesettings--bandwidthrange))
+- `instancetype` (String)
+
+<a id="nestedobjatt--edges--nodesizesettings--bandwidthrange"></a>
+### Nested Schema for `edges.nodesizesettings.bandwidthrange`
+
+Read-Only:
+
+- `max` (Number)
+- `min` (Number)
 
 

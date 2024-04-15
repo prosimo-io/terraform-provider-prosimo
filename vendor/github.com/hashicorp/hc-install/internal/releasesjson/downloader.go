@@ -1,13 +1,9 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package releasesjson
 
 import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,7 +25,7 @@ type Downloader struct {
 	BaseURL          string
 }
 
-func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, binDir string, licenseDir string) (zipFilePath string, err error) {
+func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, dstDir string) (zipFilePath string, err error) {
 	if len(pv.Builds) == 0 {
 		return "", fmt.Errorf("no builds found for %s %s", pv.Name, pv.Version)
 	}
@@ -96,7 +92,8 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 
 	defer resp.Body.Close()
 
-	pkgReader := resp.Body
+	var pkgReader io.Reader
+	pkgReader = resp.Body
 
 	contentType := resp.Header.Get("content-type")
 	if !contentTypeIsZip(contentType) {
@@ -106,6 +103,19 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 
 	expectedSize := resp.ContentLength
 
+	if d.VerifyChecksum {
+		d.Logger.Printf("verifying checksum of %q", pb.Filename)
+		// provide extra reader to calculate & compare checksum
+		var buf bytes.Buffer
+		r := io.TeeReader(resp.Body, &buf)
+		pkgReader = &buf
+
+		err := compareChecksum(d.Logger, r, verifiedChecksum, pb.Filename, expectedSize)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	pkgFile, err := ioutil.TempFile("", pb.Filename)
 	if err != nil {
 		return "", err
@@ -114,39 +124,19 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 	pkgFilePath, err := filepath.Abs(pkgFile.Name())
 
 	d.Logger.Printf("copying %q (%d bytes) to %s", pb.Filename, expectedSize, pkgFile.Name())
-
-	var bytesCopied int64
-	if d.VerifyChecksum {
-		d.Logger.Printf("verifying checksum of %q", pb.Filename)
-		h := sha256.New()
-		r := io.TeeReader(resp.Body, pkgFile)
-
-		bytesCopied, err = io.Copy(h, r)
-		if err != nil {
-			return "", err
-		}
-
-		calculatedSum := h.Sum(nil)
-		if !bytes.Equal(calculatedSum, verifiedChecksum) {
-			return pkgFilePath, fmt.Errorf(
-				"checksum mismatch (expected: %x, got: %x)",
-				verifiedChecksum, calculatedSum,
-			)
-		}
-	} else {
-		bytesCopied, err = io.Copy(pkgFile, pkgReader)
-		if err != nil {
-			return pkgFilePath, err
-		}
+	// Unless the bytes were already downloaded above for checksum verification
+	// this may take a while depending on network connection as the io.Reader
+	// is expected to be http.Response.Body which streams the bytes
+	// on demand over the network.
+	bytesCopied, err := io.Copy(pkgFile, pkgReader)
+	if err != nil {
+		return pkgFilePath, err
 	}
-
 	d.Logger.Printf("copied %d bytes to %s", bytesCopied, pkgFile.Name())
 
 	if expectedSize != 0 && bytesCopied != int64(expectedSize) {
-		return pkgFilePath, fmt.Errorf(
-			"unexpected size (downloaded: %d, expected: %d)",
-			bytesCopied, expectedSize,
-		)
+		return pkgFilePath, fmt.Errorf("unexpected size (downloaded: %d, expected: %d)",
+			bytesCopied, expectedSize)
 	}
 
 	r, err := zip.OpenReader(pkgFile.Name())
@@ -164,12 +154,6 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 		srcFile, err := f.Open()
 		if err != nil {
 			return pkgFilePath, err
-		}
-
-		// Determine the appropriate destination file path
-		dstDir := binDir
-		if isLicenseFile(f.Name) && licenseDir != "" {
-			dstDir = licenseDir
 		}
 
 		d.Logger.Printf("unpacking %s to %s", f.Name, dstDir)
@@ -201,22 +185,6 @@ var zipMimeTypes = []string{
 func contentTypeIsZip(contentType string) bool {
 	for _, mt := range zipMimeTypes {
 		if mt == contentType {
-			return true
-		}
-	}
-	return false
-}
-
-// Enterprise products have a few additional license files
-// that need to be extracted to a separate directory
-var licenseFiles = []string{
-	"EULA.txt",
-	"TermsOfEvaluation.txt",
-}
-
-func isLicenseFile(filename string) bool {
-	for _, lf := range licenseFiles {
-		if lf == filename {
 			return true
 		}
 	}

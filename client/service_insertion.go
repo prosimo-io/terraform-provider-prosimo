@@ -7,23 +7,28 @@ import (
 )
 
 type Service_Insertion struct {
-	Name                  string    `json:"name,omitempty"`
-	Type                  string    `json:"type,omitempty"`
-	Service_name          string    `json:"serviceName,omitempty"`
-	RegionID              string    `json:"regionId,omitempty"`
 	ID                    string    `json:"id,omitempty"`
-	Source                *Source   `json:"source,omitempty"`
-	Target                *Target   `json:"target,omitempty"`
-	IpRules               *[]IpRule `json:"ipRules,omitempty"`
+	Name                  string    `json:"name,omitempty"`
+	RegionID              string    `json:"regionId,omitempty"`
+	Service_name          string    `json:"serviceName,omitempty"`
+	ServiceID             string    `json:"serviceId,omitempty"`
+	Type                  string    `json:"type,omitempty"`
 	Status                string    `json:"status,omitempty"`
 	CloudType             string    `json:"cloudType,omitempty"`
 	CloudRegion           string    `json:"cloudRegion,omitempty"`
-	ServiceID             string    `json:"serviceId,omitempty"`
 	GwLoadbalancerID      string    `json:"gwLoadbalancerID,omitempty"`
 	SharedServiceCreds    string    `json:"sharedServiceCreds,omitempty"`
-	ProsimoManagedRouting bool      `json:"prosimoManagedRouting,omitempty"`
 	RouteTable            []string  `json:"routeTable,omitempty"`
+	RoutingManagedBy      string    `json:"routingManagedBy,omitempty"`
+	ResourceGroup         string    `json:"resourceGroup,omitempty"`
+	ProsimoManagedRouting bool      `json:"prosimoManagedRouting,omitempty"`
+	VnetForPeering        string    `json:"vnetForPeering,omitempty"`
+	Source                *Source   `json:"source,omitempty"`
+	Target                *Target   `json:"target,omitempty"`
+	IpRules               *[]IpRule `json:"ipRules,omitempty"`
 	NameSpaceID           string    `json:"namespaceID,omitempty"`
+	CreatedTime           string    `json:"createdTime,omitempty"`
+	UpdatedTime           string    `json:"updatedTime,omitempty"`
 }
 
 type Service_Insertion_Res struct {
@@ -31,8 +36,9 @@ type Service_Insertion_Res struct {
 }
 
 type Service_Input struct {
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
+	ID    string   `json:"id,omitempty"`
+	Name  string   `json:"name,omitempty"`
+	Cidrs []string `json:"cidrs,omitempty"`
 }
 type Target struct {
 	Networks []Service_Input `json:"networks,omitempty"`
@@ -44,6 +50,7 @@ type Source struct {
 }
 
 type IpRule struct {
+	ID       string   `json:"id,omitempty"`
 	SrcAddr  []string `json:"srcAddr,omitempty"`
 	SrcPort  []string `json:"srcPort,omitempty"`
 	DestAddr []string `json:"destAddr,omitempty"`

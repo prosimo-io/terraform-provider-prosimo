@@ -60,7 +60,7 @@ NAME=prosimo
 BINARY=terraform-provider-${NAME}
 MAJOR_VERSION=4
 MINOR_VERSION=1
-REVISION=0
+REVISION=1
 # BUILDNUMBER=0
 VERSION=${MAJOR_VERSION}.$(MINOR_VERSION).$(REVISION)
 OS_ARCH=darwin_amd64
@@ -154,4 +154,4 @@ clean-all: clean-push clean-build-all clean-build clean-stat
 #
 ######################################################
 ci-build: build-all
-ci-all-gcs: build-all image push stat
+ci-all-gcs: build-all image push 

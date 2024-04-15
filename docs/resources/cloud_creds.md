@@ -24,6 +24,13 @@ This resource is usually used along with `terraform-provider-prosimo`.
 #   }
 # }
 
+resource "prosimo_cloud_creds" "bulk" {
+  cloud_type = "GCP"
+  acctid  = "demo-1"
+exterid = vale
+}
+
+
 # resource "prosimo_cloud_creds" "azure" {
 #   cloud_type = "AZURE"
 #   nickname   = "replace_me_with_nickname"
@@ -72,6 +79,8 @@ output "cloud_creds_output" {
 
 - `aws` (Block List, Max: 1) AWS options. (see [below for nested schema](#nestedblock--aws))
 - `azure` (Block List, Max: 1) AZURE options. (see [below for nested schema](#nestedblock--azure))
+- `bulk` (Block List, Max: 1) Bulk Account Onboarding options. (see [below for nested schema](#nestedblock--bulk))
+- `bulk_onboard` (Boolean) Flag for bulk upload, set it to true if want to bulk onboard accounts: defaults to false
 - `gcp` (Block List, Max: 1) GCP options. (see [below for nested schema](#nestedblock--gcp))
 
 ### Read-Only
@@ -118,6 +127,20 @@ Required:
 - `secret_id` (String, Sensitive)
 - `subscription_id` (String) Subscription ID, ref: https://learn.microsoft.com/en-us/azure/azure-portal/get-subscription-tenant-id
 - `tenant_id` (String) Tenant ID
+
+
+<a id="nestedblock--bulk"></a>
+### Nested Schema for `bulk`
+
+Required:
+
+- `external_id` (String, Sensitive)
+
+Optional:
+
+- `account_id` (String)
+- `file_path` (String) Path of GCP credential file to upload.
+- `key_type` (String) Tenant ID
 
 
 <a id="nestedblock--gcp"></a>

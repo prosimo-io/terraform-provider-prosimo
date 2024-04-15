@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 )
 
@@ -112,7 +111,8 @@ type Policyops struct {
 }
 
 type Security struct {
-	Policies []Policyops `json:"policies,omitempty"`
+	Policies               []Policyops `json:"policies,omitempty"`
+	InternetEgressControls []Policyops `json:"internetEgressControls,omitempty"`
 }
 
 type NetworkSecurityInput struct {
@@ -122,6 +122,7 @@ type NetworkSecurityInput struct {
 type NetworkDeploymentresops struct {
 	TaskID  string `json:"taskID,omitempty"`
 	AuditID string `json:"auditID,omitempty"`
+	ID      string `json:"id,omitempty"`
 }
 
 type NetworkDeploymentres struct {
@@ -179,65 +180,86 @@ func (prosimoClient *ProsimoClient) NetworkOnboard(ctx context.Context, networkO
 
 }
 
-func (prosimoClient *ProsimoClient) NetworkOnboardCloud(ctx context.Context, networkOnboardsops *NetworkOnboardoptns) error {
-	postOnboardNetworkCloudEndpoint := fmt.Sprintf(OnboardNetworkCloudEndpoint, networkOnboardsops.ID)
+// func (prosimoClient *ProsimoClient) NetworkOnboardCloud(ctx context.Context, networkOnboardsops *NetworkOnboardoptns) error {
+// 	postOnboardNetworkCloudEndpoint := fmt.Sprintf(OnboardNetworkCloudEndpoint, networkOnboardsops.ID)
 
-	req, err := prosimoClient.api_client.NewRequest("PUT", postOnboardNetworkCloudEndpoint, networkOnboardsops)
-	if err != nil {
-		return err
-	}
+// 	req, err := prosimoClient.api_client.NewRequest("PUT", postOnboardNetworkCloudEndpoint, networkOnboardsops)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = prosimoClient.api_client.Do(ctx, req, nil)
-	if err != nil {
-		return err
-	}
+// 	_, err = prosimoClient.api_client.Do(ctx, req, nil)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
+// 	return nil
 
-}
+// }
 
-func (prosimoClient *ProsimoClient) NetworkOnboardSecurity(ctx context.Context, networkOnboardsecurityops *NetworkSecurityInput, appID string) error {
-	postOnboardNetworkPolicyEndpoint := fmt.Sprintf(OnboardNetworkPolicyEndpoint, appID)
+// func (prosimoClient *ProsimoClient) NetworkOnboardSecurity(ctx context.Context, networkOnboardsecurityops *NetworkSecurityInput, appID string) error {
+// 	postOnboardNetworkPolicyEndpoint := fmt.Sprintf(OnboardNetworkPolicyEndpoint, appID)
 
-	req, err := prosimoClient.api_client.NewRequest("PUT", postOnboardNetworkPolicyEndpoint, networkOnboardsecurityops)
-	if err != nil {
-		return err
-	}
+// 	req, err := prosimoClient.api_client.NewRequest("PUT", postOnboardNetworkPolicyEndpoint, networkOnboardsecurityops)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = prosimoClient.api_client.Do(ctx, req, nil)
-	if err != nil {
-		return err
-	}
+// 	_, err = prosimoClient.api_client.Do(ctx, req, nil)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
+// 	return nil
 
-}
+// }
 
-func (prosimoClient *ProsimoClient) OnboardNetworkDeployment(ctx context.Context, appID string) (*NetworkDeploymentres, error) {
-	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, appID)
+// func (prosimoClient *ProsimoClient) OnboardNetworkDeployment(ctx context.Context, appID string) (*NetworkDeploymentres, error) {
+// 	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, appID)
 
-	onboardrequest := &NetworkDeploymentres{}
-	req, err := prosimoClient.api_client.NewRequest("PUT", PostOnboardNetworkDeploymentEndpoint, onboardrequest)
-	if err != nil {
-		return nil, err
-	}
+// 	onboardrequest := &NetworkDeploymentres{}
+// 	req, err := prosimoClient.api_client.NewRequest("PUT", PostOnboardNetworkDeploymentEndpoint, onboardrequest)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	onboardresponse := &NetworkDeploymentres{}
-	_, err = prosimoClient.api_client.Do(ctx, req, onboardresponse)
-	if err != nil {
-		return nil, err
-	}
+// 	onboardresponse := &NetworkDeploymentres{}
+// 	_, err = prosimoClient.api_client.Do(ctx, req, onboardresponse)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return onboardresponse, nil
+// 	return onboardresponse, nil
 
-}
+// }
 
-func (prosimoClient *ProsimoClient) OnboardNetworkDeploymentPost(ctx context.Context, networkOnboardsops *NetworkOnboardoptns) (*NetworkDeploymentres, error) {
-	log.Println("Entering reboard block", networkOnboardsops)
-	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, networkOnboardsops.ID)
+// func (prosimoClient *ProsimoClient) OnboardNetworkDeploymentPost(ctx context.Context, networkOnboardsops *NetworkOnboardoptns) (*NetworkDeploymentres, error) {
+// 	log.Println("Entering reboard block", networkOnboardsops)
+// 	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, networkOnboardsops.ID)
+
+// 	// onboardrequest := &NetworkDeploymentres{}
+// 	req, err := prosimoClient.api_client.NewRequest("POST", PostOnboardNetworkDeploymentEndpoint, networkOnboardsops)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	onboardresponse := &NetworkDeploymentres{}
+// 	_, err = prosimoClient.api_client.Do(ctx, req, onboardresponse)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return onboardresponse, nil
+
+// }
+
+func (prosimoClient *ProsimoClient) OnboardNetworkDeploymentV2(ctx context.Context, networkOnboardsops *NetworkOnboardoptns, paramValue string) (*NetworkDeploymentres, error) {
+	// log.Println("Entering reboard block", networkOnboardsops)
+
+	OnboardNetworkDeploymentEndpoint := fmt.Sprintf("%s?%s=%s", NetworkOnboardEndpointNew, ParamName, paramValue)
 
 	// onboardrequest := &NetworkDeploymentres{}
-	req, err := prosimoClient.api_client.NewRequest("POST", PostOnboardNetworkDeploymentEndpoint, networkOnboardsops)
+	req, err := prosimoClient.api_client.NewRequest("POST", OnboardNetworkDeploymentEndpoint, networkOnboardsops)
 	if err != nil {
 		return nil, err
 	}

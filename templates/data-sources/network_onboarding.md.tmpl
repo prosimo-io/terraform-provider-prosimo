@@ -1,0 +1,22 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+This resource is usually used along with `terraform-provider-prosimo`.
+
+
+
+## Example Usage
+
+{{ tffile "examples/data-sources/network_onboarding/main.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+

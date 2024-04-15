@@ -22,7 +22,8 @@ data "prosimo_network_onboarding" "test-app" {
 # filter_cloud_region = ["us-east-2"]
 # filter = "pamcname==a-o0pt6l.network.prosimo-eng.prosimoedge.us,id==8524d150-9a13-4a2a-97ee-9ae6f1203315"
 # filter = "name==private-DC,status==DEPLOYED"
-filter = "id==9d5863fe-5c6c-4765-a54d-3f827ffbbfd7,connectionoption==private"
+filter = "status==DEPLOYED"
+# filter = "id==9d5863fe-5c6c-4765-a54d-3f827ffbbfd7,connectionoption==private"
 }
 
 output "network_onboard_output" {
@@ -52,7 +53,11 @@ Read-Only:
 - `createdtime` (String)
 - `id` (String)
 - `name` (String)
+- `namespace_id` (String)
+- `namespace_name` (String)
+- `namespace_nid` (Number)
 - `pamcname` (String)
+- `policy_updated` (Boolean)
 - `publiccloud` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--publiccloud))
 - `security` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--security))
 - `status` (String)
@@ -81,10 +86,43 @@ Read-Only:
 - `connectivitytype` (String)
 - `connectorgrpid` (String)
 - `connectorplacement` (String)
+- `connectorsettings` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--publiccloud--cloudnetworks--connectorsettings))
 - `edgeconnectivityid` (String)
 - `hubid` (String)
 - `id` (String)
+- `subnets` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--publiccloud--cloudnetworks--subnets))
+
+<a id="nestedobjatt--onboarded_networks--publiccloud--cloudnetworks--connectorsettings"></a>
+### Nested Schema for `onboarded_networks.publiccloud.cloudnetworks.subnets`
+
+Read-Only:
+
+- `bandwidth` (String)
+- `bandwidthname` (String)
+- `bandwidthrange` (Set of Object) (see [below for nested schema](#nestedobjatt--onboarded_networks--publiccloud--cloudnetworks--subnets--bandwidthrange))
+- `cloudnetworkid` (String)
+- `instancetype` (String)
 - `subnets` (List of String)
+- `updatestatus` (String)
+
+<a id="nestedobjatt--onboarded_networks--publiccloud--cloudnetworks--subnets--bandwidthrange"></a>
+### Nested Schema for `onboarded_networks.publiccloud.cloudnetworks.subnets.bandwidthrange`
+
+Read-Only:
+
+- `max` (Number)
+- `min` (Number)
+
+
+
+<a id="nestedobjatt--onboarded_networks--publiccloud--cloudnetworks--subnets"></a>
+### Nested Schema for `onboarded_networks.publiccloud.cloudnetworks.subnets`
+
+Read-Only:
+
+- `subnet` (String)
+- `virtual_subnet` (String)
+
 
 
 

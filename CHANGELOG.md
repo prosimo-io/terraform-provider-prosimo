@@ -1,4 +1,38 @@
-
+## 4.1.1(March 18   2024)
+### :
+- BugFix https://prosimoio.atlassian.net/browse/PRO-19277.
+  resource `prosimo_namespaces` has been devided in to two resources,`prosimo_namespaces`(Includes namespace creation and assignment) and `prosimo_namespaces_export`(Includes Export and Withdraws). 
+```hcl   
+resource "prosimo_namespace" "test" {
+    name = "test-ns"
+    assign {
+        source_networks = ["test"]
+    }
+}
+```
+```hcl    
+resource "prosimo_namespace_export" "test" {
+    name = "test-ns"
+    export {
+        source_network = "test"
+        namespaces = [ "default" ]
+    }
+}
+```
+- BugFix https://prosimoio.atlassian.net/browse/PRO-19360.
+- BugFix https://prosimoio.atlassian.net/browse/PRO-18733
+- BugFix https://prosimoio.atlassian.net/browse/PRO-18819 Introduced new tgw `id` filed in transit deployment.
+```hcl    
+    transit_deployment {
+        tgws {
+            id= "tgw-ob9531fe31541c"
+            action = "MOD"
+            connection {
+                type = "EDGE"
+                action = "ADD"
+            }
+        }
+```
 ## 4.1.0(January 10   2024)
 ### Features:
 - Field `connector_settings` in resource `prosimo_network_onboarding` and field `node_size_settings` in resource `prosimo_edge` for cloud AZURE have been modified.Here are the changes.

@@ -122,13 +122,20 @@ func (f Function) ReturnType(argTypes []cty.Type) (cty.Type, error) {
 	return f.ReturnTypeForValues(vals)
 }
 
-func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedArgs bool, err error) {
+// ReturnTypeForValues is similar to ReturnType but can be used if the caller
+// already knows the values of some or all of the arguments, in which case
+// the function may be able to determine a more definite result if its
+// return type depends on the argument *values*.
+//
+// For any arguments whose values are not known, pass an Unknown value of
+// the appropriate type.
+func (f Function) ReturnTypeForValues(args []cty.Value) (ty cty.Type, err error) {
 	var posArgs []cty.Value
 	var varArgs []cty.Value
 
 	if f.spec.VarParam == nil {
 		if len(args) != len(f.spec.Params) {
-			return cty.Type{}, false, fmt.Errorf(
+			return cty.Type{}, fmt.Errorf(
 				"wrong number of arguments (%d required; %d given)",
 				len(f.spec.Params), len(args),
 			)
@@ -138,7 +145,7 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 		varArgs = nil
 	} else {
 		if len(args) < len(f.spec.Params) {
-			return cty.Type{}, false, fmt.Errorf(
+			return cty.Type{}, fmt.Errorf(
 				"wrong number of arguments (at least %d required; %d given)",
 				len(f.spec.Params), len(args),
 			)
@@ -167,7 +174,7 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 		}
 
 		if val.IsNull() && !spec.AllowNull {
-			return cty.Type{}, false, NewArgErrorf(i, "argument must not be null")
+			return cty.Type{}, NewArgErrorf(i, "argument must not be null")
 		}
 
 		// AllowUnknown is ignored for type-checking, since we expect to be
@@ -177,13 +184,13 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 
 		if val.Type() == cty.DynamicPseudoType {
 			if !spec.AllowDynamicType {
-				return cty.DynamicPseudoType, true, nil
+				return cty.DynamicPseudoType, nil
 			}
 		} else if errs := val.Type().TestConformance(spec.Type); errs != nil {
 			// For now we'll just return the first error in the set, since
 			// we don't have a good way to return the whole list here.
 			// Would be good to do something better at some point...
-			return cty.Type{}, false, NewArgError(i, errs[0])
+			return cty.Type{}, NewArgError(i, errs[0])
 		}
 	}
 
@@ -202,18 +209,18 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 			}
 
 			if val.IsNull() && !spec.AllowNull {
-				return cty.Type{}, false, NewArgErrorf(realI, "argument must not be null")
+				return cty.Type{}, NewArgErrorf(realI, "argument must not be null")
 			}
 
 			if val.Type() == cty.DynamicPseudoType {
 				if !spec.AllowDynamicType {
-					return cty.DynamicPseudoType, true, nil
+					return cty.DynamicPseudoType, nil
 				}
 			} else if errs := val.Type().TestConformance(spec.Type); errs != nil {
 				// For now we'll just return the first error in the set, since
 				// we don't have a good way to return the whole list here.
 				// Would be good to do something better at some point...
-				return cty.Type{}, false, NewArgError(i, errs[0])
+				return cty.Type{}, NewArgError(i, errs[0])
 			}
 		}
 	}
@@ -227,36 +234,16 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 		}
 	}()
 
-	ty, err = f.spec.Type(args)
-	return ty, false, err
-}
-
-// ReturnTypeForValues is similar to ReturnType but can be used if the caller
-// already knows the values of some or all of the arguments, in which case
-// the function may be able to determine a more definite result if its
-// return type depends on the argument *values*.
-//
-// For any arguments whose values are not known, pass an Unknown value of
-// the appropriate type.
-func (f Function) ReturnTypeForValues(args []cty.Value) (ty cty.Type, err error) {
-	ty, _, err = f.returnTypeForValues(args)
-	return ty, err
+	return f.spec.Type(args)
 }
 
 // Call actually calls the function with the given arguments, which must
 // conform to the function's parameter specification or an error will be
 // returned.
 func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
-	expectedType, dynTypeArgs, err := f.returnTypeForValues(args)
+	expectedType, err := f.ReturnTypeForValues(args)
 	if err != nil {
 		return cty.NilVal, err
-	}
-	if dynTypeArgs {
-		// returnTypeForValues sets this if any argument was inexactly typed
-		// and the corresponding parameter did not indicate it could deal with
-		// that. In that case we also avoid calling the implementation function
-		// because it will also typically not be ready to deal with that case.
-		return cty.UnknownVal(expectedType), nil
 	}
 
 	if refineResult := f.spec.RefineResult; refineResult != nil {

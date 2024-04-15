@@ -40,7 +40,7 @@ resource "prosimo_network_onboarding" "testapp-azure" {
           vnet = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/Gitlab/providers/Microsoft.Network/virtualNetworks/Gitlab-vnet"
           hub_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/qing-vwan-rg/providers/Microsoft.Network/virtualHubs/qing-hub-useast-2"
           connectivity_type = "vwan-hub"
-          connector_placement = "Workload VPC"
+          connector_placement = "Workload VNET"
           subnets {
             subnet = "10.3.5.0/24"
             virtual_subnet = "10.250.2.128/25"
@@ -108,7 +108,7 @@ resource "prosimo_network_onboarding" "testapp-azure-workload-vpc" {
         cloud_networks {
           vnet = "/subscriptions/77102da4-2e1f-4445-b74a-93e842dc8c3c/resourceGroups/DefaultResourceGroup-WUS/providers/Microsoft.Network/virtualNetworks/DefaultResourceGroupWUSvnet574"
           connectivity_type = "vnet-peering"
-          connector_placement = "Workload VPC"
+          connector_placement = "Workload VNET"
           subnets {
             subnet = "10.4.0.0/24"
             virtual_subnet = "10.250.2.128/25"
@@ -143,7 +143,7 @@ resource "prosimo_network_onboarding" "testapp-azure-infra-vpc" {
         cloud_networks {
           vnet = "/subscriptions/77102da4-2e1f-4445-b74a-93e842dc8c3c/resourceGroups/DefaultResourceGroup-WUS/providers/Microsoft.Network/virtualNetworks/DefaultResourceGroupWUSvnet574"
           connectivity_type = "vnet-peering"
-          connector_placement = "Infra VPC"
+          connector_placement = "Infra VNET"
           subnets {
             subnet = "10.4.0.0/24"
             virtual_subnet = "10.168.0.0/20"
@@ -270,6 +270,7 @@ resource "prosimo_network_onboarding" "privateDC" {
 ### Optional
 
 - `force_offboard` (Boolean) Force app offboarding incase of normal offboarding failure.
+- `internet_egress_controls` (List of String) Select list of internet egress control policies
 - `namespace` (String) Assigned Namespace
 - `policies` (List of String) Select policy name.e.g: ALLOW-ALL-NETWORKS, DENY-ALL-NETWORKS or Custom Policies
 - `private_cloud` (Block Set) (see [below for nested schema](#nestedblock--private_cloud))
@@ -320,7 +321,7 @@ Read-Only:
 
 Required:
 
-- `connector_placement` (String) Infra VPC, Workload VPC or none.
+- `connector_placement` (String) Infra VPC/Infra VNET, Workload VPC/Workload VNET or none.
 
 Optional:
 

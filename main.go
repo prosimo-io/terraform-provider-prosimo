@@ -1,7 +1,7 @@
 package main
 
 import (
-	"git.prosimo.io/prosimoio/prosimo/terraform-provider-prosimo.git/prosimo"
+	"git.prosimo.io/prosimoio/tools/terraform-provider-prosimo.git/prosimo"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )

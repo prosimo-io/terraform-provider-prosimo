@@ -2,12 +2,18 @@ package client
 
 // Prosimo API constants
 const (
+	ParamName          = "action"
+	ParamValueDeploy   = "deploy"
+	ParamValueSave     = "save"
+	ParamValueReDeploy = "redeploy"
+
 	AWSCloudType     = "AWS"
 	AzureCloudType   = "AZURE"
 	GCPCloudType     = "GCP"
 	PrivateCloudType = "PRIVATE"
 
 	AWSKeyType     = "AWSKEY"
+	AWSBulkKeyType = "AWSIAM"
 	AzureKeyType   = "AZUREKEY"
 	GCPKeyType     = "GCPKEY"
 	PrivateKeyType = "PRIVATE"
@@ -212,11 +218,13 @@ const (
 	PublicCloudConnectionOption  = "public"
 	PrivateCloudConnectionOption = "private"
 
-	WorkloadVpcConnectorPlacementOptions = "Workload VPC"
-	InfraVPCConnectorPlacementOptions    = "Infra VPC"
-	AppConnectorPlacementOptions         = "app"
-	NoneConnectorPlacementOptions        = "none"
-	InfraConnectorPlacementOptions       = "infra"
+	WorkloadVpcConnectorPlacementOptions  = "Workload VPC"
+	WorkloadVNETConnectorPlacementOptions = "Workload VNET"
+	InfraVPCConnectorPlacementOptions     = "Infra VPC"
+	InfraVNETConnectorPlacementOptions    = "Infra VNET"
+	AppConnectorPlacementOptions          = "app"
+	NoneConnectorPlacementOptions         = "none"
+	InfraConnectorPlacementOptions        = "infra"
 
 	AutoServiceInsertionOptions   = "auto"
 	NoneServiceInsertionOptions   = "none"
@@ -346,6 +354,7 @@ const (
 	OnboardAppDeploymentEndpoint         = APIPrefix + "app/deployment/%s"
 	OnboardNetworkDeploymentEndpoint     = APIPrefix + "network/deployment/%s"
 	NetworkOnboardEndpoint               = APIPrefix + "network/onboard/%s"
+	NetworkOnboardEndpointNew            = APIPrefix + "network/onboard/deploy"
 	OnboardAppClientAppEndpoint          = APIPrefix + "capp"
 	AppDomainEndpoint                    = APIPrefix + "app/domain"
 	WafAppDomainEndpoint                 = APIPrefix + "waf/%s/domain"
@@ -359,6 +368,7 @@ const (
 	CacheRuleEndpoint                = APIPrefix + "cacherule"
 	WafEndpoint                      = APIPrefix + "waf"
 	GetPolicyEndpoint                = APIPrefix + "policy/search"
+	GetIECEndpoint                   = APIPrefix + "net-egress-control/search"
 	PolicyEndpoint                   = APIPrefix + "policy"
 	IPRepEndpoint                    = APIPrefix + "ip-reputation"
 	DynamicRiskEndpoint              = APIPrefix + "dynamicrisk"
