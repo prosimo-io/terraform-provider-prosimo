@@ -228,3 +228,29 @@ func retryUntilTaskCompleteSharedService(ctx context.Context, d *schema.Resource
 		return nil
 	}
 }
+func retryUntilTaskCompleteManagedFirewall(ctx context.Context, d *schema.ResourceData, meta interface{}, taskID string) resource.RetryFunc {
+	prosimoClient := meta.(*client.ProsimoClient)
+	return func() *resource.RetryError {
+		getTaskStatus, err := prosimoClient.GetTaskStatus(ctx, taskID)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
+		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+			for _, subtask := range getTaskStatus.ItemList {
+				if subtask.Status == "FAILURE" {
+					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
+				}
+			}
+			// resourceNetworkOnboardingRead(ctx, d, meta)
+			log.Println("[DEBUG]: offboarding shared service", d.Id())
+			_, err := prosimoClient.DecomFirewall(ctx, d.Id())
+			if err != nil {
+				return resource.NonRetryableError(err)
+			}
+
+		}
+		return nil
+	}
+}

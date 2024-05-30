@@ -1,6 +1,9 @@
 package client
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"log"
+)
 
 const (
 	policyJson = `{
@@ -252,12 +255,49 @@ const (
 		}
 	}
 `
+
+	internetEgressJson = `{
+		"FQDN": {
+			"property": [{
+				"user_property": "FQDN",
+				"server_property": "fqdn",
+				"operations": [{
+					"user_operation_name": "Is",
+					"server_operation_name": "is"
+				}, {
+					"user_operation_name": "Is NOT",
+					"server_operation_name": "is-not"
+				}]
+			},
+			{
+				"user_property": "Domain",
+				"server_property": "domain",
+				"operations": [{
+					"user_operation_name": "Is",
+					"server_operation_name": "is"
+				}]
+			}]
+		}
+	}
+`
 )
 
 func GetPolicyServerTemplate() MatchItem {
 
 	var input MatchItem
-	json.Unmarshal([]byte(policyJson), &input)
+	err := json.Unmarshal([]byte(policyJson), &input)
+	if err != nil {
+		log.Println("Error unmarshaling policyJson:", err)
+	}
+	return input
+}
 
+func GetInternetEgressPolicyServerTemplate() IEMatchItem {
+
+	var input IEMatchItem
+	err := json.Unmarshal([]byte(internetEgressJson), &input)
+	if err != nil {
+		log.Println("Error unmarshaling internetEgressJson:", err)
+	}
 	return input
 }

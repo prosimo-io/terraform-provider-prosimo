@@ -1,3 +1,101 @@
+## 4.2.1(April 18   2024)
+### :
+- Feature: Terraform support for Managed firewall and Internet egress.
+    ```hcl   
+    resource "prosimo_firewall_manager" "fm" {
+        integration_type = "panorama"
+        ip_address = "52.68.81.235"
+        api_key = "********"
+        license_settings {
+        license_mode = "BYOL"
+        firewall_family = "VM-100"
+        instance_family= "computeOptimized"
+        }
+    }
+
+    resource "prosimo_managed_firewall" "mf" {
+        name = "tf"
+        firewall_type = "vmseries"
+        cloud_creds_name = "prosimo-aws-app-iam"
+        cloud_region = "us-west-2"
+        cidr = "10.220.0.0/16"
+        instance_size = "c4.xlarge"
+        version = "11.0.2"
+        auth_key = "0TrustNext"
+        auth_code = "0TrustNext"
+        scaling_settings {
+        desired = 1
+        min = 1
+        max = 2
+        }
+        assignments {
+        template_name = "test-stac-1"
+        device_group = "aws-fw-1"
+        }
+        access_details {
+        username = "***"
+        password = "****"
+        select_option_for_ssh = "new key pair"
+        }
+        onboard = false
+        decommission = true
+
+    }
+
+    resource "prosimo_internet_egress" "test-internet-egress-policy" {
+        name = "psonar-internet-egress-policy"
+        action = "allow"
+        matches {
+            match_entries {
+                property = "FQDN"
+                operation = "Is"
+                type = "fqdn"
+                values {
+                    inputitems {
+                        id = "youtube.com"
+                    }
+                }
+            }
+            match_entries {
+                property = "FQDN"
+                operation = "Is NOT"
+                type = "fqdn"
+                values {
+                    inputitems {
+                        id = "prosimo.io"
+                    }
+                }
+            }
+            match_entries {
+                property = "Domain"
+                operation = "Is"
+                type = "fqdn"
+                values {
+                    inputitems {
+                        id = "prosimo.io"
+                    }
+                }
+            }
+        }
+        namespaces {
+            namespace_entries {
+                name = "default"
+            }
+        }
+        networks {
+            network_entries {
+                name = "test"
+            }
+        }
+        network_groups {
+            network_group_entries {
+                name = "test-network-group"
+            }
+        }
+    }
+    ```
+    ```hcl
+
 ## 4.1.1(March 18   2024)
 ### :
 - BugFix https://prosimoio.atlassian.net/browse/PRO-19277.

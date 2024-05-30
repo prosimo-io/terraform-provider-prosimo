@@ -11,8 +11,10 @@ type Prefix_RouteID struct {
 	Prefix        string         `json:"prefix,omitempty"`
 	RouteTableIDS []Route_Tables `json:"routeTables,omitempty"`
 }
+
 type Route_Tables struct {
-	ID string `json:"id,omitempty"`
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 // type Regions_route struct {
@@ -21,17 +23,22 @@ type Route_Tables struct {
 // }
 
 type Route_entry_network struct {
-	ID             string            `json:"id,omitempty"`
-	CloudKeyID     string            `json:"cloudKeyID,omitempty"`
-	CSP            string            `json:"csp,omitempty"`
-	CloudRegion    string            `json:"cloudRegion,omitempty"`
-	CloudNetworkID string            `json:"cloudNetworkID,omitempty"`
-	PrefixesRT     *[]Prefix_RouteID `json:"prefixRouteTables,omitempty"`
-	Enabled        bool              `json:"enabled,omitempty"`
-	Status         string            `json:"status,omitempty"`
-	TeamID         string            `json:"teamID,omitempty"`
-	AuditID        string            `json:"auditID,omitempty"`
+	ID               string            `json:"id,omitempty"`
+	CloudKeyID       string            `json:"cloudKeyID,omitempty"`
+	CSP              string            `json:"csp,omitempty"`
+	CloudRegion      string            `json:"cloudRegion,omitempty"`
+	CloudNetworkID   string            `json:"cloudNetworkID,omitempty"`
+	CloudNetworkName string            `json:"cloudNetworkName,omitempty"`
+	PrefixesRT       *[]Prefix_RouteID `json:"prefixRouteTables,omitempty"`
+	Enabled          bool              `json:"enabled,omitempty"`
+	OverwriteRoute   bool              `json:"overwriteRoute,omitempty"`
+	Status           string            `json:"status,omitempty"`
+	TeamID           string            `json:"teamID,omitempty"`
+	AuditID          string            `json:"auditID,omitempty"`
+	CreatedTime      string            `json:"createdTime,omitempty"`
+	UpdatedTime      string            `json:"updatedTime,omitempty"`
 }
+
 type Route_entry_network_res struct {
 	Data *Route_entry_network `json:"data,omitempty"`
 }

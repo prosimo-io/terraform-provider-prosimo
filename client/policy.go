@@ -31,10 +31,11 @@ type Policy struct {
 	DisplayName               string  `json:"displayName,omitempty"`
 }
 type Details struct {
-	Actions  []string        `json:"actions,omitempty"`
-	Matches  MatchDetailList `json:"matches,omitempty"`
-	Apps     Values          `json:"apps,omitempty"`
-	Networks Values          `json:"networks,omitempty"`
+	Actions                  []string        `json:"actions,omitempty"`
+	Matches                  MatchDetailList `json:"matches,omitempty"`
+	Apps                     Values          `json:"apps,omitempty"`
+	Networks                 Values          `json:"networks,omitempty"`
+	Internet_Traffic_Enabled bool            `json:"internetTrafficEnabled,omitempty"`
 }
 
 type Details_ds struct {
@@ -69,7 +70,7 @@ type Values struct {
 }
 type InputItems struct {
 	ItemID          string     `json:"id,omitempty"`
-	ItemName       string     `json:"name,omitempty"`
+	ItemName        string     `json:"name,omitempty"`
 	CityCode        int        `json:"cityCode,omitempty"`
 	CityName        string     `json:"cityName,omitempty"`
 	CountryCodeISO2 string     `json:"countryCodeISO2,omitempty"`

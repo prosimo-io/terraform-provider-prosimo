@@ -50,6 +50,7 @@ func Provider() *schema.Provider {
 			"prosimo_user_settings":            resourceUserSettings(),
 			"prosimo_certificates":             resourceCertficate(),
 			"prosimo_policy":                   resourcePolicy(),
+			"prosimo_internet_egress":          resourceInternetEgress(),
 			"prosimo_cache_rules":              resourceCache(),
 			"prosimo_edr_profile":              resourceEdrProfile(),
 			"prosimo_edr_integration":          resourceEdrIntegration(),
@@ -68,6 +69,8 @@ func Provider() *schema.Provider {
 			"prosimo_visual_transit":           resourceVisualTransit(),
 			"prosimo_regional_prefix":          resourceRegionalPrefix(),
 			"prosimo_network_prefix":           resourceNetworkPrefix(),
+			"prosimo_managed_firewall":         resourceProsimoManagedFirewalls(),
+			"prosimo_firewall_manager":         resourceFirewallManger(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -83,7 +86,11 @@ func Provider() *schema.Provider {
 			"prosimo_discovered_networks": dataSourceNetworkDiscovered(),
 			"prosimo_private_links":       dataSourcePrivateLink(),
 			"prosimo_service_insertion":   dataSourceServiceInsertion(),
+			"prosimo_namespace":           dataSourceNamespace(),
+			"prosimo_shared_services":     dataSourceSharedService(),
 			// "prosimo_waf_policy":          dataSourceWAFPolicy(),
+			"prosimo_network_prefix":  dataSourceNetworkPrefix(),
+			"prosimo_regional_prefix": dataSourceRegionalPrefix(),
 		},
 
 		// DataSourcesList: []*schema.Resouece{

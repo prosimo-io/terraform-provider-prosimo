@@ -17,7 +17,7 @@ Use this data source to get information on private links.
 
 ### Optional
 
-- `filter` (String) Custom filters to scope specific results. Usage: filter = app_access_type==agent
+- `filter` (String) Custom filters to scope specific results. Usage: filter = region==us-west-1
 
 ### Read-Only
 
@@ -30,37 +30,37 @@ Use this data source to get information on private links.
 
 Read-Only:
 
-- `cloud_creds_id` (String)
-- `cloud_sources` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloud_sources))
-- `created_time` (String)
+- `cloudcredsid` (String)
+- `cloudsources` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloudsources))
+- `createdtime` (String)
 - `credentials` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--credentials))
 - `deleted` (Boolean)
 - `edge` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--edge))
 - `id` (String)
-- `in_use` (Boolean)
+- `inuse` (Boolean)
 - `name` (String)
 - `policies` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--policies))
 - `ports` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--ports))
 - `region` (String)
-- `total_count` (Number)
-- `updated_time` (String)
+- `totalcount` (Number)
+- `updatedtime` (String)
 
-<a id="nestedobjatt--private_links--cloud_sources"></a>
-### Nested Schema for `private_links.cloud_sources`
+<a id="nestedobjatt--private_links--cloudsources"></a>
+### Nested Schema for `private_links.cloudsources`
 
 Read-Only:
 
-- `cloud_network` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloud_sources--cloud_network))
-- `created_time` (String)
+- `cloudnetwork` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloudsources--cloudnetwork))
+- `createdtime` (String)
 - `deleted` (Boolean)
-- `hostedzones` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloud_sources--hostedzones))
+- `hostedzones` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloudsources--hostedzones))
 - `id` (String)
-- `records` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloud_sources--records))
-- `subnets` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloud_sources--subnets))
-- `updated_time` (String)
+- `records` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloudsources--records))
+- `subnets` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloudsources--subnets))
+- `updatedtime` (String)
 
-<a id="nestedobjatt--private_links--cloud_sources--cloud_network"></a>
-### Nested Schema for `private_links.cloud_sources.cloud_network`
+<a id="nestedobjatt--private_links--cloudsources--cloudnetwork"></a>
+### Nested Schema for `private_links.cloudsources.cloudnetwork`
 
 Read-Only:
 
@@ -68,79 +68,79 @@ Read-Only:
 - `name` (String)
 
 
-<a id="nestedobjatt--private_links--cloud_sources--hostedzones"></a>
-### Nested Schema for `private_links.cloud_sources.hostedzones`
+<a id="nestedobjatt--private_links--cloudsources--hostedzones"></a>
+### Nested Schema for `private_links.cloudsources.hostedzones`
 
 Read-Only:
 
-- `cloud_credentials_id` (String)
-- `created_time` (String)
-- `hostedzone_id` (String)
+- `cloudcredentialsid` (String)
+- `createdtime` (String)
+- `hostedzoneid` (String)
 - `id` (String)
 - `name` (String)
-- `prosimo_managed` (Boolean)
+- `prosimomanaged` (Boolean)
 - `region` (String)
 - `status` (String)
-- `team_id` (String)
-- `updated_time` (String)
-- `vpc_id` (String)
+- `teamid` (String)
+- `updatedtime` (String)
+- `vpcid` (String)
 
 
-<a id="nestedobjatt--private_links--cloud_sources--records"></a>
-### Nested Schema for `private_links.cloud_sources.records`
+<a id="nestedobjatt--private_links--cloudsources--records"></a>
+### Nested Schema for `private_links.cloudsources.records`
 
 Read-Only:
 
-- `created_time` (String)
-- `hostedzone_id` (String)
+- `createdtime` (String)
+- `hostedzoneid` (String)
 - `id` (String)
 - `record` (String)
 - `status` (String)
 - `target` (String)
-- `team_id` (String)
+- `teamid` (String)
 - `ttl` (Number)
 - `type` (String)
-- `updated_time` (String)
+- `updatedtime` (String)
 
 
-<a id="nestedobjatt--private_links--cloud_sources--subnets"></a>
-### Nested Schema for `private_links.cloud_sources.subnets`
+<a id="nestedobjatt--private_links--cloudsources--subnets"></a>
+### Nested Schema for `private_links.cloudsources.subnets`
 
 Read-Only:
 
 - `cidr` (String)
-- `created_time` (String)
+- `createdtime` (String)
 - `deleted` (Boolean)
-- `endpoints` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloud_sources--subnets--endpoints))
+- `endpoints` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloudsources--subnets--endpoints))
 - `id` (String)
-- `updated_time` (String)
+- `updatedtime` (String)
 
-<a id="nestedobjatt--private_links--cloud_sources--subnets--endpoints"></a>
-### Nested Schema for `private_links.cloud_sources.subnets.updated_time`
+<a id="nestedobjatt--private_links--cloudsources--subnets--endpoints"></a>
+### Nested Schema for `private_links.cloudsources.subnets.updatedtime`
 
 Read-Only:
 
-- `app_id` (String)
-- `app_name` (String)
+- `appid` (String)
+- `appname` (String)
 - `domain` (String)
-- `domain_id` (String)
+- `domainid` (String)
 - `endpoint` (String)
 - `id` (String)
 - `name` (String)
-- `policy_id` (String)
-- `proto_ports` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloud_sources--subnets--updated_time--proto_ports))
+- `policyid` (String)
+- `protoports` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--cloudsources--subnets--updatedtime--protoports))
 - `status` (String)
 
-<a id="nestedobjatt--private_links--cloud_sources--subnets--updated_time--proto_ports"></a>
-### Nested Schema for `private_links.cloud_sources.subnets.updated_time.proto_ports`
+<a id="nestedobjatt--private_links--cloudsources--subnets--updatedtime--protoports"></a>
+### Nested Schema for `private_links.cloudsources.subnets.updatedtime.protoports`
 
 Read-Only:
 
 - `paths` (List of String)
 - `port` (Number)
-- `port_list` (List of String)
+- `portlist` (List of String)
 - `protocol` (String)
-- `websocket_enabled` (Boolean)
+- `websocketenabled` (Boolean)
 
 
 
@@ -163,20 +163,20 @@ Read-Only:
 Read-Only:
 
 - `cloud` (String)
-- `cloud_creds_id` (String)
+- `cloudcredsid` (String)
 - `domain` (String)
 - `id` (String)
 - `name` (String)
-- `network_info` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--edge--network_info))
+- `networkinfo` (Set of Object) (see [below for nested schema](#nestedobjatt--private_links--edge--networkinfo))
 - `region` (String)
 
-<a id="nestedobjatt--private_links--edge--network_info"></a>
-### Nested Schema for `private_links.edge.network_info`
+<a id="nestedobjatt--private_links--edge--networkinfo"></a>
+### Nested Schema for `private_links.edge.networkinfo`
 
 Read-Only:
 
-- `ilb_dns` (String)
-- `vpc_id` (String)
+- `ilbdns` (String)
+- `vpcid` (String)
 
 
 
@@ -195,15 +195,15 @@ Read-Only:
 
 Read-Only:
 
-- `app_id` (String)
-- `created_time` (String)
-- `domain_id` (String)
-- `edge_id` (String)
+- `appid` (String)
+- `createdtime` (String)
+- `domainid` (String)
+- `edgeid` (String)
 - `id` (String)
-- `pls_id` (String)
+- `plsid` (String)
 - `port` (Number)
 - `status` (String)
-- `team_id` (String)
-- `updated_time` (String)
+- `teamid` (String)
+- `updatedtime` (String)
 
 

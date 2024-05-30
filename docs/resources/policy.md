@@ -378,7 +378,7 @@ This resource is usually used along with `terraform-provider-prosimo`.
                 }
              }
           }
-         
+        internet_traffic_enabled = true
     #    apps {
     #         selecteditems {
     #             name = "agent-httpbin"
@@ -433,6 +433,7 @@ Optional:
 - `alert` (Boolean) set this to true to trigger the alert as per policy config
 - `apps` (Block Set) App details to attach to the policy (see [below for nested schema](#nestedblock--details--apps))
 - `bypass` (Boolean) set this to true to bypass policy
+- `internet_traffic_enabled` (Boolean) set it to true to enable internet access
 - `lock_users` (Boolean) set this to true to lock the user defined in policy
 - `mfa` (Boolean) set this to true to trigger
 - `networks` (Block Set) Network details to attach to the policy (see [below for nested schema](#nestedblock--details--networks))

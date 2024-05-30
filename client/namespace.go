@@ -7,9 +7,40 @@ import (
 )
 
 type Namespace struct {
-	ID     string `json:"id,omitempty"`
-	TaskID string `json:"taskID,omitempty"`
-	Name   string `json:"name,omitempty"`
+	ID               string         `json:"id,omitempty"`
+	NID              int            `json:"nid,omitempty"`
+	TaskID           string         `json:"taskID,omitempty"`
+	Name             string         `json:"name,omitempty"`
+	CreatedTime      string         `json:"createdTime,omitempty"`
+	UpdatedTime      string         `json:"updatedTime,omitempty"`
+	TeamID           string         `json:"teamID,omitempty"`
+	AssignedNetworks *Network_Input `json:"assignedNetworks,omitempty"`
+	ExportedNetworks *Network_Input `json:"exportedNetworks,omitempty"`
+	ImportedNetworks *Network_Input `json:"importedNetworks,omitempty"`
+	Status           string         `json:"status,omitempty"`
+}
+
+type Network_Input struct {
+	Networks *[]NS_Networks `json:"networks,omitempty"`
+}
+
+type NS_Networks struct {
+	ID            string       `json:"id,omitempty"`
+	Name          string       `json:"name,omitempty"`
+	TeamID        string       `json:"teamID,omitempty"`
+	PamCname      string       `json:"pamCname,omitempty"`
+	PolicyUpdated bool         `json:"policyUpdated,omitempty"`
+	Deployed      bool         `json:"deployed,omitempty"`
+	Status        string       `json:"status,omitempty"`
+	Progress      int          `json:"progress,omitempty"`
+	CreatedTime   string       `json:"createdTime,omitempty"`
+	UpdatedTime   string       `json:"updatedTime,omitempty"`
+	PublicCloud   *PublicCloud `json:"publicCloud,omitempty"`
+	Security      *Security    `json:"security,omitempty"`
+	NamespaceID   string       `json:"namespaceID,omitempty"`
+	NamespaceName string       `json:"namespaceName,omitempty"`
+	NamespaceNID  int          `json:"namespaceNID,omitempty"`
+	Exportable    bool         `json:"exportable,omitempty"`
 }
 
 type NetActNamespace struct {
@@ -129,13 +160,13 @@ func (prosimoClient *ProsimoClient) DeleteNamespace(ctx context.Context, namespa
 
 	req, err := prosimoClient.api_client.NewRequest("DELETE", updateNameSpaceEndpoint, nil)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	resourcePostResponseData := &Namespace_Response{}
 	_, err = prosimoClient.api_client.Do(ctx, req, resourcePostResponseData)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	return resourcePostResponseData, nil

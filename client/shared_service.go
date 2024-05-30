@@ -7,24 +7,39 @@ import (
 )
 
 type Shared_Service struct {
-	Name   string  `json:"name,omitempty"`
-	Type   string  `json:"type,omitempty"`
-	ID     string  `json:"id,omitempty"`
-	Region *Region `json:"region,omitempty"`
-	TaskID string  `json:"taskID,omitempty"`
-	Status string  `json:"status,omitempty"`
-	TeamID string  `json:"teamID,omitempty"`
+	ID            string           `json:"id,omitempty"`
+	Name          string           `json:"name,omitempty"`
+	Deployed      bool             `json:"deployed,omitempty"`
+	Status        string           `json:"status,omitempty"`
+	Type          string           `json:"type,omitempty"`
+	Region        *Region          `json:"region,omitempty"`
+	ServiceInsert *[]ServiceInsert `json:"serviceInsert,omitempty"`
+	CreatedTime   string           `json:"createdTime,omitempty"`
+	UpdatedTime   string           `json:"updatedTime,omitempty"`
+	Progress      int              `json:"progress,omitempty"`
+	TaskID        string           `json:"taskID,omitempty"`
+	TeamID        string           `json:"teamID,omitempty"`
 }
 
 type Region struct {
-	ID               string `json:"id,omitempty"`
-	CloudRegion      string `json:"cloudRegion,omitempty"`
-	GwLoadBalancerID string `json:"gwLoadBalancerID,omitempty"`
-	CloudKeyID       string `json:"cloudKeyID,omitempty"`
-	CloudType        string `json:"cloudType,omitempty"`
-	CloudZones       string `json:"cloudZones,omitempty"`
-	ResourceGrp      string `json:"resourceGroup,omitempty"` 
+	ID               string   `json:"id,omitempty"`
+	CloudRegion      string   `json:"cloudRegion,omitempty"`
+	GwLoadBalancerID string   `json:"gwLoadBalancerID,omitempty"`
+	CloudKeyID       string   `json:"cloudKeyID,omitempty"`
+	CloudType        string   `json:"cloudType,omitempty"`
+	CloudZones       []string `json:"cloudZones,omitempty"`
+	ResourceGrp      string   `json:"resourceGroup,omitempty"`
+}
 
+type ServiceInsert struct {
+	ID           string  `json:"id,omitempty"`
+	Name         string  `json:"name,omitempty"`
+	Type         string  `json:"type,omitempty"`
+	RegionID     string  `json:"regionid,omitempty"`
+	Source       *Source `json:"source,omitempty"`
+	Target       *Target `json:"target,omitempty"`
+	NamespaceNID int     `json:"namespaceNID,omitempty"`
+	NamespaceID  string  `json:"namespaceID,omitempty"`
 }
 
 type SS_Response struct {

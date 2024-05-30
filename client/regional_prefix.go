@@ -18,13 +18,15 @@ type Regions_route struct {
 
 type Route_entry_region struct {
 	ID             string         `json:"id,omitempty"`
+	Status         string         `json:"status,omitempty"`
 	Prefixes       []string       `json:"prefixes,omitempty"`
 	Regions        *Regions_route `json:"regions,omitempty"`
-	OverWriteRoute bool           `json:"overwriteRoute,omitempty"`
-	Status         string         `json:"status,omitempty"`
 	Type           string         `json:"type,omitempty"`
 	Enabled        bool           `json:"enabled,omitempty"`
+	OverWriteRoute bool           `json:"overwriteRoute,omitempty"`
 	TeamID         string         `json:"teamID,omitempty"`
+	CreatedTime    string         `json:"createdTime,omitempty"`
+	UpdatedTime    string         `json:"updatedTime,omitempty"`
 }
 
 type Route_entry_region_res struct {
@@ -75,6 +77,7 @@ func (prosimoClient *ProsimoClient) UpdateRouteEntry(ctx context.Context, routeE
 	return nil
 
 }
+
 func (prosimoClient *ProsimoClient) GetRouteEntry(ctx context.Context) ([]*Route_entry_region, error) {
 
 	SearchInput := Route_entry_region{}

@@ -275,6 +275,11 @@ func resourcePolicy() *schema.Resource {
 								},
 							},
 						},
+						"internet_traffic_enabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "set it to true to enable internet access",
+						},
 					},
 				},
 			},
@@ -495,6 +500,9 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 				newvalues1.SelectedItems = slectitemlist
 			}
 			newdetails.Networks = newvalues1
+		}
+		if v, ok := detailsinput["internet_traffic_enabled"]; ok {
+			newdetails.Internet_Traffic_Enabled = v.(bool)
 		}
 
 		// } else {

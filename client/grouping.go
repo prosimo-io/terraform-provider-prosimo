@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 )
 
@@ -48,7 +49,6 @@ type Grp_Config_Res struct {
 	TotalCount int           `json:"totalCount,omitempty"`
 	Records    []*Grp_Config `json:"records,omitempty"`
 }
-
 
 func (prosimoClient *ProsimoClient) GetGrpConf(ctx context.Context, grptype string) (*Grp_Config_ResData, error) {
 	grpConfig := Grp_Config{
@@ -119,5 +119,26 @@ func (prosimoClient *ProsimoClient) DeleteGrpConf(ctx context.Context, grpID str
 	}
 
 	return nil
+
+}
+
+func (prosimoClient *ProsimoClient) GetGrpConfByName(ctx context.Context, grptype string, name string) (*Grp_Config, error) {
+	grpList, err := prosimoClient.GetGrpConf(ctx, grptype)
+	if err != nil {
+		return nil, err
+	}
+	var grpConfig *Grp_Config
+	for _, returnedGrpConfig := range grpList.Grp_Config_Res.Records {
+		if returnedGrpConfig.Name == name {
+			grpConfig = returnedGrpConfig
+			break
+		}
+	}
+
+	if grpConfig == nil {
+		return nil, errors.New("Group doesn't exist")
+	}
+
+	return grpConfig, nil
 
 }
