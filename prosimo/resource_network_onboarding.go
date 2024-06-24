@@ -323,6 +323,7 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 		if err2 != nil {
 			return diag.FromErr(err2)
 		}
+		d.SetId(res.NetworkDeploymentResops.ID)
 		if d.Get("wait_for_rollout").(bool) {
 			log.Printf("[DEBUG] Waiting for task id %s to complete", res.NetworkDeploymentResops.TaskID)
 			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
@@ -332,7 +333,7 @@ func resourceNetworkOnboardingCreate(ctx context.Context, d *schema.ResourceData
 			}
 			log.Printf("[INFO] task %s is successful", res.NetworkDeploymentResops.TaskID)
 		}
-		d.SetId(res.NetworkDeploymentResops.ID)
+
 	} else {
 		res, err2 := prosimoClient.OnboardNetworkDeploymentV2(ctx, networkOnboardops, client.ParamValueSave)
 		if err2 != nil {

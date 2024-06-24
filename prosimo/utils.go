@@ -51,9 +51,9 @@ func retryUntilTaskComplete(ctx context.Context, d *schema.ResourceData, meta in
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					return resource.NonRetryableError(fmt.Errorf("task %s has failed at step %s", taskID, subtask.Name))
@@ -72,9 +72,9 @@ func retryUntilTaskComplete_edge_onboard(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
@@ -105,9 +105,9 @@ func retryUntilTaskComplete_edge_Offboard(ctx context.Context, d *schema.Resourc
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
@@ -138,9 +138,9 @@ func retryUntilTaskCompleteNetworkOnboard(ctx context.Context, d *schema.Resourc
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
@@ -173,9 +173,9 @@ func retryUntilTaskCompleteNetworkOffboard(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
@@ -209,9 +209,9 @@ func retryUntilTaskCompleteSharedService(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
@@ -235,9 +235,9 @@ func retryUntilTaskCompleteManagedFirewall(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)

@@ -11,6 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// var appOnboardSettings *client.AppOnboardSettings
+
+// var appURL *client.AppURL
+// var cloudConfigList []*client.AppURL
+
 func validate_primaryIDP(ctx context.Context, idpName string, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	prosimoClient := meta.(*client.ProsimoClient)
@@ -44,9 +49,9 @@ func retryUntilTaskComplete_appOnboard(ctx context.Context, d *schema.ResourceDa
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
@@ -73,9 +78,9 @@ func retryUntilTaskComplete_appOffboard(ctx context.Context, d *schema.ResourceD
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
-		if getTaskStatus.TaskDetails.Status == "IN-PROGRESS" {
+		if getTaskStatus.Status == "IN-PROGRESS" {
 			return resource.RetryableError(fmt.Errorf("task %s is not completed yet", taskID))
-		} else if getTaskStatus.TaskDetails.Status == "FAILURE" {
+		} else if getTaskStatus.Status == "FAILURE" {
 			for _, subtask := range getTaskStatus.ItemList {
 				if subtask.Status == "FAILURE" {
 					log.Printf("[ERROR]: task %s has failed at step %s, rolling back", taskID, subtask.Name)
@@ -96,45 +101,27 @@ func retryUntilTaskComplete_appOffboard(ctx context.Context, d *schema.ResourceD
 	}
 }
 
-func createAppOnboardSettings(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
+func createAppOnboardConfigs(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) (diag.Diagnostics, *client.AppOnboardSettings) {
 
 	var diags diag.Diagnostics
-
-	prosimoClient := meta.(*client.ProsimoClient)
-
+	var cloudConfigList []*client.AppURL
 	appOnboardSettings := appOnboardSettingsOpts.GetAppOnboardSettings()
-	createdAppOnboardSettings, err := prosimoClient.CreateAppOnboardSettings(ctx, appOnboardSettings)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	log.Printf("[DEBUG] Created AppOnboard Settings for appName - %s, appAccessType - (%s), id - (%s)",
-		appOnboardSettings.App_Name, appOnboardSettings.App_Access_Type, createdAppOnboardSettings.ResourceData.ID)
-	d.SetId(createdAppOnboardSettings.ResourceData.ID)
-
-	return diags
-
-}
-
-func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
-
-	var diags diag.Diagnostics
+	log.Println("appOnboardSettingsOpts", appOnboardSettingsOpts)
 
 	prosimoClient := meta.(*client.ProsimoClient)
-
-	appOnboardSettingsID := appOnboardSettingsOpts.ID
-
-	cloudConfigList := []*client.AppURL{}
 
 	for _, appURLOpts := range appOnboardSettingsOpts.AppURLsOpts {
+		appURL := appURLOpts.GetAppURL()
+		//------------------------------------------------------------------------------------------------------
+		//		Cloud Configuration
+		//------------------------------------------------------------------------------------------------------
 
 		cloudConfigOpts := appURLOpts.CloudConfigOpts
 
-		appURL := appURLOpts.GetAppURL()
 		if cloudConfigOpts.AppHOstedType == client.HostedPrivate {
 			cloudCreds, err := prosimoClient.GetCloudCredsPrivate(ctx)
 			if err != nil {
-				return diag.FromErr(err)
+				return diag.FromErr(err), nil
 			}
 			for _, cloudCred := range cloudCreds.CloudCreds {
 				if cloudCred.Nickname == cloudConfigOpts.CloudCredsName {
@@ -146,7 +133,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 			// log.Println("cloudConfigOpts.CloudCredsName", cloudConfigOpts.CloudCredsName)
 			cloudCreds, err := prosimoClient.GetCloudCredsByName(ctx, cloudConfigOpts.CloudCredsName)
 			if err != nil {
-				return diag.FromErr(err)
+				return diag.FromErr(err), nil
 			}
 
 			appURL.CloudKeyID = cloudCreds.ID
@@ -188,7 +175,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 					if cloudConfigOpts.AppHOstedType == client.HostedPrivate {
 						CloudRegionDetails, err := prosimoClient.GetCloudRegion(ctx, appURL.CloudKeyID)
 						if err != nil {
-							return diag.FromErr(err)
+							return diag.FromErr(err), nil
 						}
 						for _, CloudRegion := range CloudRegionDetails.CloudRegionList {
 							appOnboardCloudConfigRegions.LocationID = CloudRegion.LocationID
@@ -206,9 +193,9 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 					appOnboardCloudConfigRegionsList = append(appOnboardCloudConfigRegionsList, appOnboardCloudConfigRegions)
 					appURL.Regions = appOnboardCloudConfigRegionsList
 
-					appOnboardCloudConfigResponseRegionsList, err := prosimoClient.DiscoverAppOnboardEndpoint(ctx, appOnboardSettingsID, appURL)
+					appOnboardCloudConfigResponseRegionsList, err := prosimoClient.DiscoverAppOnboardEndpoint(ctx, appURL, appOnboardSettingsOpts.AppOnboardType)
 					if err != nil {
-						return diag.FromErr(err)
+						return diag.FromErr(err), nil
 					}
 
 					if appOnboardCloudConfigRegionOpts.AttachPointID != "" {
@@ -228,7 +215,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 									Summary:  "Invalid  AppNetworkID.",
 									Detail:   "Input AppNetworkID does not exist.",
 								})
-								return diags
+								return diags, nil
 							}
 							// }
 
@@ -248,7 +235,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 									Summary:  "Invalid  AttachPointID.",
 									Detail:   "Input AttachPointID does not exist.",
 								})
-								return diags
+								return diags, nil
 							}
 							// }
 						}
@@ -270,7 +257,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 						apppnboardSearchops.NetworkService = "dns"
 						returnedappList, err := prosimoClient.SearchAppOnboardApps(ctx, apppnboardSearchops)
 						if err != nil {
-							return diag.FromErr(err)
+							return diag.FromErr(err), nil
 						}
 						if len(returnedappList.Data.Records) > 0 {
 							for _, onboardApp := range returnedappList.Data.Records {
@@ -307,7 +294,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 						if cloudConfigOpts.AppHOstedType == client.HostedPrivate {
 							CloudRegionDetails, err := prosimoClient.GetCloudRegion(ctx, appURL.CloudKeyID)
 							if err != nil {
-								return diag.FromErr(err)
+								return diag.FromErr(err), nil
 							}
 							for _, CloudRegion := range CloudRegionDetails.CloudRegionList {
 								appOnboardCloudConfigRegions.LocationID = CloudRegion.LocationID
@@ -329,9 +316,9 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 						appOnboardCloudConfigRegionsList = append(appOnboardCloudConfigRegionsList, appOnboardCloudConfigRegions)
 						appURL.Regions = appOnboardCloudConfigRegionsList
 
-						appOnboardCloudConfigResponseRegionsList, err := prosimoClient.DiscoverAppOnboardEndpoint(ctx, appOnboardSettingsID, appURL)
+						appOnboardCloudConfigResponseRegionsList, err := prosimoClient.DiscoverAppOnboardEndpoint(ctx, appURL, appOnboardSettingsOpts.AppOnboardType)
 						if err != nil {
-							return diag.FromErr(err)
+							return diag.FromErr(err), nil
 						}
 						if appOnboardCloudConfigRegionOpts.AttachPointID != "" {
 							endpointList := []*client.AppOnboardCloudRegionEndpoints{}
@@ -350,7 +337,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 										Summary:  "Invalid  AppNetworkID.",
 										Detail:   "Input AppNetworkID does not exist.",
 									})
-									return diags
+									return diags, nil
 								}
 								// }
 
@@ -369,7 +356,7 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 										Summary:  "Invalid  AttachPointID.",
 										Detail:   "Input AttachPointID does not exist.",
 									})
-									return diags
+									return diags, nil
 								}
 								// }
 							}
@@ -392,189 +379,117 @@ func createAppOnboardCloudConfigs(ctx context.Context, d *schema.ResourceData, m
 		} else {
 			appURL.Regions = nil
 		}
-		cloudConfigList = append(cloudConfigList, appURL)
 
-	}
+		//------------------------------------------------------------------------------------------------------
+		//		DNS Service Configuration
+		//------------------------------------------------------------------------------------------------------
+		if appOnboardSettingsOpts.AppOnboardType == client.TypeWEB || appOnboardSettingsOpts.AppOnboardType == client.TypeJumpBox || appOnboardSettingsOpts.AppOnboardType == client.TypeCloudSvc || appOnboardSettingsOpts.AppOnboardType == client.TypeCitrixVDI {
+			log.Println("inside dns block")
+			dnsServiceOpts := appURLOpts.DNSServiceOpts
+			dnsService := &client.DNSService{}
+			if dnsServiceOpts.Type == client.ManualDNSServiceType || dnsServiceOpts.Type == client.ProsimoDNSServiceType {
+				dnsService.Type = dnsServiceOpts.Type
 
-	appOnboardSettingsCloudConfigData := &client.AppOnboardSettings{}
-	appOnboardSettingsCloudConfigData.AppURLs = cloudConfigList
-	appOnboardSettingsCloudConfigData.Dns_Discovery = appOnboardSettingsOpts.Dns_Discovery
-	_, err := prosimoClient.CreateAppOnboardCloudConfig(ctx, appOnboardSettingsID, appOnboardSettingsCloudConfigData)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diags
-}
-
-func createAppOnboardDNSService(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	prosimoClient := meta.(*client.ProsimoClient)
-
-	appOnboardSettingsID := appOnboardSettingsOpts.ID
-
-	dnsServiceAppList := []*client.AppURL{}
-
-	for _, appURLOpts := range appOnboardSettingsOpts.AppURLsOpts {
-
-		dnsServiceOpts := appURLOpts.DNSServiceOpts
-
-		appURL := appURLOpts.GetAppURL()
-
-		dnsService := &client.DNSService{}
-
-		if dnsServiceOpts.Type == client.ManualDNSServiceType || dnsServiceOpts.Type == client.ProsimoDNSServiceType {
-			dnsService.Type = dnsServiceOpts.Type
-
-		} else {
-			cloudCreds, err := prosimoClient.GetCloudCredsByName(ctx, dnsServiceOpts.CloudCredsName)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			dnsService.ID = cloudCreds.ID
-			dnsService.Type = dnsServiceOpts.Type
-		}
-
-		dnsAppURL := &client.AppURL{}
-		dnsAppURL.ID = appURL.ID
-		dnsAppURL.DNSService = dnsService
-		dnsServiceAppList = append(dnsServiceAppList, dnsAppURL)
-
-	}
-
-	appOnboardSettingsDNSServiceData := &client.AppOnboardSettings{}
-	appOnboardSettingsDNSServiceData.AppURLs = dnsServiceAppList
-	_, err := prosimoClient.CreateDNSService(ctx, appOnboardSettingsID, appOnboardSettingsDNSServiceData)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diags
-}
-
-func createAppOnboardSSLCert(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	prosimoClient := meta.(*client.ProsimoClient)
-
-	appOnboardSettingsID := appOnboardSettingsOpts.ID
-
-	sslCertAppList := []*client.AppURL{}
-	appOnboardSettingsSSLCertData := &client.AppOnboardSettings{}
-	if appOnboardSettingsOpts.ClientCert != "" {
-		res, err := prosimoClient.GetCertDetails(ctx)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if len(res) > 0 {
-			flag := false
-			for _, cert := range res {
-				if cert.URL == appOnboardSettingsOpts.ClientCert && cert.Type == "Client" {
-					flag = true
-					appOnboardSettingsSSLCertData.CertID = cert.ID
-				}
-			}
-			if !flag {
-				log.Println("[ERROR]: Client Certficate does not exist.")
-			}
-		} else {
-			log.Println("[ERROR]: Client Certficate does not exist.")
-		}
-	}
-	for _, appURLOpts := range appOnboardSettingsOpts.AppURLsOpts {
-
-		sslCertOpts := appURLOpts.SSLCertOpts
-
-		appURL := appURLOpts.GetAppURL()
-		sslCertAppURL := &client.AppURL{}
-		sslCertAppURL.ID = appURL.ID
-		if appURLOpts.DomainType == client.ProsimoAppDomain {
-			res, err := prosimoClient.GetCertDetails(ctx)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			if len(res) > 0 {
-				for _, cert := range res {
-					if cert.ISTeamCert {
-						sslCertAppURL.CertID = cert.ID
-					}
-				}
-			}
-		} else {
-			if sslCertOpts.GenerateCert {
-				generateCert := &client.GenerateCert{}
-				generateCert.CA = "Let’sEncrypt"
-				generateCert.URL = appURL.InternalDomain
-				generateCert.TermsOfServiceAgreed = true
-
-				generateCertResponseData, err := prosimoClient.GenerateCert(ctx, generateCert)
+			} else {
+				cloudCreds, err := prosimoClient.GetCloudCredsByName(ctx, dnsServiceOpts.CloudCredsName)
 				if err != nil {
-					return diag.FromErr(err)
+					return diag.FromErr(err), nil
 				}
-				sslCertAppURL.CertID = generateCertResponseData.ResourceData.ID
 
-			} else if sslCertOpts.UploadCert != nil {
-				uploadCertResponseData, err := prosimoClient.UploadCert(ctx, sslCertOpts.UploadCert.CertPath, sslCertOpts.UploadCert.KeyPath)
-				if err == nil {
-					sslCertAppURL.CertID = uploadCertResponseData.ResourceData.ID
-					// return diag.FromErr(err)
-				} else {
-
-					log.Println("[ERROR]: Certificate upload failed")
-					return diag.FromErr(err)
-				}
-			} else if sslCertOpts.ExistingCert != "" {
+				dnsService.ID = cloudCreds.ID
+				dnsService.Type = dnsServiceOpts.Type
+			}
+			appURL.DNSService = dnsService
+		}
+		//------------------------------------------------------------------------------------------------------
+		//		Certificate Configuration
+		//------------------------------------------------------------------------------------------------------
+		if appOnboardSettingsOpts.AppOnboardType == client.TypeWEB || appOnboardSettingsOpts.AppOnboardType == client.TypeJumpBox || appOnboardSettingsOpts.AppOnboardType == client.TypeCloudSvc || appOnboardSettingsOpts.AppOnboardType == client.TypeCitrixVDI {
+			appOnboardSettingsSSLCertData := &client.AppOnboardSettings{}
+			if appOnboardSettingsOpts.ClientCert != "" {
 				res, err := prosimoClient.GetCertDetails(ctx)
 				if err != nil {
-					return diag.FromErr(err)
+					return diag.FromErr(err), nil
 				}
 				if len(res) > 0 {
 					flag := false
 					for _, cert := range res {
-						if cert.URL == sslCertOpts.ExistingCert {
+						if cert.URL == appOnboardSettingsOpts.ClientCert && cert.Type == "Client" {
 							flag = true
-							sslCertAppURL.CertID = cert.ID
+							appOnboardSettingsSSLCertData.CertID = cert.ID
 						}
 					}
 					if !flag {
-						log.Println("[ERROR]: Certficate does not exist.")
+						log.Println("[ERROR]: Client Certficate does not exist.")
 					}
 				} else {
-					log.Println("[ERROR]: Certficate does not exist.")
+					log.Println("[ERROR]: Client Certficate does not exist.")
 				}
 			}
+			sslCertOpts := appURLOpts.SSLCertOpts
+			if appURLOpts.DomainType == client.ProsimoAppDomain {
+				res, err := prosimoClient.GetCertDetails(ctx)
+				if err != nil {
+					return diag.FromErr(err), nil
+				}
+				if len(res) > 0 {
+					for _, cert := range res {
+						if cert.ISTeamCert {
+							appURL.CertID = cert.ID
+						}
+					}
+				}
+			} else {
+				if sslCertOpts.GenerateCert {
+					generateCert := &client.GenerateCert{}
+					generateCert.CA = "Let’sEncrypt"
+					generateCert.URL = appURL.InternalDomain
+					generateCert.TermsOfServiceAgreed = true
 
+					generateCertResponseData, err := prosimoClient.GenerateCert(ctx, generateCert)
+					if err != nil {
+						return diag.FromErr(err), nil
+					}
+					appURL.CertID = generateCertResponseData.ResourceData.ID
+
+				} else if sslCertOpts.UploadCert != nil {
+					uploadCertResponseData, err := prosimoClient.UploadCert(ctx, sslCertOpts.UploadCert.CertPath, sslCertOpts.UploadCert.KeyPath)
+					if err == nil {
+						appURL.CertID = uploadCertResponseData.ResourceData.ID
+						// return diag.FromErr(err)
+					} else {
+
+						log.Println("[ERROR]: Certificate upload failed")
+						return diag.FromErr(err), nil
+					}
+				} else if sslCertOpts.ExistingCert != "" {
+					res, err := prosimoClient.GetCertDetails(ctx)
+					if err != nil {
+						return diag.FromErr(err), nil
+					}
+					if len(res) > 0 {
+						flag := false
+						for _, cert := range res {
+							if cert.URL == sslCertOpts.ExistingCert {
+								flag = true
+								appURL.CertID = cert.ID
+							}
+						}
+						if !flag {
+							log.Println("[ERROR]: Certficate does not exist.")
+						}
+					} else {
+						log.Println("[ERROR]: Certficate does not exist.")
+					}
+				}
+
+			}
 		}
-		sslCertAppList = append(sslCertAppList, sslCertAppURL)
-
-	}
-	appOnboardSettingsSSLCertData.AppURLs = sslCertAppList
-	_, err := prosimoClient.CreateAppOnboardCert(ctx, appOnboardSettingsID, appOnboardSettingsSSLCertData)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diags
-}
-
-func createAppOnboardOptOption(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	prosimoClient := meta.(*client.ProsimoClient)
-
-	appOnboardSettingsID := appOnboardSettingsOpts.ID
-
-	optOptionAppList := []*client.AppURL{}
-
-	for _, appURLOpts := range appOnboardSettingsOpts.AppURLsOpts {
+		//------------------------------------------------------------------------------------------------------
+		//		Cache Rule
+		//------------------------------------------------------------------------------------------------------
 
 		cacheRuleName := appURLOpts.CacheRuleName
-
-		appURL := appURLOpts.GetAppURL()
-		optOptionAppURL := &client.AppURL{}
-		optOptionAppURL.ID = appURL.ID
 
 		if cacheRuleName == "" {
 			cacheRuleName = "Default Cache"
@@ -582,105 +497,80 @@ func createAppOnboardOptOption(ctx context.Context, d *schema.ResourceData, meta
 
 		cacheRuleDbObj, err := prosimoClient.GetCacheRuleByName(ctx, cacheRuleName)
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(err), nil
+		}
+		appURL.CacheRuleID = cacheRuleDbObj.ID
+
+		//------------------------------------------------------------------------------------------------------
+		//		WAF
+		//------------------------------------------------------------------------------------------------------
+
+		wafName := appURLOpts.WafPolicyName
+		if wafName != "" {
+			wafDbObj, err := prosimoClient.GetWafByName(ctx, wafName)
+			if err != nil {
+				return diag.FromErr(err), nil
+			}
+			appURL.WafHTTP = wafDbObj.ID
 		}
 
-		optOptionAppURL.CacheRuleID = cacheRuleDbObj.ID
-
-		optOptionAppList = append(optOptionAppList, optOptionAppURL)
+		//------------------------------------------------------------------------------------------------------
+		cloudConfigList = append(cloudConfigList, appURL) //Append global appURL struct to global appURL List.(look at the variables on top)
+		//------------------------------------------------------------------------------------------------------
 
 	}
-
-	appOnboardSettingsOptOptionData := &client.AppOnboardSettings{}
-	appOnboardSettingsOptOptionData.AppURLs = optOptionAppList
-	appOnboardSettingsOptOptionData.EnableMultiCloud = appOnboardSettingsOpts.EnableMultiCloud
-	appOnboardSettingsOptOptionData.OptOption = appOnboardSettingsOpts.OptOption
-	_, err := prosimoClient.CreateAppOnboardOptOption(ctx, appOnboardSettingsID, appOnboardSettingsOptOptionData)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diags
-}
-
-func createAppOnboardSecurity(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	prosimoClient := meta.(*client.ProsimoClient)
-
-	appOnboardSettingsID := appOnboardSettingsOpts.ID
+	//------------------------------------------------------------------------------------------------------
+	//		Policies
+	//------------------------------------------------------------------------------------------------------
 	appOnboardPolicy := &client.AppOnboardPolicy{}
 
 	for _, policyName := range appOnboardSettingsOpts.PolicyName {
 
 		policyDbObj, err := prosimoClient.GetPolicyByName(ctx, policyName)
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(err), nil
 		}
 
-		appOnboardPolicy.PolicyIDs = append(appOnboardPolicy.PolicyIDs, policyDbObj.ID)
+		appOnboardSettings.PolicyIDs = append(appOnboardPolicy.PolicyIDs, policyDbObj.ID)
 	}
 
-	_, err := prosimoClient.CreateAppOnboardPolicy(ctx, appOnboardSettingsID, appOnboardPolicy)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	wafAppList := []*client.AppURL{}
-
-	for _, appURLOpts := range appOnboardSettingsOpts.AppURLsOpts {
-
-		wafName := appURLOpts.WafPolicyName
-
-		appURL := appURLOpts.GetAppURL()
-		wafAppURL := &client.AppURL{}
-		wafAppURL.ID = appURL.ID
-
-		if wafName != "" {
-			wafDbObj, err := prosimoClient.GetWafByName(ctx, wafName)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			wafAppURL.WafHTTP = wafDbObj.ID
-		}
-
-		wafAppList = append(wafAppList, wafAppURL)
-
-	}
-
-	appOnboardSettingsWafData := &client.AppOnboardSettings{}
-	appOnboardSettingsWafData.AppURLs = wafAppList
-	_, err = prosimoClient.CreateAppOnboardWaf(ctx, appOnboardSettingsID, appOnboardSettingsWafData)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diags
+	appOnboardSettings.AppURLs = cloudConfigList
+	appOnboardSettings.Dns_Discovery = appOnboardSettingsOpts.Dns_Discovery
+	appOnboardSettings.EnableMultiCloud = appOnboardSettingsOpts.EnableMultiCloud
+	appOnboardSettings.OptOption = appOnboardSettingsOpts.OptOption
+	return diags, appOnboardSettings
 }
 
-func onboardApp(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts) diag.Diagnostics {
+func onboardApp(ctx context.Context, d *schema.ResourceData, meta interface{}, appOnboardSettingsOpts *client.AppOnboardSettingsOpts, appOnboardSettings *client.AppOnboardSettings) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	prosimoClient := meta.(*client.ProsimoClient)
 
-	appOnboardSettingsID := appOnboardSettingsOpts.ID
-
 	if appOnboardSettingsOpts.OnboardApp {
-		appOnboardDeploymentData := &client.AppOnboardSettings{}
-		appOnboardResData, err := prosimoClient.OnboardAppDeployment(ctx, appOnboardSettingsID, appOnboardDeploymentData)
+
+		appOnboardResData, err := prosimoClient.OnboardAppDeploymentV2(ctx, appOnboardSettings, client.ParamValueDeploy)
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		d.SetId(appOnboardResData.ResourceData.ID)
+
 		if d.Get("wait_for_rollout").(bool) {
-			log.Printf("[DEBUG] Waiting for task id %s to complete", appOnboardResData.ResourceData.ID)
+			log.Printf("[DEBUG] Waiting for task id %s to complete", appOnboardResData.ResourceData.TaskID)
 			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-				retryUntilTaskComplete_appOnboard(ctx, d, meta, appOnboardResData.ResourceData.ID, appOnboardSettingsOpts))
+				retryUntilTaskComplete_appOnboard(ctx, d, meta, appOnboardResData.ResourceData.TaskID, appOnboardSettingsOpts))
 			// retryUntilTaskComplete(ctx, d, meta, appOnboardResData.ResourceData.ID))
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			log.Printf("[INFO] task %s is successful", appOnboardResData.ResourceData.ID)
+			log.Printf("[INFO] task %s is successful", appOnboardResData.ResourceData.TaskID)
 		}
+	} else {
+		appOnboardResData, err := prosimoClient.OnboardAppDeploymentV2(ctx, appOnboardSettings, client.ParamValueSave)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(appOnboardResData.ResourceData.ID)
+
 	}
 
 	return diags

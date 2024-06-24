@@ -35,14 +35,17 @@ resource "prosimo_app_onboarding_dns" "AgentlessAppOnboarding" {
             cloud_creds_name = "prosimo-aws-iam"
             edge_regions {
                 region_type = "active"
-                region_name = "us-west-1"
-                conn_option = "public"          
+                region_name = "us-east-1"
+                conn_option = "public"   
+                backend_ip_address_discover = false
+                backend_ip_address_manual = ["23.99.84.98"]       
             }
+
         }
     }
     optimization_option = "PerformanceEnhanced"
 
-    policy_name = ["ALLOW-ALL-USERS"]
+    policy_name = ["ALLOW-ALL-NETWORKS"]
 
     onboard_app = false
     decommission_app = false
@@ -69,6 +72,7 @@ resource "prosimo_app_onboarding_ip" "AgentlessAppOnboarding" {
                 app_network_id = "vpc-067648a8b45cd2369"
                 attach_point_id = "tgw-02c98e2afd03758d7"
                 tgw_app_routetable = "MODIFY"
+                backend_ip_address_discover = true
                 
             }
         }
@@ -106,6 +110,8 @@ resource "prosimo_app_onboarding_ip" "AgentlessAppOnboarding_TransitVnet" {
                 app_network_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/qing_vtransit_eastus2_rg/providers/Microsoft.Network/virtualNetworks/qing_vtransit__eastus2_spoke1"
                 attach_point_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/qing_vtransit_eastus2_rg/providers/Microsoft.Network/virtualNetworks/qing_vtransit_eastus2_hub"
                 # tgw_app_routetable = "MODIFY"
+                backend_ip_address_discover = true
+
                 
             }
         }
@@ -211,10 +217,16 @@ Optional:
 <a id="nestedblock--app_urls--cloud_config--edge_regions"></a>
 ### Nested Schema for `app_urls.cloud_config.edge_regions`
 
+Required:
+
+- `backend_ip_address_discover` (Boolean) if Set to true, auto discovers available endpoints
+
 Optional:
 
 - `app_network_id` (String) App network id details
 - `attach_point_id` (String) Attach Point id details
+- `backend_ip_address_dns` (Boolean)
+- `backend_ip_address_manual` (List of String) Pass endpoints manually.
 - `conn_option` (String) Connection option for private connection: e.g: peering/transitGateway/awsPrivateLink/azurePrivateLink/azureTransitVnet/vwanHub
 - `region_name` (String) Name of the region where app is available
 - `region_type` (String) Type of region: e.g:active, backup etc

@@ -1,3 +1,6 @@
+## 4.3.1(May 16 2024)
+### Feature:
+- Terraform support for app onboarding 2.0
 ## 4.2.1(April 18   2024)
 ### :
 - Feature: Terraform support for Managed firewall and Internet egress.

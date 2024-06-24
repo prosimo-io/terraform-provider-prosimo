@@ -5,7 +5,8 @@ type ResourcePostResponseData struct {
 }
 
 type ResourceData struct {
-	ID string `json:"id,omitempty"`
+	ID     string `json:"id,omitempty"`
+	TaskID string `json:"taskID,omitempty"`
 }
 
 func GetCloudTypes() []string {
@@ -197,7 +198,6 @@ func GetConnectorBandwidthOptions() []string {
 	ConnectorBandwidthOptions[3] = MoreThanTenGBPS
 	return ConnectorBandwidthOptions
 }
-
 
 func GetVPCSourceOptions() []string {
 	VPCSourceOptions := make([]string, 2)

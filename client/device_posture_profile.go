@@ -52,31 +52,41 @@ type DevicePosture_Profile_Update_Res struct {
 	DPProfileUpdateRes DevicePosture_Profile `json:"data,omitempty"`
 }
 
+type TaskStatusPost struct {
+	IdList []string `json:"idList,omitempty"`
+}
+
 type Task struct {
 	TaskID string `json:"taskID,omitempty"`
 	Status string `json:"status,omitempty"`
-	Name   string `json:"name,omitempty"`
+	// Name   string `json:"name,omitempty"`
 }
 
 type Item struct {
-	TaskItemID string `json:"taskItemID,omitempty"`
+	TaskItemID string `json:"taskID,omitempty"`
 	Status     string `json:"status,omitempty"`
 	Name       string `json:"name,omitempty"`
+	Details    string `json:"details,omitempty"`
 }
 
-type Context struct {
-	Type string `json:"type,omitempty"`
-}
+// type Context struct {
+// 	Type string `json:"type,omitempty"`
+// }
 
 type Task_Status struct {
-	TaskDetails Task    `json:"task,omitempty"`
-	ItemList    []Item  `json:"items,omitempty"`
-	ContextType Context `json:"context,omitempty"`
+	TaskID   string `json:"taskID,omitempty"`
+	ItemList []Item `json:"items,omitempty"`
+	Status   string `json:"status,omitempty"`
+	// ContextType Context `json:"context,omitempty"`
 }
 
 type Task_Status_res struct {
-	TaskStatusRes *Task_Status `json:"data,omitempty"`
+	Records []*Task_Status `json:"data,omitempty"`
 }
+
+//	type Task_Status_res_data struct {
+//		TaskStatusRes *Task_Status_res `json:"data,omitempty"`
+//	}
 type DP_Profile_Read_Res struct {
 	High   []DevicePosture_Profile `json:"high,omitempty"`
 	Medium []DevicePosture_Profile `json:"medium,omitempty"`
@@ -223,11 +233,21 @@ func (prosimoClient *ProsimoClient) UpdateDPProfilelow(ctx context.Context, dppr
 }
 
 func (prosimoClient *ProsimoClient) GetTaskStatus(ctx context.Context, taskID string) (*Task_Status, error) {
-	var taskResData *Task_Status_res
 	var err error
-	UpdatedTaskEndpoint := fmt.Sprintf("%s/%s", TaskEndpoint, taskID)
+	var taskidList []string
+	taskidList = append(taskidList, taskID)
+	taskInput := TaskStatusPost{
+		IdList: taskidList,
+	}
+
+	// UpdatedTaskEndpoint := fmt.Sprintf("%s/%s", TaskEndpoint, taskID)
+	req, err := prosimoClient.api_client.NewRequest("POST", TaskEndpointSearch, taskInput)
+	if err != nil {
+		return nil, err
+	}
+	taskStatusData := &Task_Status_res{}
 	for _, backoff := range backoffSchedule {
-		taskResData, err = prosimoClient.api_client.GetRequest(ctx, UpdatedTaskEndpoint)
+		_, err = prosimoClient.api_client.Do(ctx, req, taskStatusData)
 		if err == nil {
 			break
 		}
@@ -236,10 +256,13 @@ func (prosimoClient *ProsimoClient) GetTaskStatus(ctx context.Context, taskID st
 		fmt.Fprintf(os.Stderr, "Retrying in %v\n", backoff)
 		time.Sleep(backoff)
 	}
-
 	if err != nil {
 		return nil, err
 	}
 
-	return taskResData.TaskStatusRes, nil
+	var taskDetails *Task_Status
+	for _, taskStatusRes := range taskStatusData.Records {
+		taskDetails = taskStatusRes
+	}
+	return taskDetails, nil
 }

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"log"
 )
 
 type AppOnboardSettingsOpts struct {
@@ -391,11 +392,14 @@ func (prosimoClient *ProsimoClient) CreateAppOnboardCloudConfig(ctx context.Cont
 
 }
 
-func (prosimoClient *ProsimoClient) DiscoverAppOnboardEndpoint(ctx context.Context, appOnboardSettingsID string, appURL *AppURL) ([]*AppOnboardCloudConfigRegions, error) {
-
-	postOnboardAppEndpointDiscoveredEndpoint := fmt.Sprintf(OnboardAppEndpointDiscoveredEndpoint, appOnboardSettingsID)
-
-	req, err := prosimoClient.api_client.NewRequest("POST", postOnboardAppEndpointDiscoveredEndpoint, appURL)
+func (prosimoClient *ProsimoClient) DiscoverAppOnboardEndpoint(ctx context.Context, appURL *AppURL, appOnboardType string) ([]*AppOnboardCloudConfigRegions, error) {
+	appOnboardSettingsCloudConfigData := &AppOnboardSettings{}
+	cloudConfigList := []*AppURL{}
+	cloudConfigList = append(cloudConfigList, appURL)
+	appOnboardSettingsCloudConfigData.AppURLs = cloudConfigList
+	appOnboardSettingsCloudConfigData.AppOnboardType = appOnboardType
+    
+	req, err := prosimoClient.api_client.NewRequest("POST", OnboardAppEndpointDiscoveredEndpoint, appOnboardSettingsCloudConfigData)
 	if err != nil {
 		return nil, err
 	}
@@ -491,6 +495,27 @@ func (prosimoClient *ProsimoClient) OnboardAppDeployment(ctx context.Context, ap
 	postOnboardAppDeploymentEndpoint := fmt.Sprintf(OnboardAppDeploymentEndpoint, appOnboardSettingsID)
 
 	return prosimoClient.api_client.PutRequest(ctx, postOnboardAppDeploymentEndpoint, appOnboardSettings)
+
+}
+func (prosimoClient *ProsimoClient) OnboardAppDeploymentV2(ctx context.Context, appOnboardSettings *AppOnboardSettings, paramValue string) (*ResourcePostResponseData, error) {
+	// log.Println("Entering reboard block", networkOnboardsops)
+	log.Println("Inside app onboard v2")
+
+	OnboardAppkDeploymentEndpoint := fmt.Sprintf("%s?%s=%s", AppOnboardEndpointNew, ParamName, paramValue)
+
+	// onboardrequest := &NetworkDeploymentres{}
+	req, err := prosimoClient.api_client.NewRequest("POST", OnboardAppkDeploymentEndpoint, appOnboardSettings)
+	if err != nil {
+		return nil, err
+	}
+
+	onboardresponse := &ResourcePostResponseData{}
+	_, err = prosimoClient.api_client.Do(ctx, req, onboardresponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return onboardresponse, nil
 
 }
 

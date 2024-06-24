@@ -16,245 +16,404 @@ This resource is usually used along with `terraform-provider-prosimo`.
 ## Example Usage
 
 ```terraform
-# #Agentless Web access (domain_type = "custom", subdomain_included = false)
-resource "prosimo_app_onboarding_web" "agentless_multi_VMs" {
-
-    app_name = "agentless-multi-VMs-tf"
+# terraform {
+#   required_providers {
+#     prosimo = {
+#       version = "1.0.0"
+#       source  = "prosimo.io/prosimo/prosimo"
+#     }
+#   }
+# }
+# provider "prosimo" {
+#     token = "K4K_JXv1WjAjchzAXAciKEqE-JhYwIVvt90YtVmfvkI="
+#     insecure = true
+#     base_url = "https://myevesachinsp1715634065479.dashboard.psonar.us/"
+# }
+resource "prosimo_app_onboarding_web" "azure-private-wordpress" {
+    # depends_on = [prosimo_app_onboarding_web.azure-vhub-wordpress]
+    app_name = "azure-privatelink-wordpress"
     idp_name = "azure_ad"
     app_urls {
-        internal_domain = "10.100.0.142"
+        internal_domain = "wordpress-azure-1715634348750.myeventarena.com"
         domain_type = "custom"
-        app_fqdn = "alex-app-101.abc.com"
+        app_fqdn = "wordpress-azure-1715634348750.myeventarena.com"
         subdomain_included = false
-
         protocols {
-            protocol = "ssh"
-            port = 22
+            protocol = "https"
+            port = 443
         }
-
         health_check_info {
           enabled = true
         }
-
         cloud_config {
-            connection_option = "public"
-            cloud_creds_name = "prosimo-aws-iam"
+            connection_option = "private"
+            cloud_creds_name = "prosimo-app"
             edge_regions {
+                region_name = "westus"
                 region_type = "active"
-                region_name = "us-west-1"
-                conn_option = "public"
+                conn_option = "azurePrivateLink"
                 backend_ip_address_discover = false
-                backend_ip_address_manual = ["10.100.0.142"]
+                backend_ip_address_manual = ["10.250.31.28"]
             }
         }
         dns_service {
             type = "manual"
         }
-
         ssl_cert {
-          generate_cert = true
+            generate_cert = true
         }
     }
     optimization_option = "PerformanceEnhanced"
-
+    enable_multi_cloud_access = true
     policy_name = ["ALLOW-ALL-USERS"]
-
-    onboard_app =false
+    onboard_app = true
     decommission_app = false
+    wait_for_rollout = false
 }
-
-#Agentless Web access (domain_type = "Prosimo", subdomain_included = false)
-resource "prosimo_app_onboarding_web" "AgentlessAppOnboarding-prosimo_domain" {
-
-    app_name = "common-app-issue-new1"
+resource "prosimo_app_onboarding_web" "azure-vhub-wordpress" {
+    app_name = "azure-vhub-wordpress"
     idp_name = "azure_ad"
     app_urls {
-        internal_domain = "ssh-server-us-west2-1657650573897.myeventarena.com"
-        domain_type = "prosimo"
-        app_fqdn = "demo.access.myevekapildev1660666246049.scnetworkers.info"
+        internal_domain = "wordpress-azure-1715635122046.myeventarena.com"
+        domain_type = "custom"
+        app_fqdn = "wordpress-azure-1715635122046.myeventarena.com"
         subdomain_included = false
-
         protocols {
-            protocol = "ssh"
-            port = 80
+            protocol = "https"
+            port = 443
         }
-
         health_check_info {
-          enabled = false
+          enabled = true
         }
-
+        cloud_config {
+            connection_option = "private"
+            cloud_creds_name = "prosimo-app"
+            edge_regions {
+                region_name = "westus"
+                region_type = "active"
+                conn_option = "vwanHub"
+                backend_ip_address_discover = false
+                backend_ip_address_manual = ["13.87.133.10"]
+                app_network_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/wordpress-azure-1715635122046-rg/providers/Microsoft.Network/virtualNetworks/wordpress-azure-1715635122046-vnet"
+                attach_point_id = "/subscriptions/2de14016-6ebc-426e-848e-62a10837ce40/resourceGroups/wordpress-azure-1715635122046-rg/providers/Microsoft.Network/virtualHubs/wordpress-azure-1715635122046-vhub"
+            }
+        }
+        dns_service {
+            type = "manual"
+        }
+        ssl_cert {
+            generate_cert = true
+        }
+    }
+    optimization_option = "PerformanceEnhanced"
+    enable_multi_cloud_access = true
+    policy_name = ["ALLOW-ALL-USERS"]
+    onboard_app = true
+    decommission_app = false
+    wait_for_rollout = false
+}
+# resource "prosimo_app_onboarding_cloudsvc" "psonar-s3-app" {
+#     app_name = "psonar-s3-app"
+#     idp_name         = "azure_ad"
+#     cloud_svc        = "amazon-s3"
+#     app_urls {
+#         internal_domain = "s3-aws-1715634065779.myeventarena.com"
+#         domain_type = "custom"
+#         app_fqdn = "s3-aws-1715634065779.myeventarena.com"
+#         subdomain_included = false
+#         health_check_info {
+#           enabled = false
+#         }
+#         cloud_config {
+#             connection_option = "private"
+#             cloud_creds_name = "prosimo-aws-app-iam"
+#             edge_regions {
+#                 region_type = "active"
+#                 region_name = "us-east-1"
+#                 buckets = ["psonar-s3-wordpress"]
+#             }
+#         }
+#         dns_service {
+#             type = "manual"
+#         }
+#         ssl_cert {
+#           generate_cert = true
+#         }
+#     }
+#     optimization_option = "PerformanceEnhanced"
+#     enable_multi_cloud_access = true
+#     policy_name = ["ALLOW-ALL-USERS"]
+#     onboard_app = true
+#     decommission_app = false
+# }
+# resource "prosimo_app_onboarding_web" "aws-vpc_peering-wordpress" {
+#     app_name = "aws-vpc_peering-wordpress"
+#     idp_name = "azure_ad"
+#     app_urls {
+#         internal_domain = "wordpress-aws-1715648697124.myeventarena.com"
+#         domain_type = "custom"
+#         app_fqdn = "wordpress-aws-1715648697124.myeventarena.com"
+#         subdomain_included = false
+#         protocols {
+#             protocol = "https"
+#             port = 443
+#         }
+#         health_check_info {
+#           enabled = true
+#         }
+#         cloud_config {
+#             connection_option = "private"
+#             cloud_creds_name = "prosimo-aws-app-iam"
+#             edge_regions {
+#                 region_name = "us-west-1"
+#                 region_type = "active"
+#                 conn_option = "private"
+#                 backend_ip_address_discover = false
+#                 backend_ip_address_manual = ["54.151.116.212"]
+#             }
+#         }
+#         dns_service {
+#             type = "manual"
+#         }
+#         ssl_cert {
+#             generate_cert = true
+#         }
+#     }
+#     optimization_option = "PerformanceEnhanced"
+#     enable_multi_cloud_access = true
+#     policy_name = ["ALLOW-ALL-USERS"]
+#     onboard_app = true
+#     decommission_app = false
+# }
+# resource "prosimo_app_onboarding_web" "aws-privatelink-wordpress" {
+#     app_name = "aws-privatelink-wordpress"
+#     idp_name = "azure_ad"
+#     app_urls {
+#         internal_domain = "wordpress-aws-1715640653389.myeventarena.com"
+#         domain_type = "custom"
+#         app_fqdn = "wordpress-aws-1715640653389.myeventarena.com"
+#         subdomain_included = false
+#         protocols {
+#             protocol = "https"
+#             port = 443
+#         }
+#         health_check_info {
+#           enabled = true
+#         }
+#         cloud_config {
+#             connection_option = "private"
+#             cloud_creds_name = "prosimo-aws-app-iam"
+#             edge_regions {
+#                 region_name = "us-west-1"
+#                 region_type = "active"
+#                 conn_option = "awsPrivateLink"
+#                 backend_ip_address_discover = true
+#             }
+#         }
+#         dns_service {
+#             type = "manual"
+#         }
+#         ssl_cert {
+#             generate_cert = true
+#         }
+#     }
+#     optimization_option = "PerformanceEnhanced"
+#     enable_multi_cloud_access = true
+#     policy_name = ["ALLOW-ALL-USERS"]
+#     onboard_app = true
+#     decommission_app = false
+# }
+# resource "prosimo_app_onboarding_web" "aws-vpn-gateway-wordpress" {
+#     app_name = "aws-vpn-gateway-wordpress"
+#     idp_name = "azure_ad"
+#     app_urls {
+#         internal_domain = "wordpress-aws-1715648954579.myeventarena.com"
+#         domain_type = "custom"
+#         app_fqdn = "wordpress-aws-1715648954579.myeventarena.com"
+#         subdomain_included = false
+#         protocols {
+#             protocol = "https"
+#             port = 443
+#         }
+#         health_check_info {
+#           enabled = true
+#         }
+#         cloud_config {
+#             connection_option = "private"
+#             cloud_creds_name = "prosimo-aws-app-iam"
+#             edge_regions {
+#                 region_name = "us-west-1"
+#                 region_type = "active"
+#                 conn_option = "awsVpnGateway"
+#                 backend_ip_address_discover = false
+#                 backend_ip_address_manual = ["10.250.40.9"]
+#                 app_network_id = "vpc-0204ddfc1848ea929"
+#             }
+#         }
+#         dns_service {
+#             type = "manual"
+#         }
+#         ssl_cert {
+#             generate_cert = true
+#         }
+#     }
+#     optimization_option = "PerformanceEnhanced"
+#     enable_multi_cloud_access = true
+#     policy_name = ["ALLOW-ALL-USERS"]
+#     onboard_app = true
+#     decommission_app = false
+# }
+# resource "prosimo_app_onboarding_web" "aws-tgw-wordpress" {
+#     app_name = "aws-tgw-wordpress"
+#     idp_name = "azure_ad"
+#     app_urls {
+#         internal_domain = "wordpress-aws-1715649214334.myeventarena.com"
+#         domain_type = "custom"
+#         app_fqdn = "wordpress-aws-1715649214334.myeventarena.com"
+#         subdomain_included = false
+#         protocols {
+#             protocol = "https"
+#             port = 443
+#         }
+#         health_check_info {
+#           enabled = true
+#         }
+#         cloud_config {
+#             connection_option = "private"
+#             cloud_creds_name = "prosimo-aws-app-iam"
+#             edge_regions {
+#                 region_name = "us-west-1"
+#                 region_type = "active"
+#                 conn_option = "transitGateway"
+#                 backend_ip_address_discover = false
+#                 backend_ip_address_manual = ["10.250.41.60"]
+#                 app_network_id = "vpc-0ebc3bb3cff0dbb09"
+#                 attach_point_id = "tgw-0a1871b2a38c38c8f"
+#             }
+#         }
+#         dns_service {
+#             type = "manual"
+#         }
+#         ssl_cert {
+#             generate_cert = true
+#         }
+#     }
+#     optimization_option = "PerformanceEnhanced"
+#     enable_multi_cloud_access = true
+#     policy_name = ["ALLOW-ALL-USERS"]
+#     onboard_app = true
+#     decommission_app = false
+# }
+# resource "prosimo_app_onboarding_web" "common-app" {
+#     app_name = "common-app"
+#     idp_name = "azure_ad"
+#     app_urls {
+#         internal_domain = "app-gcp-us-west1-1715634065485.myeventarena.com"
+#         domain_type = "custom"
+#         app_fqdn = "app-gcp-us-west1-1715634065485.myeventarena.com"
+#         subdomain_included = false
+#         protocols {
+#             protocol = "https"
+#             port = 443
+#         }
+#         health_check_info {
+#           enabled = false
+#         }
+#         cloud_config {
+#             connection_option = "public"
+#             cloud_creds_name = "prosimo-gcp-infra"
+#             edge_regions {
+#                 region_name = "us-west1"
+#                 region_type = "active"
+#                 conn_option = "public"
+#                 backend_ip_address_discover = false
+#                 backend_ip_address_manual = ["23.99.84.98"]
+#             }
+#         }
+#         dns_service {
+#             type = "manual"
+#         }
+#         ssl_cert {
+#             generate_cert = true
+#         }
+#     }
+#     optimization_option = "PerformanceEnhanced"
+#     enable_multi_cloud_access = true
+#     policy_name = ["ALLOW-ALL-USERS"]
+#     onboard_app = true
+#     decommission_app = false
+# }
+# resource "prosimo_app_onboarding_jumpbox" "gcp-peering-jumpbox-server" {
+#     app_name = "gcp-peering-jumpbox-server"
+#     idp_name         = "azure_ad"
+#     app_urls {
+#         internal_domain = "jumpbox-server-gcp-1715637227320.myeventarena.com"
+#         domain_type = "custom"
+#         app_fqdn = "jumpbox-server-gcp-1715637227320.myeventarena.com"
+#         subdomain_included = false
+#         health_check_info {
+#           enabled = false
+#         }
+#         cloud_config {
+#             connection_option = "private"
+#             cloud_creds_name = "prosimo-gcp-app"
+#             edge_regions {
+#                 region_type = "active"
+#                 region_name = "us-west1"
+#                 conn_option = "private"
+#                 backend_ip_address_discover = false
+#                 backend_ip_address_manual = ["35.247.55.92"]
+#             }
+#         }
+#         dns_service {
+#             type = "manual"
+#         }
+#         ssl_cert {
+#           generate_cert = true
+#         }
+#     }
+#     optimization_option = "PerformanceEnhanced"
+#     enable_multi_cloud_access = true
+#     policy_name = ["ALLOW-ALL-USERS"]
+#     onboard_app = true
+#     decommission_app = false
+# }
+resource "prosimo_app_onboarding_web" "aws-privatelink-wordpress" {
+    app_name = "aws-privatelink-wordpress"
+    idp_name = "azure_ad"
+    app_urls {
+        internal_domain = "wordpress-aws-1715640653389.myeventarena.com"
+        domain_type = "custom"
+        app_fqdn = "wordpress-aws-1715640653389.myeventarena.com"
+        subdomain_included = false
+        protocols {
+            protocol = "https"
+            port = 443
+        }
+        health_check_info {
+          enabled = true
+        }
         cloud_config {
             connection_option = "public"
-            cloud_creds_name = "prosimo-gcp-infra"
+            cloud_creds_name = "prosimo-aws-iam"
             edge_regions {
+                region_name = "us-east-1"
                 region_type = "active"
-                region_name = "us-west2"
                 conn_option = "public"
                 backend_ip_address_discover = false
                 backend_ip_address_manual = ["23.99.84.98"]
             }
         }
-
         dns_service {
             type = "manual"
         }
-
-        ssl_cert {
-            upload_cert {
-                cert_path = "path/to/certificate"
-                private_key_path = "path/to/key"
-            }
-        }
-    }
-
-    optimization_option = "PerformanceEnhanced"
-
-    policy_name = ["ALLOW-ALL-USERS"]
-
-    onboard_app =false
-    decommission_app = false
-}
-
-# Agentless Web access (domain_type = "Prosimo", subdomain_included = true)
-resource "prosimo_app_onboarding_web" "AgentlessAppOnboarding-prosimo_domain_bulk" {
-
-    app_name = "common-app-issue-new2"
-    idp_name = "azure_ad"
-    app_urls {
-        internal_domain = "ssh-server-us-west2-1657650573897.myeventarena.com"
-        domain_type = "prosimo"
-        app_fqdn = "demo.access.myevekapildev1660666246049.scnetworkers.info"
-        subdomain_included = true
-
-        protocols {
-            protocol = "ssh"
-            port = 80
-        }
-
-        health_check_info {
-          enabled = false
-        }
-
-        cloud_config {
-            connection_option = "public"
-            cloud_creds_name = "prosimo-gcp-infra"
-            edge_regions {
-                backend_ip_address_discover = false
-            }
-        }
-
-        dns_custom {
-          dns_server = ["10.100.0.5"]
-          is_healthcheck_enabled = true
-        }
-        dns_service {
-            type = "manual"
-        }
-
-        ssl_cert {
-          generate_cert = true
-        }
-    }
-
-    optimization_option = "PerformanceEnhanced"
-
-    policy_name = ["ALLOW-ALL-USERS"]
-
-    onboard_app =false
-    decommission_app = false
-}
-
-
-# Agentless Web access (domain_type = "Custom", subdomain_included = true)
-resource "prosimo_app_onboarding_web" "AgentlessAppOnboarding-custom_domain_bulk" {
-
-    app_name = "common-app-issue-new3"
-    idp_name = "azure_ad"
-    app_urls {
-        internal_domain = "ssh-server-us-west2-1657650573897.myeventarena.com"
-        domain_type = "custom"
-        app_fqdn = "ssh-server-us-west2-1657650573897.myeventarena.com"
-        subdomain_included = true
-
-        protocols {
-            protocol = "ssh"
-            port = 80
-        }
-
-        health_check_info {
-          enabled = false
-        }
-
-        cloud_config {
-            connection_option = "public"
-            cloud_creds_name = "prosimo-gcp-infra"
-            edge_regions {
-                backend_ip_address_discover = false
-            }
-        }
-
-        dns_custom {
-          dns_app = "agent-DNS-Server-tf"
-          is_healthcheck_enabled = true
-        }
-        dns_service {
-            type = "manual"
-        }
-
-        ssl_cert {
-            upload_cert {
-                cert_path = "path/to/cert"
-                private_key_path = "path/to/key"
-            }
-        }
-    }
-
-    optimization_option = "PerformanceEnhanced"
-
-    policy_name = ["ALLOW-ALL-USERS"]
-
-    onboard_app =false
-    decommission_app = false
-}
-
-# Agentless Web access(app hosted in privateDC.)
-resource "prosimo_app_onboarding_web" "private-dc" {
-
-    app_name = "common-app-private"
-    app_urls {
-        subdomain_included = false
-        domain_type = "custom"
-        internal_domain = "alex-app-101.abc.com"
-        app_fqdn = "alex-app-101.abc.com"
-
-        protocols {
-            protocol = "ssh"
-            port = 22
-        }
-
-        health_check_info {
-          enabled = true
-        }
-
-
-        cloud_config {
-            app_hosted_type = "PRIVATE"
-            connection_option = "public"
-            cloud_creds_name = "PrivateDC"
-            dc_app_ip = "10.1.1.1"
-        }
-                dns_service {
-            type = "manual"
-         }
         ssl_cert {
             generate_cert = true
         }
     }
-
     optimization_option = "PerformanceEnhanced"
-
+    enable_multi_cloud_access = true
     policy_name = ["ALLOW-ALL-USERS"]
-
     onboard_app = false
     decommission_app = false
 }

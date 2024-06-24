@@ -184,10 +184,23 @@ func resourceAppOnboarding_DNS() *schema.Resource {
 													Optional:    true,
 													Description: "Attach Point id details",
 												},
-												// "backend_ip_address_discover": {
-												// 	Type:     schema.TypeBool,
-												// 	Optional: true,
-												// },
+												"backend_ip_address_manual": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Elem:        &schema.Schema{Type: schema.TypeString},
+													Description: "Pass endpoints manually.",
+												},
+												"backend_ip_address_discover": {
+													Type:        schema.TypeBool,
+													Required:    true,
+													Description: "if Set to true, auto discovers available endpoints",
+												},
+												"backend_ip_address_dns": {
+													Type:     schema.TypeBool,
+													Optional: true,
+													Default:  false,
+													Elem:     &schema.Schema{Type: schema.TypeString},
+												},
 											},
 										},
 									},
@@ -262,7 +275,7 @@ func resourceAppOnboarding_DNS_Create(ctx context.Context, d *schema.ResourceDat
 
 	var diags diag.Diagnostics
 
-	prosimoClient := meta.(*client.ProsimoClient)
+	// prosimoClient := meta.(*client.ProsimoClient)
 	appOffboardFlag := d.Get("decommission_app").(bool)
 	if appOffboardFlag {
 		diags = append(diags, diag.Diagnostic{
@@ -286,57 +299,14 @@ func resourceAppOnboarding_DNS_Create(ctx context.Context, d *schema.ResourceDat
 	if diags != nil {
 		return diags
 	}
-	// Step 1: create settings config
-	diags = createAppOnboardSettings(ctx, d, meta, appOnboardObjOpts)
+
+	// Step: create App onboard configs:
+	diags, appOnboardSettings := createAppOnboardConfigs(ctx, d, meta, appOnboardObjOpts)
 	if diags != nil {
 		return diags
 	}
-
-	appOnboardSettingsDbObj, err := prosimoClient.GetAppOnboardSettings(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	appOnboardObjOpts.ID = appOnboardSettingsDbObj.ID
-	for _, appURLDB := range appOnboardSettingsDbObj.AppURLs {
-
-		for _, appURLOpts := range appOnboardObjOpts.AppURLsOpts {
-
-			if appURLOpts.InternalDomain == appURLDB.InternalDomain {
-				appURLOpts.ID = appURLDB.ID
-			}
-
-		}
-
-	}
-
-	// Step 2: create cloud config
-	diags = createAppOnboardCloudConfigs(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// Step 3: create optimization option
-	diags = createAppOnboardOptOption(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// Step 4: create waf and policy
-	diags = createAppOnboardSecurity(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// do summary endpoint before app onboarding
-	_, err = prosimoClient.GetAppOnboardSummary(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// resourceAppOnboardingRead(ctx, d, meta)
-
-	// Step 5: onboard app
-	diags = onboardApp(ctx, d, meta, appOnboardObjOpts)
+	// Step: onboard app
+	diags = onboardApp(ctx, d, meta, appOnboardObjOpts, appOnboardSettings)
 	if diags != nil {
 		return diags
 	}
@@ -400,53 +370,10 @@ func resourceAppOnboarding_DNS_Update(ctx context.Context, d *schema.ResourceDat
 			}
 		}
 
+		var appOnboardSettings *client.AppOnboardSettings
 		if !offBoardApp {
-			// Step 1: create settings config
-			diags = updateAppOnboardSettings(ctx, d, meta, appOnboardObjOpts, d.Id())
-			if diags != nil {
-				return diags
-			}
-
-			// updating again if any new apps are added
-			appOnboardSettingsDbObj, err := prosimoClient.GetAppOnboardSettings(ctx, d.Id())
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			appOnboardObjOpts.ID = appOnboardSettingsDbObj.ID
-			for _, appURLDB := range appOnboardSettingsDbObj.AppURLs {
-
-				for _, appURLOpts := range appOnboardObjOpts.AppURLsOpts {
-
-					if appURLOpts.InternalDomain == appURLDB.InternalDomain {
-						appURLOpts.ID = appURLDB.ID
-					}
-
-				}
-
-			}
-
-			// Step 2: create cloud config (Validate if it's a reboarding, If so clould config call would be skipped.)
-			appSummary, err := prosimoClient.GetAppOnboardSummary(ctx, d.Id())
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			if !appSummary.Deployed {
-				diags = createAppOnboardCloudConfigs(ctx, d, meta, appOnboardObjOpts)
-				if diags != nil {
-					return diags
-				}
-			} else {
-				log.Println("[DEBUG] Skipping Cloud config changes.Can't modify cloud config for a deployed app.")
-			}
-
-			// Step 3: create optimization option
-			diags = createAppOnboardOptOption(ctx, d, meta, appOnboardObjOpts)
-			if diags != nil {
-				return diags
-			}
-
-			// Step 4: create waf and policy
-			diags = createAppOnboardSecurity(ctx, d, meta, appOnboardObjOpts)
+			// Step: Update app onboard config:
+			diags, appOnboardSettings = createAppOnboardConfigs(ctx, d, meta, appOnboardObjOpts)
 			if diags != nil {
 				return diags
 			}
@@ -455,15 +382,8 @@ func resourceAppOnboarding_DNS_Update(ctx context.Context, d *schema.ResourceDat
 		//App reboard
 		isOnboard := d.Get("onboard_app").(bool)
 		if isOnboard {
-
-			// do summary endpoint before app onboarding
-			_, err = prosimoClient.GetAppOnboardSummary(ctx, d.Id())
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			// Step 5: onboard app
-			diags = onboardApp(ctx, d, meta, appOnboardObjOpts)
+			// Step: onboard app
+			diags = onboardApp(ctx, d, meta, appOnboardObjOpts, appOnboardSettings)
 			if diags != nil {
 				return diags
 			}
@@ -570,7 +490,19 @@ func getAppOnboardConfigObj_IP(d *schema.ResourceData) (*client.AppOnboardSettin
 			} else {
 				cloudConfigRegionOpts.ConnOption = ConnOptns
 			}
-			cloudConfigRegionOpts.BackendIPAddressDiscover = true
+			ipAddressDiscover := edgeRegionValues["backend_ip_address_discover"].(bool)
+			// ipAddressDns := edgeRegionValues["backend_ip_address_dns"].(bool)
+			// cloudConfigRegionOpts.BackendIPAddressDns = ipAddressDns
+			if ipAddressDiscover {
+				cloudConfigRegionOpts.BackendIPAddressDiscover = ipAddressDiscover
+			} else {
+				if v, ok := edgeRegionValues["backend_ip_address_manual"]; ok {
+					ipAddressList := v.([]interface{})
+					if len(ipAddressList) > 0 {
+						cloudConfigRegionOpts.BackendIPAddressEntry = expandStringList(v.([]interface{}))
+					}
+				}
+			}
 			regionOptsList = append(regionOptsList, cloudConfigRegionOpts)
 		}
 

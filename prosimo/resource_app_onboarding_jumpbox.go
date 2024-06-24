@@ -333,7 +333,7 @@ func resourceAppOnboarding_JumpBox_Create(ctx context.Context, d *schema.Resourc
 
 	var diags diag.Diagnostics
 
-	prosimoClient := meta.(*client.ProsimoClient)
+	// prosimoClient := meta.(*client.ProsimoClient)
 	appOffboardFlag := d.Get("decommission_app").(bool)
 	if appOffboardFlag {
 		diags = append(diags, diag.Diagnostic{
@@ -357,74 +357,20 @@ func resourceAppOnboarding_JumpBox_Create(ctx context.Context, d *schema.Resourc
 	if diags != nil {
 		return diags
 	}
-	// Step 1: create settings config
-	diags = createAppOnboardSettings(ctx, d, meta, appOnboardObjOpts)
+
+	// Step: create App onboard configs:
+	diags, appOnboardSettings := createAppOnboardConfigs(ctx, d, meta, appOnboardObjOpts)
 	if diags != nil {
 		return diags
 	}
 
-	appOnboardSettingsDbObj, err := prosimoClient.GetAppOnboardSettings(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	appOnboardObjOpts.ID = appOnboardSettingsDbObj.ID
-	for _, appURLDB := range appOnboardSettingsDbObj.AppURLs {
-
-		for _, appURLOpts := range appOnboardObjOpts.AppURLsOpts {
-
-			if appURLOpts.InternalDomain == appURLDB.InternalDomain {
-				appURLOpts.ID = appURLDB.ID
-			}
-
-		}
-
-	}
-
-	// Step 2: create cloud config
-	diags = createAppOnboardCloudConfigs(ctx, d, meta, appOnboardObjOpts)
+	// Step: onboard app
+	diags = onboardApp(ctx, d, meta, appOnboardObjOpts, appOnboardSettings)
 	if diags != nil {
 		return diags
 	}
 
-	// Step 3: create dns service
-	diags = createAppOnboardDNSService(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// Step 4: create ssl cert
-	diags = createAppOnboardSSLCert(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// Step 5: create optimization option
-	diags = createAppOnboardOptOption(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// Step 6: create waf and policy
-	diags = createAppOnboardSecurity(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	// do summary endpoint before app onboarding
-	_, err = prosimoClient.GetAppOnboardSummary(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// resourceAppOnboardingRead(ctx, d, meta)
-
-	// Step 7: onboard app
-	diags = onboardApp(ctx, d, meta, appOnboardObjOpts)
-	if diags != nil {
-		return diags
-	}
-
-	resourceAppOnboarding_CloudSVC_Read(ctx, d, meta)
+	resourceAppOnboarding_JumpBox_Read(ctx, d, meta)
 
 	return diags
 }
@@ -482,66 +428,10 @@ func resourceAppOnboarding_JumpBox_Update(ctx context.Context, d *schema.Resourc
 				}
 			}
 		}
-
+		var appOnboardSettings *client.AppOnboardSettings
 		if !offBoardApp {
-			// Step 1: create settings config
-			diags = updateAppOnboardSettings(ctx, d, meta, appOnboardObjOpts, d.Id())
-			if diags != nil {
-				return diags
-			}
-
-			// updating again if any new apps are added
-			appOnboardSettingsDbObj, err := prosimoClient.GetAppOnboardSettings(ctx, d.Id())
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			appOnboardObjOpts.ID = appOnboardSettingsDbObj.ID
-			for _, appURLDB := range appOnboardSettingsDbObj.AppURLs {
-
-				for _, appURLOpts := range appOnboardObjOpts.AppURLsOpts {
-
-					if appURLOpts.InternalDomain == appURLDB.InternalDomain {
-						appURLOpts.ID = appURLDB.ID
-					}
-
-				}
-
-			}
-
-			// Step 2: create cloud config (Validate if it's a reboarding, If so clould config call would be skipped.)
-			appSummary, err := prosimoClient.GetAppOnboardSummary(ctx, d.Id())
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			if !appSummary.Deployed {
-				diags = createAppOnboardCloudConfigs(ctx, d, meta, appOnboardObjOpts)
-				if diags != nil {
-					return diags
-				}
-			} else {
-				log.Println("[DEBUG] Skipping Cloud config changes.Can't modify cloud config for a deployed app.")
-			}
-
-			// Step 3: create dns service
-			diags = createAppOnboardDNSService(ctx, d, meta, appOnboardObjOpts)
-			if diags != nil {
-				return diags
-			}
-
-			// Step 4: create ssl cert
-			diags = createAppOnboardSSLCert(ctx, d, meta, appOnboardObjOpts)
-			if diags != nil {
-				return diags
-			}
-
-			// Step 5: create optimization option
-			diags = createAppOnboardOptOption(ctx, d, meta, appOnboardObjOpts)
-			if diags != nil {
-				return diags
-			}
-
-			// Step 6: create waf and policy
-			diags = createAppOnboardSecurity(ctx, d, meta, appOnboardObjOpts)
+			// Step: Update app onboard config:
+			diags, appOnboardSettings = createAppOnboardConfigs(ctx, d, meta, appOnboardObjOpts)
 			if diags != nil {
 				return diags
 			}
@@ -550,22 +440,15 @@ func resourceAppOnboarding_JumpBox_Update(ctx context.Context, d *schema.Resourc
 		//App reboard
 		isOnboard := d.Get("onboard_app").(bool)
 		if isOnboard {
-
-			// do summary endpoint before app onboarding
-			_, err = prosimoClient.GetAppOnboardSummary(ctx, d.Id())
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			// Step 7: onboard app
-			diags = onboardApp(ctx, d, meta, appOnboardObjOpts)
+			// Step: onboard app
+			diags = onboardApp(ctx, d, meta, appOnboardObjOpts, appOnboardSettings)
 			if diags != nil {
 				return diags
 			}
 		}
 	}
 
-	resourceAppOnboarding_CloudSVC_Read(ctx, d, meta)
+	resourceAppOnboarding_JumpBox_Read(ctx, d, meta)
 
 	return diags
 }
@@ -575,7 +458,6 @@ func resourceAppOnboarding_JumpBox_Read(ctx context.Context, d *schema.ResourceD
 	var diags diag.Diagnostics
 
 	prosimoClient := meta.(*client.ProsimoClient)
-	// log.Printf("resourceAppOnboardingRead %s", d.Id())
 	appOnboardSettingsDbObj, err := prosimoClient.GetAppOnboardSettings(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)

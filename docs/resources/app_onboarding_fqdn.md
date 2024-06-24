@@ -17,51 +17,51 @@ This resource is usually used along with `terraform-provider-prosimo`.
 
 ```terraform
 # Agent WEB access(subdomain_included = true, domain_type = "custom")
-resource "prosimo_app_onboarding_fqdn" "AgentlessAppOnboarding" {
+# resource "prosimo_app_onboarding_fqdn" "AgentlessAppOnboarding" {
 
-    app_name = "common-app-agent-fqdn"
-    idp_name = "azure_ad"
-    app_urls {
-        domain_type = "custom"
-        app_fqdn = "alex-app-101.abc.com"
-        subdomain_included = true
+#     app_name = "common-app-agent-fqdn"
+#     idp_name = "azure_ad"
+#     app_urls {
+#         domain_type = "custom"
+#         app_fqdn = "alex-app-101.abc.com"
+#         subdomain_included = true
 
-        protocols {
-            protocol = "tcp"
-            port_list = ["80", "90"]
-        }
-        protocols {
-            protocol = "tcp"
-            port_list = ["161", "162-200"] 
-        }
+#         protocols {
+#             protocol = "tcp"
+#             port_list = ["80", "90"]
+#         }
+#         protocols {
+#             protocol = "tcp"
+#             port_list = ["161", "162-200"] 
+#         }
 
-        health_check_info {
-          enabled = false
-        }
+#         health_check_info {
+#           enabled = false
+#         }
 
-        cloud_config {
-            connection_option = "private"
-            cloud_creds_name = "prosimo-gcp-infra"
-            edge_regions {
-                backend_ip_address_discover = false
-                backend_ip_address_dns = false
-                dns_custom {                                   
-                    dns_server = ["8.8.8.8"]
-                    is_healthcheck_enabled = true
-                  }
-            }
-        }
-    }
-    saml_rewrite{
-      selected_auth_type = "oidc"
-    }
-    optimization_option = "PerformanceEnhanced"
+#         cloud_config {
+#             connection_option = "private"
+#             cloud_creds_name = "prosimo-gcp-infra"
+#             edge_regions {
+#                 backend_ip_address_discover = false
+#                 backend_ip_address_dns = false
+#                 dns_custom {                                   
+#                     dns_server = ["8.8.8.8"]
+#                     is_healthcheck_enabled = true
+#                   }
+#             }
+#         }
+#     }
+#     saml_rewrite{
+#       selected_auth_type = "oidc"
+#     }
+#     optimization_option = "PerformanceEnhanced"
 
-    policy_name = "ALLOW-ALL"
+#     policy_name = "ALLOW-ALL"
 
-    onboard_app = false
-    decommission_app = false
-}
+#     onboard_app = false
+#     decommission_app = false
+# }
 
 
 
@@ -140,6 +140,47 @@ resource "prosimo_app_onboarding_fqdn" "private-dc" {
     policy_name = ["DENY-ALL-USERS"]
 
     onboard_app = false
+    decommission_app = false
+}
+
+resource "prosimo_app_onboarding_fqdn" "common-tcp-app" {
+    # depends_on = [time_sleep.time_delay]
+
+    app_name = "common-tcp-app"
+    idp_name = "azure_ad"
+
+    app_urls {
+        domain_type = "custom"
+        app_fqdn = "app-azure-eastus2-1716269296928.myeventarena.com"
+        subdomain_included = false
+
+        protocols {
+            protocol = "tcp"
+            port_list = ["5432"]
+            web_socket_enabled = false
+        }
+
+        health_check_info {
+          enabled = false
+        }
+
+        cloud_config {
+            connection_option = "private"
+            cloud_creds_name = "prosimo-app"
+            edge_regions {
+                region_name = "eastus2"
+                region_type = "active"
+                conn_option = "peering"
+                backend_ip_address_discover = false
+                backend_ip_address_manual = ["52.254.84.48"]
+            }
+        }
+    }
+
+    optimization_option = "PerformanceEnhanced"
+    enable_multi_cloud_access = true
+    policy_name = ["ALLOW-ALL-USERS"]
+    onboard_app = true
     decommission_app = false
 }
 ```
