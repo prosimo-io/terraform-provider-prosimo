@@ -350,7 +350,7 @@ func GetDyRiskNameTypes() []string {
 }
 
 func GetPolicyResourceTypes() []string {
-	PolicyResourceTypes := make([]string, 11)
+	PolicyResourceTypes := make([]string, 12)
 	PolicyResourceTypes[0] = PolicyMatchUser
 	PolicyResourceTypes[1] = PolicyMatchNetwork
 	PolicyResourceTypes[2] = PolicyMatchDevice
@@ -362,6 +362,7 @@ func GetPolicyResourceTypes() []string {
 	PolicyResourceTypes[8] = PolicyMatchAppDP
 	PolicyResourceTypes[9] = PolicyMatchPosition
 	PolicyResourceTypes[10] = PolicyMatchNetworkACL
+	PolicyResourceTypes[11] = PolicyMatchEgressFqdn
 
 	return PolicyResourceTypes
 }

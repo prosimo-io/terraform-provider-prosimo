@@ -49,6 +49,7 @@ type MatchDetailList struct {
 	Networks               []MatchDetails `json:"networks,omitempty"`
 	ProsimoNetworks        []MatchDetails `json:"prosimoNetworks,omitempty"`
 	NetworkACL             []MatchDetails `json:"networkACL,omitempty"`
+	EgressFqdns            []MatchDetails `json:"egressFqdns,omitempty"`
 	IDP                    []MatchDetails `json:"idp,omitempty"`
 	Devices                []MatchDetails `json:"devices,omitempty"`
 	Time                   []MatchDetails `json:"time,omitempty"`
@@ -81,11 +82,13 @@ type InputItems struct {
 }
 
 type KeyValues struct {
-	SourceIp   []string `json:"sourceIP,omitempty"`
-	TargetIp   []string `json:"targetIP,omitempty"`
-	Protocol   []string `json:"protocol,omitempty"`
-	SourcePort []string `json:"sourcePort,omitempty"`
-	TargetPort []string `json:"targetPort,omitempty"`
+	SourceIp         []string `json:"sourceIP,omitempty"`
+	TargetIp         []string `json:"targetIP,omitempty"`
+	Protocol         []string `json:"protocol,omitempty"`
+	SourcePort       []string `json:"sourcePort,omitempty"`
+	TargetPort       []string `json:"targetPort,omitempty"`
+	FqdnInverseMatch []string `json:"fqdnInverseMatch,omitempty"`
+	FqdnMatch        []string `json:"fqdnMatch,omitempty"`
 }
 
 type MatchItem struct {
@@ -100,6 +103,7 @@ type MatchItem struct {
 	Device_Posture_Profile PropertyItemList `json:"Device_Posture_Profile,omitempty"`
 	Networks               PropertyItemList `json:"Networks,omitempty"`
 	NetworkACL             PropertyItemList `json:"NetworkACL,omitempty"`
+	EgressFqdn             PropertyItemList `json:"EgressFqdn,omitempty"`
 }
 type PropertyItemList struct {
 	Property []PropertyItem
@@ -139,7 +143,7 @@ func (prosimoClient *ProsimoClient) GetPolicy(ctx context.Context) ([]*Policy, e
 func (prosimoClient *ProsimoClient) GetInternetEgressControl(ctx context.Context) ([]*Policy, error) {
 
 	PolicySearchInput := Policy{}
-	req, err := prosimoClient.api_client.NewRequest("POST", GetIECEndpoint , PolicySearchInput)
+	req, err := prosimoClient.api_client.NewRequest("POST", GetIECEndpoint, PolicySearchInput)
 	if err != nil {
 		return nil, err
 	}

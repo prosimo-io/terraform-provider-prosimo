@@ -1,3 +1,6 @@
+## 4.4.1(Jun 28 2024)
+### Feature:
+- Terraform support for network Rules with Internet Access
 ## 4.3.1(May 16 2024)
 ### Feature:
 - Terraform support for app onboarding 2.0

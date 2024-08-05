@@ -289,109 +289,136 @@ This resource is usually used along with `terraform-provider-prosimo`.
 #  }
 
 
-  resource "prosimo_policy" "policy-for-common-app-new" {
-     name = "psonar-test-policy-transit"
+#   resource "prosimo_policy" "policy-for-common-app-new" {
+#      name = "psonar-test-policy-transit"
+#      app_access_type = "transit"
+#      namespace = "default"
+#      details {
+#         actions = "allow"
+#         # lock_users = false
+#         # alert = true
+#         # mfa = true
+#         # lock_users = false
+#           matches {
+#             match_entries {
+#                 property = "URL"
+#                 operation = "Does NOT contain"
+#                 type     = "url"
+#                 values {
+#                     inputitems {
+#                         name = "1235678"                      
+#                     }
+#                 }
+#             }
+#             match_entries {
+#                 property = "Network"
+#                 operation = "Is"
+#                 type     = "networks"
+#                 values {
+#                     selecteditems {
+#                         name = "aws-uswest1-spoke1-infra-tf"                  
+#                     }
+#                 }
+#             }
+#             match_entries {
+#                 type     = "networkacl"
+#                 values {
+#                     inputitems {
+#                        ip_details {
+#                         source_ip = ["any"]
+#                         target_ip = ["any"]
+#                         protocol = ["tcp"]
+#                         source_port = ["any"]
+#                         target_port = ["any"]
+#                        }               
+#                     }
+#                 }
+#             }
+#             match_entries {
+#                 property = "Time"
+#                 operation = "Between"
+#                 type     = "time"
+#                 values {
+#                     inputitems {
+#                         name = "10"                    
+#                     }
+#                 }
+#              }
+          
+#           match_entries {
+#                 property = "FQDN"
+#                 operation = "Is"
+#                 type     = "fqdn"
+#                 values {
+#                     inputitems {
+#                         name = "1234"                    
+#                     }
+#                 }
+#             }
+#              match_entries {
+#                 property = "HTTP Method"
+#                 operation = "Is"
+#                 type     = "advanced"
+#                 values {
+#                     selecteditems {
+#                         name = "GET"                     
+#                     }
+#                     selecteditems {
+#                         name = "POST"                     
+#                     }
+#                     selecteditems {
+#                         name = "HEAD"                     
+#                     }
+#                     selecteditems {
+#                         name = "DELETE"                     
+#                     }
+#                     selecteditems {
+#                         name = "CONNECT"                     
+#                     }
+#                 }
+#              }
+#           }
+#         internet_traffic_enabled = true
+#     #    apps {
+#     #         selecteditems {
+#     #             name = "agent-httpbin"
+#     #         }
+#     #     }
+#         networks {
+#             selecteditems {
+#                 name = "gcp-usw1-vpc1-tf"
+#             }
+#         }
+#      }
+#  }
+
+  resource "prosimo_policy" "internet-egress-fqdn-policy" {
+     name = "psonar-test-egress-fqdn-policy-transit"
      app_access_type = "transit"
      namespace = "default"
      details {
         actions = "allow"
-        # lock_users = false
-        # alert = true
-        # mfa = true
-        # lock_users = false
-          matches {
+        matches {
             match_entries {
-                property = "URL"
-                operation = "Does NOT contain"
-                type     = "url"
-                values {
-                    inputitems {
-                        name = "1235678"                      
-                    }
-                }
-            }
-            match_entries {
-                property = "Network"
+                property = "EgressFqdn"
                 operation = "Is"
-                type     = "networks"
-                values {
-                    selecteditems {
-                        name = "aws-uswest1-spoke1-infra-tf"                  
-                    }
-                }
-            }
-            match_entries {
-                type     = "networkacl"
+                type     = "egressfqdn"
                 values {
                     inputitems {
-                       ip_details {
-                        source_ip = ["any"]
-                        target_ip = ["any"]
-                        protocol = ["tcp"]
-                        source_port = ["any"]
-                        target_port = ["any"]
-                       }               
+                        egress_fqdn_details {
+                            fqdn_inverse_match = ["mail.google.com","youtube.in"]
+                            fqdn_match = ["*google.com","youtube.com", "example.in"]
+                            protocol = ["tls"]
+                            source_ip = ["any"]
+                            target_port = ["443"]
+                        }
                     }
                 }
-            }
-            match_entries {
-                property = "Time"
-                operation = "Between"
-                type     = "time"
-                values {
-                    inputitems {
-                        name = "10"                    
-                    }
-                }
-             }
-          
-          match_entries {
-                property = "FQDN"
-                operation = "Is"
-                type     = "fqdn"
-                values {
-                    inputitems {
-                        name = "1234"                    
-                    }
-                }
-            }
-             match_entries {
-                property = "HTTP Method"
-                operation = "Is"
-                type     = "advanced"
-                values {
-                    selecteditems {
-                        name = "GET"                     
-                    }
-                    selecteditems {
-                        name = "POST"                     
-                    }
-                    selecteditems {
-                        name = "HEAD"                     
-                    }
-                    selecteditems {
-                        name = "DELETE"                     
-                    }
-                    selecteditems {
-                        name = "CONNECT"                     
-                    }
-                }
-             }
-          }
-        internet_traffic_enabled = true
-    #    apps {
-    #         selecteditems {
-    #             name = "agent-httpbin"
-    #         }
-    #     }
-        networks {
-            selecteditems {
-                name = "gcp-usw1-vpc1-tf"
             }
         }
+        internet_traffic_enabled = true
      }
  }
-
 # output "policy_details" {
 #   description = "policy details"
 #   value       = data.prosimo_policy_access
@@ -451,7 +478,7 @@ Optional:
 
 Required:
 
-- `type` (String) Select policy match condition type, for access policy options are users, location, idp, devices, time, url, device-posture, fqdn and advanced. For transit type options are time, url, networkacl, fqdn, networks and advanced
+- `type` (String) Select policy match condition type, for access policy options are users, location, idp, devices, time, url, device-posture, fqdn and advanced. For transit type options are time, url, networkacl, fqdn, egressfqdns, prosimonetworks, networks and advanced
 
 Optional:
 
@@ -473,8 +500,21 @@ Optional:
 
 Optional:
 
+- `egress_fqdn_details` (Block Set) Only applicable for type egressfqdn (see [below for nested schema](#nestedblock--details--matches--match_entries--values--inputitems--egress_fqdn_details))
 - `ip_details` (Block Set) Only applicable for type networkacl (see [below for nested schema](#nestedblock--details--matches--match_entries--values--inputitems--ip_details))
 - `name` (String) Input value name
+
+<a id="nestedblock--details--matches--match_entries--values--inputitems--egress_fqdn_details"></a>
+### Nested Schema for `details.matches.match_entries.values.inputitems.egress_fqdn_details`
+
+Optional:
+
+- `fqdn_inverse_match` (List of String) FQDNs which need to be excluded
+- `fqdn_match` (List of String) FQDNs which need to be included
+- `protocol` (List of String) List of protocols
+- `source_ip` (List of String) Source IP list
+- `target_port` (List of String) Target port list
+
 
 <a id="nestedblock--details--matches--match_entries--values--inputitems--ip_details"></a>
 ### Nested Schema for `details.matches.match_entries.values.inputitems.ip_details`

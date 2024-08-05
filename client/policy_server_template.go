@@ -93,6 +93,16 @@ const (
 				}]
 			}]
 		},
+		"EgressFqdn": {
+			"property": [{
+				"user_property": "EgressFqdn",
+				"server_property": "fqdn",
+				"operations": [{
+					"user_operation_name": "Is",
+					"server_operation_name": "is"
+				}]
+			}]
+		},
 		"IDP": {
 			"property": [{
 				"user_property": "",

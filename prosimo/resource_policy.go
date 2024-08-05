@@ -111,7 +111,7 @@ func resourcePolicy() *schema.Resource {
 													Type:         schema.TypeString,
 													Required:     true,
 													ValidateFunc: validation.StringInSlice(client.GetPolicyResourceTypes(), false),
-													Description:  "Select policy match condition type, for access policy options are users, location, idp, devices, time, url, device-posture, fqdn and advanced. For transit type options are time, url, networkacl, fqdn, networks and advanced",
+													Description:  "Select policy match condition type, for access policy options are users, location, idp, devices, time, url, device-posture, fqdn and advanced. For transit type options are time, url, networkacl, fqdn, egressfqdns, prosimonetworks, networks and advanced",
 												},
 												"property": {
 													Type:        schema.TypeString,
@@ -168,6 +168,45 @@ func resourcePolicy() *schema.Resource {
 																						Optional:    true,
 																						Elem:        &schema.Schema{Type: schema.TypeString},
 																						Description: "Source port list",
+																					},
+																					"target_port": {
+																						Type:        schema.TypeList,
+																						Optional:    true,
+																						Elem:        &schema.Schema{Type: schema.TypeString},
+																						Description: "Target port list",
+																					},
+																				},
+																			},
+																		},
+																		"egress_fqdn_details": {
+																			Type:        schema.TypeSet,
+																			Optional:    true,
+																			Description: "Only applicable for type egressfqdn",
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+																					"fqdn_inverse_match": {
+																						Type:        schema.TypeList,
+																						Optional:    true,
+																						Elem:        &schema.Schema{Type: schema.TypeString},
+																						Description: "FQDNs which need to be excluded",
+																					},
+																					"fqdn_match": {
+																						Type:        schema.TypeList,
+																						Optional:    true,
+																						Elem:        &schema.Schema{Type: schema.TypeString},
+																						Description: "FQDNs which need to be included",
+																					},
+																					"protocol": {
+																						Type:        schema.TypeList,
+																						Optional:    true,
+																						Elem:        &schema.Schema{Type: schema.TypeString},
+																						Description: "List of protocols",
+																					},
+																					"source_ip": {
+																						Type:        schema.TypeList,
+																						Optional:    true,
+																						Elem:        &schema.Schema{Type: schema.TypeString},
+																						Description: "Source IP list",
 																					},
 																					"target_port": {
 																						Type:        schema.TypeList,
@@ -298,7 +337,7 @@ func resourcePolicy() *schema.Resource {
 func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{}) (diag.Diagnostics, client.Policy) {
 	prosimoClient := meta.(*client.ProsimoClient)
 
-	// var diags diag.Diagnostics
+	var diags diag.Diagnostics
 
 	newpolicy := &client.Policy{}
 	newdetails := client.Details{}
@@ -389,13 +428,14 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 			}
 			newdetails.Actions = actionList
 		}
-
+		nwAclFlag := false
+		egressFqdnFlag := false
 		if v, ok := detailsinput["matches"].(*schema.Set); ok && v.Len() > 0 {
-
 			matchdetails := v.List()[0].(map[string]interface{})
 			userlist := []client.MatchDetails{}
 			devicelist := []client.MatchDetails{}
 			networkslist := []client.MatchDetails{}
+			egressfqdnlist := []client.MatchDetails{}
 			timelist := []client.MatchDetails{}
 			urllist := []client.MatchDetails{}
 			applist := []client.MatchDetails{}
@@ -404,7 +444,6 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 			dplist := []client.MatchDetails{}
 			nwlist := []client.MatchDetails{}
 			nwACLlist := []client.MatchDetails{}
-
 			if v, ok := matchdetails["match_entries"].(*schema.Set); ok && v.Len() > 0 {
 				for i, val := range v.List() {
 					_ = val
@@ -452,16 +491,32 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 							nwlist = append(dplist, nwInput)
 							newmatchList.ProsimoNetworks = nwlist
 						} else if types == "networkacl" {
+							nwAclFlag = true
 							nwaclInput := matchNWACLEntry(meta, matchEntries)
 							nwACLlist = append(dplist, nwaclInput)
 							newmatchList.NetworkACL = nwACLlist
+						} else if types == "egressfqdn" {
+							egressFqdnFlag = true
+							nwegressfqdnInput := matchEgressFqdnEntry(meta, matchEntries)
+							egressfqdnlist = append(dplist, nwegressfqdnInput)
+							newmatchList.EgressFqdns = egressfqdnlist
 						}
 						newdetails.Matches = newmatchList
 					}
 				}
 			}
+			if nwAclFlag && egressFqdnFlag {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Network ACL and Egress FQDN match conditions configured together",
+					Detail:   "Network ACL and Egress FQDN match conditions are mutually exclusive, configure any one of them",
+				})
+				return diags, *newpolicy
+			}
 		}
+		appsAttachmentFlag := false
 		if v, ok := detailsinput["apps"].(*schema.Set); ok && v.Len() > 0 {
+			appsAttachmentFlag = true
 			appdetails := v.List()[0].(map[string]interface{})
 			slectitemlist := []client.InputItems{}
 			if v, ok := appdetails["selecteditems"].(*schema.Set); ok && v.Len() > 0 {
@@ -481,8 +536,9 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 			newdetails.Apps = newvalues1
 
 		}
-
+		nwAttachmentFlag := false
 		if v, ok := detailsinput["networks"].(*schema.Set); ok && v.Len() > 0 {
+			nwAttachmentFlag = true
 			networkdetails := v.List()[0].(map[string]interface{})
 			slectitemlist := []client.InputItems{}
 			if v, ok := networkdetails["selecteditems"].(*schema.Set); ok && v.Len() > 0 {
@@ -501,10 +557,27 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 			}
 			newdetails.Networks = newvalues1
 		}
+		internetFlag := false
 		if v, ok := detailsinput["internet_traffic_enabled"]; ok {
 			newdetails.Internet_Traffic_Enabled = v.(bool)
+			internetFlag = newdetails.Internet_Traffic_Enabled
 		}
-
+		if (appsAttachmentFlag || nwAttachmentFlag) && internetFlag {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Internet Access is configured along with networks/apps attachments",
+				Detail:   "Internet Access and apps/networks attachments are mutually exclusive, use any one of them",
+			})
+			return diags, *newpolicy
+		}
+		if (appsAttachmentFlag || nwAttachmentFlag) && egressFqdnFlag {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Egress FQDN match condition is configured along with networks/apps attachments",
+				Detail:   "Egress FQDN match condition is only supported along with internet access",
+			})
+			return diags, *newpolicy
+		}
 		// } else {
 		// 	newdetails.Networks = nil
 		// }
@@ -514,10 +587,13 @@ func inputDataops(ctx context.Context, d *schema.ResourceData, meta interface{})
 	return nil, *newpolicy
 }
 func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
+	var diags diag.Diagnostics
 	prosimoClient := meta.(*client.ProsimoClient)
-	_, newpolicy := inputDataops(ctx, d, meta)
+	diags, newpolicy := inputDataops(ctx, d, meta)
 	// log.Println("newpolicy", newpolicy)
+	if diags != nil {
+		return diags
+	}
 	policyListData, err := prosimoClient.CreatePolicy(ctx, &newpolicy)
 	if err != nil {
 		return diag.FromErr(err)
@@ -1176,6 +1252,40 @@ func matchNWACLEntry(meta interface{}, matchEntries map[string]interface{}) clie
 	return newtimematchdetails
 }
 
+func matchEgressFqdnEntry(meta interface{}, matchEntries map[string]interface{}) client.MatchDetails {
+	prosimoClient := meta.(*client.ProsimoClient)
+	newtimematchdetails := client.MatchDetails{}
+	var FinalOperation string
+	var property string
+	flag := false
+	matchDetails := prosimoClient.ReadJson()
+	for _, val := range matchDetails.EgressFqdn.Property {
+		if matchEntries["property"].(string) == val.User_Property {
+			property = val.Server_Property
+			flag = true
+		}
+		for _, val := range val.Operations {
+			if matchEntries["operation"].(string) == val.User_Operation_Name {
+				FinalOperation = val.Server_Operation_Name
+				flag = true
+			}
+		}
+	}
+	if !flag {
+		log.Println("[ERROR] Invalid entry for type EgressFqdns")
+	}
+
+	if v, ok := matchEntries["values"].(*schema.Set); ok && v.Len() > 0 {
+		inputval := v.List()[0].(map[string]interface{})
+		newuservalues := getMatchValues(inputval)
+		newtimematchdetails.Operations = FinalOperation
+		newtimematchdetails.Property = property
+		newtimematchdetails.Values = newuservalues
+
+	}
+	return newtimematchdetails
+}
+
 func matchProsimoNWEntry(ctx context.Context, meta interface{}, matchEntries map[string]interface{}) client.MatchDetails {
 	prosimoClient := meta.(*client.ProsimoClient)
 	newmatchdetails := client.MatchDetails{}
@@ -1245,6 +1355,16 @@ func getMatchValues(inputval map[string]interface{}) client.Values {
 					TargetPort: expandStringList(ipDetails["target_port"].([]interface{})),
 				}
 				newinputitems.KeyValues = ipdetailsInput
+			} else if v, ok := inputitem["egress_fqdn_details"].(*schema.Set); ok && v.Len() > 0 {
+				ipDetails := v.List()[0].(map[string]interface{})
+				ipdetailsInput := &client.KeyValues{
+					FqdnInverseMatch: expandStringList(ipDetails["fqdn_inverse_match"].([]interface{})),
+					FqdnMatch:        expandStringList(ipDetails["fqdn_match"].([]interface{})),
+					Protocol:         expandStringList(ipDetails["protocol"].([]interface{})),
+					SourceIp:         expandStringList(ipDetails["source_ip"].([]interface{})),
+					TargetPort:       expandStringList(ipDetails["target_port"].([]interface{})),
+				}
+				newinputitems.KeyValues = ipdetailsInput
 			}
 			inputitemlist = append(inputitemlist, newinputitems)
 		}
@@ -1273,9 +1393,14 @@ func getMatchValues(inputval map[string]interface{}) client.Values {
 
 func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	//resourcePolicyCreate(ctx, d, meta)
+	var diags diag.Diagnostics
 	prosimoClient := meta.(*client.ProsimoClient)
 	policyID := d.Id()
-	_, newpolicy := inputDataops(ctx, d, meta)
+	// diags, newpolicy := inputDataops(ctx, d, meta, false)
+	diags, newpolicy := inputDataops(ctx, d, meta)
+	if diags != nil {
+		return diags
+	}
 	newpolicy.ID = policyID
 	policyListData, err := prosimoClient.UpdatePolicy(ctx, &newpolicy)
 	if err != nil {
@@ -1330,16 +1455,19 @@ func resourcePolicynDelete(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	// Detach apps/networks or internet access from the policy before the destroy operation
 	res.Details.Apps.SelectedItems = res.Details.Apps.SelectedItems[:0]
+	res.Details.Networks.SelectedItems = res.Details.Networks.SelectedItems[:0]
+	res.Details.Internet_Traffic_Enabled = false
 	updateData, err := prosimoClient.UpdatePolicy(ctx, res)
 	_ = updateData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	// Delete the policy
 	res_err := prosimoClient.DeletePolicy(ctx, policyId)
 	if res_err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(res_err)
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but

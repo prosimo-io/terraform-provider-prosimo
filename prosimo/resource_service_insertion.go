@@ -179,8 +179,9 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	sourceNetwork := &client.Source{}
 	sourceNetworkList := []client.Service_Input{}
 	if v, ok := d.GetOk("source"); ok {
-		for i, _ := range v.([]interface{}) {
-			sourceConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+		sources := v.([]interface{})
+		for i := range sources {
+			sourceConfig := sources[i].(map[string]interface{})
 			if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
 
 				for i, val := range v.List() {
@@ -207,18 +208,26 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	targetNetworkList := []client.Service_Input{}
 	targetAppList := []client.Service_Input{}
 	if v, ok := d.GetOk("target"); ok {
-		for i, _ := range v.([]interface{}) {
-			targetConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+		targets := v.([]interface{})
+		for i, _ := range targets {
+			targetConfig := targets[i].(map[string]interface{})
 			if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
 
 				for i, val := range v.List() {
 					_ = val
 
 					networkConfig := v.List()[i].(map[string]interface{})
+					var selectnetworkid string
 					selectnetworkName := networkConfig["name"].(string)
-					selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
-					if err != nil {
-						return diag.FromErr(err)
+					if selectnetworkName == client.InternetNetworkName || selectnetworkName == client.InternetNetworkCIDR {
+						selectnetworkName = client.InternetNetworkCIDR
+						selectnetworkid = client.InternetNetworkID
+					} else {
+						networkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
+						selectnetworkid = networkid
+						if err != nil {
+							return diag.FromErr(err)
+						}
 					}
 					serviceInput := client.Service_Input{
 						Name: selectnetworkName,
@@ -250,9 +259,9 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	ipRulesConfigInputList := []client.IpRule{}
 	if v, ok := d.GetOk("ip_rules"); ok {
-		for i, _ := range v.([]interface{}) {
-
-			ipRulesConfig := v.([]interface{})[i].(map[string]interface{})
+		ipRules := v.([]interface{})
+		for i, _ := range ipRules {
+			ipRulesConfig := ipRules[i].(map[string]interface{})
 			ipRulesConfigInput := &client.IpRule{
 				SrcAddr:  expandStringList(ipRulesConfig["source_addresses"].([]interface{})),
 				SrcPort:  expandStringList(ipRulesConfig["source_ports"].([]interface{})),
@@ -374,8 +383,9 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		sourceNetwork := &client.Source{}
 		sourceNetworkList := []client.Service_Input{}
 		if v, ok := d.GetOk("source"); ok {
-			for i, _ := range v.([]interface{}) {
-				sourceConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+			sources := v.([]interface{})
+			for i, _ := range sources {
+				sourceConfig := sources[i].(map[string]interface{})
 				if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
 
 					for i, val := range v.List() {
@@ -402,18 +412,25 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		targetNetworkList := []client.Service_Input{}
 		targetAppList := []client.Service_Input{}
 		if v, ok := d.GetOk("target"); ok {
-			for i, _ := range v.([]interface{}) {
-				targetConfig := v.(*schema.Set).List()[i].(map[string]interface{})
+			targets := v.([]interface{})
+			for i, _ := range targets {
+				targetConfig := targets[i].(map[string]interface{})
 				if v, ok := targetConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
 
 					for i, val := range v.List() {
 						_ = val
-
+						var selectnetworkid string
 						networkConfig := v.List()[i].(map[string]interface{})
 						selectnetworkName := networkConfig["name"].(string)
-						selectnetworkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
-						if err != nil {
-							return diag.FromErr(err)
+						if selectnetworkName == client.InternetNetworkName || selectnetworkName == client.InternetNetworkCIDR {
+							selectnetworkName = client.InternetNetworkCIDR
+							selectnetworkid = client.InternetNetworkID
+						} else {
+							networkid, err := prosimoClient.GetNetworkID(ctx, selectnetworkName)
+							selectnetworkid = networkid
+							if err != nil {
+								return diag.FromErr(err)
+							}
 						}
 						serviceInput := client.Service_Input{
 							Name: selectnetworkName,
@@ -445,9 +462,10 @@ func resourceSIUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 		ipRulesConfigInputList := []client.IpRule{}
 		if v, ok := d.GetOk("ip_rules"); ok {
-			for i, _ := range v.([]interface{}) {
+			ipRules := v.([]interface{})
+			for i, _ := range ipRules {
 
-				ipRulesConfig := v.([]interface{})[i].(map[string]interface{})
+				ipRulesConfig := ipRules[i].(map[string]interface{})
 				ipRulesConfigInput := &client.IpRule{
 					SrcAddr:  expandStringList(ipRulesConfig["source_addresses"].([]interface{})),
 					SrcPort:  expandStringList(ipRulesConfig["source_ports"].([]interface{})),

@@ -2,6 +2,10 @@ package client
 
 // Prosimo API constants
 const (
+	InternetNetworkName = "Internet"
+	InternetNetworkCIDR = "0.0.0.0/0"
+	InternetNetworkID   = "6dfd3976-e648-4e5d-818e-b4cde5741cd5"
+
 	ParamName          = "action"
 	ParamValueDeploy   = "deploy"
 	ParamValueSave     = "save"
@@ -133,6 +137,7 @@ const (
 	PolicyMatchAppDP       = "device-posture"
 	PolicyMatchPosition    = "location"
 	PolicyMatchNetworkACL  = "networkacl"
+	PolicyMatchEgressFqdn  = "egressfqdn"
 
 	PolicyMatchOperationIs             = "Is"
 	PolicyMatchOperationIsNot          = "Is NOT"
