@@ -24,8 +24,8 @@ resource "prosimo_managed_firewall" "mf" {
     cidr = "10.220.0.0/16"
     instance_size = "c4.xlarge"
     version = "11.0.2"
-    auth_key = "0TrustNext"
-    auth_code = "0TrustNext"
+    auth_key = "*****"
+    auth_code = "*****"
     scaling_settings {
       desired = 1
       min = 1

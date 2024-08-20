@@ -18,8 +18,8 @@ This resource is usually used along with `terraform-provider-prosimo`.
 ```terraform
 resource "prosimo_firewall_manager" "fm" {
     integration_type = "panorama"
-    ip_address = "52.68.81.235"
-    api_key = "LUFRPT05d0hxRVZwa1hFbjMxZGVqWUZCbmxHS1Bqc289eXVMeFlPTm83bk9hL3ZzUkxDTS9LN1VaS3NQWVlTWUJjeWJCelNheTBxS2Iwc2h3bDIza1hFd1dkL2lHTThPbw=="
+    ip_address = "your_ip"
+    api_key = "your_api_key"
     license_settings {
       license_mode = "BYOL"
       firewall_family = "VM-100"
