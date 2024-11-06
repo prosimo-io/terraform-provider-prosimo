@@ -22,23 +22,50 @@ resource "prosimo_managed_firewall" "mf" {
     cloud_creds_name = "prosimo-aws-app-iam"
     cloud_region = "us-west-2"
     cidr = "10.220.0.0/16"
-    instance_size = "c4.xlarge"
-    version = "11.0.2"
-    auth_key = "*****"
-    auth_code = "*****"
+    instance_size = "c5.xlarge"
+    version = "11.1.3"
+    auth_key = "********"
+    auth_code = "*******"
     scaling_settings {
       desired = 1
       min = 1
       max = 2
     }
-    assignments {
-      template_name = "test-stac-1"
-      device_group = "aws-fw-1"
+    # assignments {
+    #   template_name = "demoStack"
+    #   device_group = "aws-fw-1"
+    # }
+    access_details {
+      username = "admin"
+      password = "Sibu@105636"
+      select_option_for_ssh = "Generate new key pair"
+    }
+    onboard = false
+    decommission = true
+
+}
+resource "prosimo_managed_firewall" "mf-check" {
+    name = "tf-check"
+    firewall_type = "checkpoint-security-gateway"
+    cloud_creds_name = "prosimo-aws-app-iam"
+    cloud_region = "us-west-2"
+    cidr = "10.220.0.0/16"
+    instance_size = "c5.xlarge"
+    version = "R81.20"
+    sic_key = "testkey123"
+    license_settings = "BYOL"
+    scaling_settings {
+      min = 1
+      max = 2
     }
     access_details {
-      username = "***"
-      password = "****"
-      select_option_for_ssh = "new key pair"
+      username = "admin"
+      password = "******"
+      select_option_for_ssh = "Generate new key pair"
+    }
+    health_check_config {
+      protocol = "HTTP"
+      port = "80"
     }
     onboard = false
     decommission = true
@@ -52,14 +79,11 @@ resource "prosimo_managed_firewall" "mf" {
 ### Required
 
 - `access_details` (Block Set, Min: 1) Access Details (see [below for nested schema](#nestedblock--access_details))
-- `assignments` (Block Set, Min: 1) Assignment Config (see [below for nested schema](#nestedblock--assignments))
-- `auth_code` (String) Instance Auth Key
-- `auth_key` (String) Instance Auth Key
 - `cidr` (String) CIDR range
 - `cloud_creds_name` (String) Cloud Account Name
 - `cloud_region` (String) Cloud Region
 - `decommission` (Boolean) Set this to true if you would like to Decommission Managed Firewall
-- `firewall_type` (String) Type of Firewall, e.g: vmseries
+- `firewall_type` (String) Type of Firewall, e.g: vmseries or checkpoint-security-gateway
 - `instance_size` (String) Instance size to be filled in Instance details Section
 - `name` (String) Name of the Resource
 - `onboard` (Boolean) Set this to true if you would like to onboard Managed Firewall
@@ -68,7 +92,13 @@ resource "prosimo_managed_firewall" "mf" {
 
 ### Optional
 
+- `assignments` (Block Set) Assignment Config (see [below for nested schema](#nestedblock--assignments))
+- `auth_code` (String) Instance Auth Key
+- `auth_key` (String) Instance Auth Key
 - `bootstrap` (String) Region Level IP Prefixes
+- `health_check_config` (Block Set) Health Check Configuration (see [below for nested schema](#nestedblock--health_check_config))
+- `license_settings` (String) License type, e.g: BYOL,PAYG
+- `sic_key` (String) SIC Key for checkpoint
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `wait_for_rollout` (Boolean) Wait for the rollout of the task to complete. Defaults to true.
 
@@ -92,6 +122,19 @@ Optional:
 - `public_key` (String) Public Key details when selected option is `Provide public key`
 
 
+<a id="nestedblock--scaling_settings"></a>
+### Nested Schema for `scaling_settings`
+
+Required:
+
+- `max` (Number) Maximum Capacity
+- `min` (Number) Minimum Capacity
+
+Optional:
+
+- `desired` (Number) Default Capacity
+
+
 <a id="nestedblock--assignments"></a>
 ### Nested Schema for `assignments`
 
@@ -101,14 +144,13 @@ Required:
 - `template_name` (String) Name of Template
 
 
-<a id="nestedblock--scaling_settings"></a>
-### Nested Schema for `scaling_settings`
+<a id="nestedblock--health_check_config"></a>
+### Nested Schema for `health_check_config`
 
 Required:
 
-- `desired` (Number) Default Capacity
-- `max` (Number) Maximum Capacity
-- `min` (Number) Minimum Capacity
+- `port` (String) Port Number
+- `protocol` (String) Protocol Type
 
 
 <a id="nestedblock--timeouts"></a>

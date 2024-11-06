@@ -183,7 +183,7 @@ func resourceRPRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	d.Set("id", ns.ID)
 	d.Set("cidr", ns.Prefixes)
 	d.Set("all_regions", ns.Regions.All)
-	d.Set("selected_regions", ns.Regions.Selected)
+	// d.Set("selected_regions", ns.Regions.Selected)
 	d.Set("overwrite_route", ns.OverWriteRoute)
 	d.Set("status", ns.Status)
 	return diags

@@ -2,6 +2,7 @@ package prosimo
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -548,29 +549,53 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 			cloudNetworkListConfig := v.(*schema.Set).List()
 			for _, cloudNetwork := range cloudNetworkListConfig {
 				cloudNetworkConfig := cloudNetwork.(map[string]interface{})
+				cloudNetworkInput := &client.CloudNetworkops{
+					ConnectivityType: cloudNetworkConfig["connectivity_type"].(string),
+					HubID:            cloudNetworkConfig["hub_id"].(string),
+				}
 				inputSubnetsConfigList := []client.InputSubnet{}
-				// virtualSubnetFlag := cloudNetworkConfig["use_virtual_subnet"].(bool)
+				if cloudCreds.CloudType == client.AzureCloudType {
+					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vnet"].(string)
+				} else {
+					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vpc"].(string)
+				}
 				if v, ok := cloudNetworkConfig["subnets"]; ok {
 					subnetsConfigList := v.([]interface{})
 					for _, subnetConfig := range subnetsConfigList {
 						inputSubnetConfig := subnetConfig.(map[string]interface{})
-						inputSubnet := client.InputSubnet{
-							Subnet: inputSubnetConfig["subnet"].(string),
-							// VirtualSubnet: inputSubnetConfig["virtual_subnet"].(string),
+						vpc_list, err := prosimoClient.GetNetworkList(ctx, cloudCreds.ID, publiccloudOptsConfig["region_name"].(string))
+						if err != nil {
+							return diag.FromErr(err), nil
 						}
-						if v, ok := inputSubnetConfig["virtual_subnet"].(string); ok {
-							if v != "0" {
-								inputSubnet.VirtualSubnet = v
+						for _, vpc := range vpc_list {
+							if vpc.Network == cloudNetworkInput.CloudNetworkID {
+								subnetFound := false
+								for _, subnet := range vpc.Subnets {
+									if subnet.CIDR == inputSubnetConfig["subnet"].(string) {
+										inputSubnet := client.InputSubnet{
+											Subnet: inputSubnetConfig["subnet"].(string),
+										}
+										// Check if VirtualSubnet exists and is not "0"
+										if virtualSubnet, ok := inputSubnetConfig["virtual_subnet"].(string); ok && virtualSubnet != "0" {
+											inputSubnet.VirtualSubnet = virtualSubnet
+										}
+										inputSubnetsConfigList = append(inputSubnetsConfigList, inputSubnet)
+										subnetFound = true
+										break
+									}
+								}
+								if !subnetFound {
+									diags = append(diags, diag.Diagnostic{
+										Severity: diag.Error,
+										Summary:  "Invalid Subnet",
+										Detail:   fmt.Sprintf("Provided subnet %s does not exist in VPC %s.", inputSubnetConfig["subnet"].(string), vpc.Network),
+									})
+									return diags, nil
+								}
 							}
 						}
-						inputSubnetsConfigList = append(inputSubnetsConfigList, inputSubnet)
 					}
-				}
-				cloudNetworkInput := &client.CloudNetworkops{
-					ConnectivityType: cloudNetworkConfig["connectivity_type"].(string),
-					HubID:            cloudNetworkConfig["hub_id"].(string),
-					// ConnectorPlacement: cloudNetworkConfig["connector_placement"].(string),
-					Subnets: inputSubnetsConfigList,
+					cloudNetworkInput.Subnets = inputSubnetsConfigList
 				}
 				connectorPlacement := cloudNetworkConfig["connector_placement"].(string)
 				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions || connectorPlacement == client.WorkloadVNETConnectorPlacementOptions {
@@ -579,11 +604,6 @@ func resourceNetworkOnboardingSettings(ctx context.Context, d *schema.ResourceDa
 					cloudNetworkInput.ConnectorPlacement = client.InfraConnectorPlacementOptions
 				} else {
 					cloudNetworkInput.ConnectorPlacement = connectorPlacement
-				}
-				if cloudCreds.CloudType == client.AzureCloudType {
-					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vnet"].(string)
-				} else {
-					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vpc"].(string)
 				}
 				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions && cloudCreds.CloudType == client.AWSCloudType {
 					if v, ok := cloudNetworkConfig["service_insertion_endpoint_subnets"].(string); ok {
@@ -799,26 +819,53 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 			cloudNetworkListConfig := v.(*schema.Set).List()
 			for _, cloudNetwork := range cloudNetworkListConfig {
 				cloudNetworkConfig := cloudNetwork.(map[string]interface{})
+				cloudNetworkInput := &client.CloudNetworkops{
+					ConnectivityType: cloudNetworkConfig["connectivity_type"].(string),
+					HubID:            cloudNetworkConfig["hub_id"].(string),
+				}
 				inputSubnetsConfigList := []client.InputSubnet{}
+				if cloudCreds.CloudType == client.AzureCloudType {
+					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vnet"].(string)
+				} else {
+					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vpc"].(string)
+				}
 				if v, ok := cloudNetworkConfig["subnets"]; ok {
 					subnetsConfigList := v.([]interface{})
 					for _, subnetConfig := range subnetsConfigList {
 						inputSubnetConfig := subnetConfig.(map[string]interface{})
-						inputSubnet := client.InputSubnet{
-							Subnet: inputSubnetConfig["subnet"].(string),
+						vpc_list, err := prosimoClient.GetNetworkList(ctx, cloudCreds.ID, publiccloudOptsConfig["region_name"].(string))
+						if err != nil {
+							return diag.FromErr(err), nil
 						}
-						if v, ok := inputSubnetConfig["virtual_subnet"].(string); ok {
-							if v != "0" {
-								inputSubnet.VirtualSubnet = v
+						for _, vpc := range vpc_list {
+							if vpc.Network == cloudNetworkInput.CloudNetworkID {
+								subnetFound := false
+								for _, subnet := range vpc.Subnets {
+									if subnet.CIDR == inputSubnetConfig["subnet"].(string) {
+										inputSubnet := client.InputSubnet{
+											Subnet: inputSubnetConfig["subnet"].(string),
+										}
+										// Check if VirtualSubnet exists and is not "0"
+										if virtualSubnet, ok := inputSubnetConfig["virtual_subnet"].(string); ok && virtualSubnet != "0" {
+											inputSubnet.VirtualSubnet = virtualSubnet
+										}
+										inputSubnetsConfigList = append(inputSubnetsConfigList, inputSubnet)
+										subnetFound = true
+										break
+									}
+								}
+								if !subnetFound {
+									diags = append(diags, diag.Diagnostic{
+										Severity: diag.Error,
+										Summary:  "Invalid Subnet",
+										Detail:   fmt.Sprintf("Provided subnet %s does not exist in VPC %s.", inputSubnetConfig["subnet"].(string), vpc.Network),
+									})
+									return diags, nil
+								}
 							}
 						}
-						inputSubnetsConfigList = append(inputSubnetsConfigList, inputSubnet)
 					}
-				}
-				cloudNetworkInput := &client.CloudNetworkops{
-					ConnectivityType: cloudNetworkConfig["connectivity_type"].(string),
-					HubID:            cloudNetworkConfig["hub_id"].(string),
-					Subnets:          inputSubnetsConfigList,
+					cloudNetworkInput.Subnets = inputSubnetsConfigList
 				}
 				connectorPlacement := cloudNetworkConfig["connector_placement"].(string)
 				if connectorPlacement == client.WorkloadVpcConnectorPlacementOptions || connectorPlacement == client.WorkloadVNETConnectorPlacementOptions {
@@ -827,11 +874,6 @@ func resourceNetworkOnboardingSettingsUpdate(ctx context.Context, d *schema.Reso
 					cloudNetworkInput.ConnectorPlacement = client.InfraConnectorPlacementOptions
 				} else {
 					cloudNetworkInput.ConnectorPlacement = connectorPlacement
-				}
-				if cloudCreds.CloudType == client.AzureCloudType {
-					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vnet"].(string)
-				} else {
-					cloudNetworkInput.CloudNetworkID = cloudNetworkConfig["vpc"].(string)
 				}
 				if cloudNetworkInput.ConnectorPlacement == client.AppConnectorPlacementOptions && cloudCreds.CloudType == client.AWSCloudType {
 					if v, ok := cloudNetworkConfig["service_insertion_endpoint_subnets"].(string); ok {

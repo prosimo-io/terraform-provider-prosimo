@@ -36,7 +36,7 @@ func resourceProsimoManagedFirewalls() *schema.Resource {
 			"firewall_type": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Type of Firewall, e.g: vmseries",
+				Description: "Type of Firewall, e.g: vmseries or checkpoint-security-gateway",
 			},
 			"cloud_creds_name": {
 				Type:        schema.TypeString,
@@ -65,13 +65,23 @@ func resourceProsimoManagedFirewalls() *schema.Resource {
 			},
 			"auth_key": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Instance Auth Key",
 			},
 			"auth_code": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Instance Auth Key",
+			},
+			"sic_key": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "SIC Key for checkpoint",
+			},
+			"license_settings": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "License type, e.g: BYOL,PAYG",
 			},
 			"bootstrap": {
 				Type:        schema.TypeString,
@@ -86,7 +96,7 @@ func resourceProsimoManagedFirewalls() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"desired": {
 							Type:        schema.TypeInt,
-							Required:    true,
+							Optional:    true,
 							Description: "Default Capacity",
 						},
 						"min": {
@@ -104,7 +114,7 @@ func resourceProsimoManagedFirewalls() *schema.Resource {
 			},
 			"assignments": {
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Description: "Assignment Config",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -155,6 +165,26 @@ func resourceProsimoManagedFirewalls() *schema.Resource {
 					},
 				},
 			},
+			"health_check_config": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Health Check Configuration",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"protocol": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Protocol Type",
+						},
+						"port": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Port Number",
+						},
+					},
+				},
+			},
+
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -190,6 +220,7 @@ func resourcePMFCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	scalingConfigInput := client.ScalingConfig{}
 	assignmentsConfigInput := client.DeviceConfig{}
 	accessConfigInput := client.AccessConfig{}
+	monitoringConfigInput := client.MonitoringConfig{}
 	prosimoClient := meta.(*client.ProsimoClient)
 	offboardFlag := d.Get("decommission").(bool)
 	if offboardFlag {
@@ -204,9 +235,21 @@ func resourcePMFCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	activationConfig := &client.ActivationConfig{
-		AuthKey:  d.Get("auth_key").(string),
-		AuthCode: d.Get("auth_code").(string),
+	activationConfig := &client.ActivationConfig{}
+	if d.Get("firewall_type").(string) == client.TypePaloAlto {
+		activationConfig = &client.ActivationConfig{
+			AuthKey:  d.Get("auth_key").(string),
+			AuthCode: d.Get("auth_code").(string),
+		}
+	} else {
+		licenseConfig := &client.LicenseConfig{
+			LicenseMode: d.Get("license_settings").(string),
+		}
+		activationConfig = &client.ActivationConfig{
+			SicKey:        d.Get("sic_key").(string),
+			LicenseConfig: licenseConfig,
+		}
+
 	}
 
 	fwConfig := &client.FWConfig{
@@ -222,6 +265,7 @@ func resourcePMFCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		ScalingConfig:    &scalingConfigInput,
 		DeviceConfig:     &assignmentsConfigInput,
 		AccessConfig:     &accessConfigInput,
+		MonitoringConfig: &monitoringConfigInput,
 	}
 	if v, ok := d.GetOk("scaling_settings"); ok {
 		scalingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
@@ -273,6 +317,17 @@ func resourcePMFCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		accessConfigInput.PEMDetails = pemDetailsInput
 	}
 
+	if v, ok := d.GetOk("health_check_config"); ok {
+		healthCheckConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+		healthCheckInput := &client.HealthCheck{
+			Protocol: healthCheckConfig["protocol"].(string),
+			Port:     healthCheckConfig["port"].(string),
+		}
+		monitoringConfigInput = client.MonitoringConfig{
+			HealthCheckConfig: healthCheckInput,
+		}
+	}
+
 	log.Printf("[DEBUG]Creating FireWall : %v", fwConfig)
 	createFirewall, err := prosimoClient.CreateFirewall(ctx, fwConfig)
 	if err != nil {
@@ -288,7 +343,7 @@ func resourcePMFCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if d.Get("wait_for_rollout").(bool) {
 			log.Printf("[INFO] Waiting for task id %s to complete", onboardresponse.FWConfig.TaskID)
 			err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
-				retryUntilTaskCompleteSharedService(ctx, d, meta, onboardresponse.FWConfig.TaskID))
+				retryUntilTaskCompleteManagedFirewall(ctx, d, meta, onboardresponse.FWConfig.TaskID))
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -394,6 +449,7 @@ func resourcePMFUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 			scalingConfigInput := client.ScalingConfig{}
 			assignmentsConfigInput := client.DeviceConfig{}
 			accessConfigInput := client.AccessConfig{}
+			monitoringConfigInput := client.MonitoringConfig{}
 			prosimoClient := meta.(*client.ProsimoClient)
 			offboardFlag := d.Get("decommission").(bool)
 			if offboardFlag {
@@ -408,9 +464,21 @@ func resourcePMFUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			activationConfig := &client.ActivationConfig{
-				AuthKey:  d.Get("auth_key").(string),
-				AuthCode: d.Get("auth_code").(string),
+			activationConfig := &client.ActivationConfig{}
+			if d.Get("firewall_type").(string) == client.TypePaloAlto {
+				activationConfig = &client.ActivationConfig{
+					AuthKey:  d.Get("auth_key").(string),
+					AuthCode: d.Get("auth_code").(string),
+				}
+			} else {
+				licenseConfig := &client.LicenseConfig{
+					LicenseMode: d.Get("license_settings").(string),
+				}
+				activationConfig = &client.ActivationConfig{
+					SicKey:        d.Get("sic_key").(string),
+					LicenseConfig: licenseConfig,
+				}
+
 			}
 
 			fwConfig := &client.FWConfig{
@@ -427,6 +495,7 @@ func resourcePMFUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 				ScalingConfig:    &scalingConfigInput,
 				DeviceConfig:     &assignmentsConfigInput,
 				AccessConfig:     &accessConfigInput,
+				MonitoringConfig: &monitoringConfigInput,
 			}
 			if v, ok := d.GetOk("scaling_settings"); ok {
 				scalingConfig := v.(*schema.Set).List()[0].(map[string]interface{})
@@ -477,6 +546,17 @@ func resourcePMFUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 				}
 				log.Println("pemDetailsInput", pemDetailsInput)
 				accessConfigInput.PEMDetails = pemDetailsInput
+			}
+
+			if v, ok := d.GetOk("health_check_config"); ok {
+				healthCheckConfig := v.(*schema.Set).List()[0].(map[string]interface{})
+				healthCheckInput := &client.HealthCheck{
+					Protocol: healthCheckConfig["protocol"].(string),
+					Port:     healthCheckConfig["port"].(string),
+				}
+				monitoringConfigInput = client.MonitoringConfig{
+					HealthCheckConfig: healthCheckInput,
+				}
 			}
 
 			log.Printf("[DEBUG]Updating FireWall : %v", fwConfig)

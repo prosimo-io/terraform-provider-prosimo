@@ -22,11 +22,17 @@ type FWConfig struct {
 	DeviceConfig     *DeviceConfig     `json:"deviceConfig,omitempty"`
 	AccessConfig     *AccessConfig     `json:"accessConfig,omitempty"`
 	Bootstrap        string            `json:"bootstrap,omitempty"`
+	MonitoringConfig *MonitoringConfig `json:"monitoringConfig,omitempty"`
 }
 
 type ActivationConfig struct {
-	AuthKey  string `json:"authKey,omitempty"`
-	AuthCode string `json:"authCode,omitempty"`
+	AuthKey       string         `json:"authKey,omitempty"`
+	AuthCode      string         `json:"authCode,omitempty"`
+	SicKey        string         `json:"sicKey,omitempty"`
+	LicenseConfig *LicenseConfig `json:"licenseConfig,omitempty"`
+}
+type LicenseConfig struct {
+	LicenseMode string `json:"licenseMode,omitempty"`
 }
 type ScalingConfig struct {
 	DefaultCapacity int `json:"defaultCapacity,omitempty"`
@@ -54,12 +60,13 @@ type PEMDetails struct {
 	PublicKey   string `json:"publicKey,omitempty"`
 }
 
-// type Hosted_Zones struct {
-// 	ID       string `json:"id,omitempty"`
-// 	SourceID string `json:"sourceID,omitempty"`
-// 	DomainID string `json:"domainID,omitempty"`
-// 	Name     string `json:"name,omitempty"`
-// }
+type MonitoringConfig struct {
+	HealthCheckConfig *HealthCheck `json:"healthCheck,omitempty"`
+}
+type HealthCheck struct {
+	Protocol string `json:"protocol,omitempty"`
+	Port string `json:"port,omitempty"`
+}
 
 type FWConfig_Res struct {
 	PlMapRes *FWConfig `json:"data,omitempty"`
@@ -198,7 +205,7 @@ func (prosimoClient *ProsimoClient) GetFirewallByID(ctx context.Context, id stri
 	}
 
 	if firewall == nil {
-		return nil, errors.New("Firewall doesn't exists")
+		return nil, errors.New("firewall doesn't exists")
 	}
 
 	return firewall, nil

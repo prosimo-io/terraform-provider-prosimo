@@ -180,7 +180,7 @@ func resourceSICreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	sourceNetworkList := []client.Service_Input{}
 	if v, ok := d.GetOk("source"); ok {
 		sources := v.([]interface{})
-		for i := range sources {
+		for i, _ := range sources {
 			sourceConfig := sources[i].(map[string]interface{})
 			if v, ok := sourceConfig["networks"].(*schema.Set); ok && v.Len() > 0 {
 

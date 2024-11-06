@@ -156,13 +156,7 @@ func resourceSSCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 			return diags
 		}
-		regionInput = &client.Region{
-			CloudRegion:      cloudRregion,
-			CloudKeyID:       cloudCreds.ID,
-			CloudType:        cloudCreds.CloudType,
-			GwLoadBalancerID: regionConfig["gateway_lb"].(string),
-			// CloudZones:       "",
-		}
+
 		if regionInput.CloudType == client.AzureCloudType {
 			if v, ok := regionConfig["resource_group"]; ok {
 				regionInput.ResourceGrp = v.(string)
@@ -176,6 +170,20 @@ func resourceSSCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 				return diags
 			}
 		}
+		regionInput = &client.Region{
+			CloudRegion:      cloudRregion,
+			CloudKeyID:       cloudCreds.ID,
+			CloudType:        cloudCreds.CloudType,
+			GwLoadBalancerID: regionConfig["gateway_lb"].(string),
+			// CloudZones:       "",
+		}
+
+		// validate GWLB
+		gwlbDiags := validateGWLB(ctx, prosimoClient, regionInput, regionConfig)
+		if gwlbDiags.HasError() {
+			return gwlbDiags
+		}
+
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -328,13 +336,7 @@ func resourceSSUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 					return diags
 				}
-				regionInput = &client.Region{
-					CloudRegion:      cloudRregion,
-					CloudKeyID:       cloudCreds.ID,
-					CloudType:        cloudCreds.CloudType,
-					GwLoadBalancerID: regionConfig["gateway_lb"].(string),
-					// CloudZones:       "",
-				}
+
 				if regionInput.CloudType == client.AzureCloudType {
 					if v, ok := regionConfig["resource_group"]; ok {
 						regionInput.ResourceGrp = v.(string)
@@ -348,6 +350,21 @@ func resourceSSUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 						return diags
 					}
 				}
+
+				regionInput = &client.Region{
+					CloudRegion:      cloudRregion,
+					CloudKeyID:       cloudCreds.ID,
+					CloudType:        cloudCreds.CloudType,
+					GwLoadBalancerID: regionConfig["gateway_lb"].(string),
+					// CloudZones:       "",
+				}
+
+				// validate GWLB
+				gwlbDiags := validateGWLB(ctx, prosimoClient, regionInput, regionConfig)
+				if gwlbDiags.HasError() {
+					return gwlbDiags
+				}
+
 			} else {
 				diags = append(diags, diag.Diagnostic{
 					Severity: diag.Error,
@@ -450,5 +467,37 @@ func resourceSSDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] Deleted Shared Service with - id - %s", ssID)
 	d.SetId("")
 
+	return diags
+}
+func validateGWLB(ctx context.Context, prosimoClient *client.ProsimoClient, regionInput *client.Region, regionConfig map[string]interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	gwlbInput := client.GwlbSearch{
+		CloudCredID: regionInput.CloudKeyID,
+		Region:      regionInput.CloudRegion,
+	}
+	gwlb := regionConfig["gateway_lb"].(string)
+
+	var gwlbExists bool
+	var err error
+
+	switch regionInput.CloudType {
+	case client.AWSCloudType:
+		gwlbExists, err = prosimoClient.CheckIfGWLBExistsAWS(ctx, gwlbInput, gwlb)
+	case client.AzureCloudType:
+		gwlbExists, err = prosimoClient.CheckIfGWLBExistsAZURE(ctx, gwlbInput, gwlb, regionConfig["resource_group"].(string))
+	case client.GCPCloudType:
+		gwlbExists, err = prosimoClient.CheckIfGWLBExistsGCP(ctx, gwlbInput, gwlb)
+	}
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if !gwlbExists {
+		return diag.Errorf("Unable to find Gateway Load Balancer %s in region %s", gwlb, regionInput.CloudRegion)
+	}
+
+	regionInput.GwLoadBalancerID = gwlb
 	return diags
 }

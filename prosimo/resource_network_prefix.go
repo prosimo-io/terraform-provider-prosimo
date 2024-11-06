@@ -275,7 +275,7 @@ func resourceNPRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 
 	d.Set("id", ns.ID)
-	d.Set("prefix_route_tables", ns.PrefixesRT)
+	// d.Set("prefix_route_tables", ns.PrefixesRT)
 	d.Set("cloud_region", ns.CloudRegion)
 	d.Set("cloud_network", ns.CloudNetworkID)
 	d.Set("status", ns.Status)

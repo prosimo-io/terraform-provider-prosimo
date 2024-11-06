@@ -16,6 +16,9 @@ const (
 	GCPCloudType     = "GCP"
 	PrivateCloudType = "PRIVATE"
 
+	TypePaloAlto   = "vmseries"
+	TypeCheckPoint = "checkpoint-security-gateway"
+
 	AWSKeyType     = "AWSKEY"
 	AWSBulkKeyType = "AWSIAM"
 	AzureKeyType   = "AZUREKEY"
@@ -315,6 +318,10 @@ const (
 	TaskEndpointSearch                   = APIPrefix + "task/search"
 	CloudS3Endpoint                      = APIPrefix + "cloud/service/amazon/s3/discovery"
 	SharedServiceEndpoint                = APIPrefix + "shared-svc"
+	AWSGWLBEndpoint                      = APIPrefix + "shared-svc/endpointsvc"
+	AzureRGEndpoint                      = APIPrefix + "shared-svc/resource-group"
+	AzureGWLBEndpoint                    = APIPrefix + "shared-svc/resource-group/%s/loadbalancer"
+	GCPGWLBEndpoint                      = APIPrefix + "shared-svc/gateway-lb"
 	SharedServiceDeploymentEndpoint      = APIPrefix + "shared-svc/deployment"
 	GetSharedServiceEndpoint             = APIPrefix + "shared-svc/search"
 	ServiceInsertionEndpoint             = APIPrefix + "svc-insert"
@@ -339,6 +346,7 @@ const (
 	LogExporterEndpoint                  = APIPrefix + "logexporter"
 	GroupingEndpoint                     = APIPrefix + "groupings"
 	DiscoveredNetworksapi                = APIPrefix + "network/discovery"
+	DiscoveredNetworkVpc                 = APIPrefix + "network/discovery/cloud/%s/regions/%s/vpc"
 	OnboardAppEndpoint                   = APIPrefix + "app/onboard"
 	OnboardNetworkEndpoint               = APIPrefix + "network/onboard"
 	OnboardAppSearchEndpoint             = APIPrefix + "app/onboard/search"

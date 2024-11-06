@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 )
 
 type Shared_Service struct {
@@ -52,6 +53,19 @@ type SSListData struct {
 
 type SSListDataResponse struct {
 	Data *SSListData `json:"data,omitempty"`
+}
+type GwlbSearch struct {
+	CloudCredID string `json:"cloudCreds,omitempty"`
+	Region string `json:"region,omitempty"`
+}
+type GWLBlistDataResponse struct {
+	Data []GWLBListData `json:"data,omitempty"`
+}
+type GWLBListData struct {
+	Name string `json:"name,omitempty"`
+}
+type GWLBAWSlistDataResponse struct {
+	Data []string `json:"data,omitempty"`
 }
 
 func (prosimoClient *ProsimoClient) CreateSharedService(ctx context.Context, sharedServiceInput *Shared_Service) (*SS_Response, error) {
@@ -207,4 +221,103 @@ func (prosimoClient *ProsimoClient) GetSharedServiceByName(ctx context.Context, 
 
 	return sharedService, nil
 
+}
+
+func (prosimoClient *ProsimoClient) CheckIfGWLBExistsAWS(ctx context.Context, gwinput GwlbSearch, gwlb string) (bool, error) {
+	// Initialize the flag as false
+	gwlbExists := false
+
+	// Create a new API request for AWS endpoint
+	req, err := prosimoClient.api_client.NewRequest("POST", AWSGWLBEndpoint, gwinput)
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Initialize the response structure
+	GWListData := &GWLBAWSlistDataResponse{}
+
+	// Send the request and unmarshal the response into GWListData
+	_, err = prosimoClient.api_client.Do(ctx, req, GWListData)
+	if err != nil {
+		return false, fmt.Errorf("failed to perform request: %w", err)
+	}
+	log.Println("GWListData", GWListData)
+	log.Println("gwlb", gwlb)
+	// Loop through the returned list of GWLB names
+	for _, retgwlb := range GWListData.Data {
+		if retgwlb == gwlb {
+			gwlbExists = true
+			break
+		}
+	}
+
+	// Return whether the GWLB exists along with no error
+	return gwlbExists, nil
+}
+
+
+func (prosimoClient *ProsimoClient) CheckIfGWLBExistsGCP(ctx context.Context, gwinput GwlbSearch, gwlb string) (bool, error) {
+	// Initialize the flag as false
+	gwlbExists := false
+
+	// Create a new API request for GCP endpoint
+	req, err := prosimoClient.api_client.NewRequest("POST", GCPGWLBEndpoint, gwinput)
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Initialize the response structure
+	GWListData := &GWLBlistDataResponse{}
+
+	// Send the request and unmarshal the response into GWListData
+	_, err = prosimoClient.api_client.Do(ctx, req, GWListData)
+	if err != nil {
+		return false, fmt.Errorf("failed to perform request: %w", err)
+	}
+
+	// Loop through the returned data to check if the desired GWLB exists
+	for _, retgwlb := range GWListData.Data {
+		if retgwlb.Name == gwlb {
+			gwlbExists = true
+			break
+		}
+	}
+
+	// Return whether the GWLB exists along with no error
+	return gwlbExists, nil
+}
+
+
+func (prosimoClient *ProsimoClient) CheckIfGWLBExistsAZURE(ctx context.Context, gwinput GwlbSearch, gwlb string, rg string) (bool, error) {
+	// Initialize the flag as false
+	gwlbExists := false
+
+	// Construct the Azure GWLB API endpoint URL
+	postAzureGWLBEndpoint := fmt.Sprintf(AzureGWLBEndpoint, rg)
+
+	// Create a new API request with the given input data
+	req, err := prosimoClient.api_client.NewRequest("POST", postAzureGWLBEndpoint, gwinput)
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Initialize the response structure
+	GWListData := &GWLBlistDataResponse{}
+
+	// Send the request and unmarshal the response into GWListData
+	_, err = prosimoClient.api_client.Do(ctx, req, GWListData)
+	if err != nil {
+		return false, fmt.Errorf("failed to perform request: %w", err)
+	}
+
+	// Loop through the returned data to check if the desired GWLB exists
+	for _, retgwlb := range GWListData.Data {
+		if retgwlb.Name == gwlb {
+			gwlbExists = true
+			break
+		}
+	}
+
+	// Return whether the GWLB exists along with no error
+	return gwlbExists, nil
 }

@@ -198,44 +198,47 @@ func createAppOnboardConfigs(ctx context.Context, d *schema.ResourceData, meta i
 						return diag.FromErr(err), nil
 					}
 
-					if appOnboardCloudConfigRegionOpts.AttachPointID != "" {
+					if appOnboardCloudConfigRegionOpts.AttachPointID != "" || appOnboardCloudConfigRegionOpts.AppnetworkID != "" {
 						endpointList := []*client.AppOnboardCloudRegionEndpoints{}
 						NetworkIDFlag := false
 						AttachIDFlag := false
 						for _, appOnboardCloudConfigResponseRegions := range appOnboardCloudConfigResponseRegionsList {
-							for _, endpoints := range appOnboardCloudConfigResponseRegions.Endpoints {
-								if endpoints.AppNetworkID == appOnboardCloudConfigRegionOpts.AppnetworkID {
-									endpointList = append(endpointList, endpoints)
-									NetworkIDFlag = true
+							if appOnboardCloudConfigRegionOpts.AppnetworkID != "" {
+								for _, endpoints := range appOnboardCloudConfigResponseRegions.Endpoints {
+									if endpoints.AppNetworkID == appOnboardCloudConfigRegionOpts.AppnetworkID {
+										endpointList = append(endpointList, endpoints)
+										NetworkIDFlag = true
+									}
 								}
-							}
-							if !NetworkIDFlag {
-								diags = append(diags, diag.Diagnostic{
-									Severity: diag.Error,
-									Summary:  "Invalid  AppNetworkID.",
-									Detail:   "Input AppNetworkID does not exist.",
-								})
-								return diags, nil
-							}
-							// }
+								if !NetworkIDFlag {
+									diags = append(diags, diag.Diagnostic{
+										Severity: diag.Error,
+										Summary:  "Invalid  AppNetworkID.",
+										Detail:   "Input AppNetworkID does not exist.",
+									})
+									return diags, nil
+								}
+								// }
 
-							globalCloudConfigRegion.Endpoints = endpointList
+								globalCloudConfigRegion.Endpoints = endpointList
+							}
 							// log.Println("globalCloudConfigRegion.Endpoints", globalCloudConfigRegion.Endpoints)
 							// }
-							for _, attachpoint := range appOnboardCloudConfigResponseRegions.Attchpoints {
-								if attachpoint.AttachPointID == appOnboardCloudConfigRegionOpts.AttachPointID {
-									globalCloudConfigRegion.Endpoints[0].AttachPointID = attachpoint.AttachPointID
-									AttachIDFlag = true
-									// appOnboardCloudConfigResponseRegionsList[0].Endpoints[0].AttachPointID = attachpoint.AttachPointID
+							if appOnboardCloudConfigRegionOpts.AttachPointID != "" {
+								for _, attachpoint := range appOnboardCloudConfigResponseRegions.Attchpoints {
+									if attachpoint.AttachPointID == appOnboardCloudConfigRegionOpts.AttachPointID {
+										globalCloudConfigRegion.Endpoints[0].AttachPointID = attachpoint.AttachPointID
+										AttachIDFlag = true
+									}
 								}
-							}
-							if !AttachIDFlag {
-								diags = append(diags, diag.Diagnostic{
-									Severity: diag.Error,
-									Summary:  "Invalid  AttachPointID.",
-									Detail:   "Input AttachPointID does not exist.",
-								})
-								return diags, nil
+								if !AttachIDFlag {
+									diags = append(diags, diag.Diagnostic{
+										Severity: diag.Error,
+										Summary:  "Invalid  AttachPointID.",
+										Detail:   "Input AttachPointID does not exist.",
+									})
+									return diags, nil
+								}
 							}
 							// }
 						}
@@ -320,45 +323,48 @@ func createAppOnboardConfigs(ctx context.Context, d *schema.ResourceData, meta i
 						if err != nil {
 							return diag.FromErr(err), nil
 						}
-						if appOnboardCloudConfigRegionOpts.AttachPointID != "" {
+						if appOnboardCloudConfigRegionOpts.AttachPointID != "" || appOnboardCloudConfigRegionOpts.AppnetworkID != "" {
 							endpointList := []*client.AppOnboardCloudRegionEndpoints{}
 							NetworkIDFlag := false
 							AttachIDFlag := false
 							for _, appOnboardCloudConfigResponseRegions := range appOnboardCloudConfigResponseRegionsList {
-								for _, endpoints := range appOnboardCloudConfigResponseRegions.Endpoints {
-									if endpoints.AppNetworkID == appOnboardCloudConfigRegionOpts.AppnetworkID {
-										endpointList = append(endpointList, endpoints)
-										NetworkIDFlag = true
+								if appOnboardCloudConfigRegionOpts.AppnetworkID != "" {
+									for _, endpoints := range appOnboardCloudConfigResponseRegions.Endpoints {
+										if endpoints.AppNetworkID == appOnboardCloudConfigRegionOpts.AppnetworkID {
+											endpointList = append(endpointList, endpoints)
+											NetworkIDFlag = true
+										}
 									}
-								}
-								if !NetworkIDFlag {
-									diags = append(diags, diag.Diagnostic{
-										Severity: diag.Error,
-										Summary:  "Invalid  AppNetworkID.",
-										Detail:   "Input AppNetworkID does not exist.",
-									})
-									return diags, nil
-								}
-								// }
+									if !NetworkIDFlag {
+										diags = append(diags, diag.Diagnostic{
+											Severity: diag.Error,
+											Summary:  "Invalid  AppNetworkID.",
+											Detail:   "Input AppNetworkID does not exist.",
+										})
+										return diags, nil
+									}
+									// }
 
-								globalCloudConfigRegion.Endpoints = endpointList
+									globalCloudConfigRegion.Endpoints = endpointList
+								}
 								// log.Println("globalCloudConfigRegion.Endpoints", globalCloudConfigRegion.Endpoints)
 								// }
-								for _, attachpoint := range appOnboardCloudConfigResponseRegions.Attchpoints {
-									if attachpoint.AttachPointID == appOnboardCloudConfigRegionOpts.AttachPointID {
-										globalCloudConfigRegion.Endpoints[0].AttachPointID = attachpoint.AttachPointID
-										AttachIDFlag = true
+								if appOnboardCloudConfigRegionOpts.AttachPointID != "" {
+									for _, attachpoint := range appOnboardCloudConfigResponseRegions.Attchpoints {
+										if attachpoint.AttachPointID == appOnboardCloudConfigRegionOpts.AttachPointID {
+											globalCloudConfigRegion.Endpoints[0].AttachPointID = attachpoint.AttachPointID
+											AttachIDFlag = true
+										}
+									}
+									if !AttachIDFlag {
+										diags = append(diags, diag.Diagnostic{
+											Severity: diag.Error,
+											Summary:  "Invalid  AttachPointID.",
+											Detail:   "Input AttachPointID does not exist.",
+										})
+										return diags, nil
 									}
 								}
-								if !AttachIDFlag {
-									diags = append(diags, diag.Diagnostic{
-										Severity: diag.Error,
-										Summary:  "Invalid  AttachPointID.",
-										Detail:   "Input AttachPointID does not exist.",
-									})
-									return diags, nil
-								}
-								// }
 							}
 						} else {
 

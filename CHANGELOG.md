@@ -1,3 +1,12 @@
+## 4.5.3(Sep 27 2024)
+### Feature:
+- Terraform support for gcp shared service.
+## 4.4.3(Septemebr 10 2024)
+### Bugfix:
+- PRO-22649: Terraform - prosimo_network_onboarding resource - Azure network onboarding allows random subnets to be onboarded as a part of the network
+## 4.4.2(Septemebr 10 2024)
+### Bugfix:
+- PRO-21161: [Terraform] Multiple endpoints attached for a single domain
 ## 4.4.1(Jun 28 2024)
 ### Feature:
 - Terraform support for network Rules with Internet Access

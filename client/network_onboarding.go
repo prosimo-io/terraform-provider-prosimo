@@ -125,6 +125,23 @@ type NetworkDeploymentresops struct {
 	ID      string `json:"id,omitempty"`
 }
 
+type SubnetRead struct {
+	ID   string `json:"id,omitempty"`
+	CIDR string `json:"cidr,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+type VPC struct {
+	ID           string       `json:"id,omitempty"`
+	Network      string       `json:"network,omitempty"`
+	Name         string       `json:"name,omitempty"`
+	Subnet_Count int          `json:"subnet_count,omitempty"`
+	Subnets      []SubnetRead `json:"subnets,omitempty"`
+}
+
+type VPCLIST struct {
+	VpcList []VPC `json:"data,omitempty"`
+}
+
 type NetworkDeploymentres struct {
 	NetworkDeploymentResops NetworkDeploymentresops `json:"data,omitempty"`
 }
@@ -180,78 +197,6 @@ func (prosimoClient *ProsimoClient) NetworkOnboard(ctx context.Context, networkO
 
 }
 
-// func (prosimoClient *ProsimoClient) NetworkOnboardCloud(ctx context.Context, networkOnboardsops *NetworkOnboardoptns) error {
-// 	postOnboardNetworkCloudEndpoint := fmt.Sprintf(OnboardNetworkCloudEndpoint, networkOnboardsops.ID)
-
-// 	req, err := prosimoClient.api_client.NewRequest("PUT", postOnboardNetworkCloudEndpoint, networkOnboardsops)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	_, err = prosimoClient.api_client.Do(ctx, req, nil)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-
-// }
-
-// func (prosimoClient *ProsimoClient) NetworkOnboardSecurity(ctx context.Context, networkOnboardsecurityops *NetworkSecurityInput, appID string) error {
-// 	postOnboardNetworkPolicyEndpoint := fmt.Sprintf(OnboardNetworkPolicyEndpoint, appID)
-
-// 	req, err := prosimoClient.api_client.NewRequest("PUT", postOnboardNetworkPolicyEndpoint, networkOnboardsecurityops)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	_, err = prosimoClient.api_client.Do(ctx, req, nil)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-
-// }
-
-// func (prosimoClient *ProsimoClient) OnboardNetworkDeployment(ctx context.Context, appID string) (*NetworkDeploymentres, error) {
-// 	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, appID)
-
-// 	onboardrequest := &NetworkDeploymentres{}
-// 	req, err := prosimoClient.api_client.NewRequest("PUT", PostOnboardNetworkDeploymentEndpoint, onboardrequest)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	onboardresponse := &NetworkDeploymentres{}
-// 	_, err = prosimoClient.api_client.Do(ctx, req, onboardresponse)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return onboardresponse, nil
-
-// }
-
-// func (prosimoClient *ProsimoClient) OnboardNetworkDeploymentPost(ctx context.Context, networkOnboardsops *NetworkOnboardoptns) (*NetworkDeploymentres, error) {
-// 	log.Println("Entering reboard block", networkOnboardsops)
-// 	PostOnboardNetworkDeploymentEndpoint := fmt.Sprintf(OnboardNetworkDeploymentEndpoint, networkOnboardsops.ID)
-
-// 	// onboardrequest := &NetworkDeploymentres{}
-// 	req, err := prosimoClient.api_client.NewRequest("POST", PostOnboardNetworkDeploymentEndpoint, networkOnboardsops)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	onboardresponse := &NetworkDeploymentres{}
-// 	_, err = prosimoClient.api_client.Do(ctx, req, onboardresponse)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return onboardresponse, nil
-
-// }
 
 func (prosimoClient *ProsimoClient) OnboardNetworkDeploymentV2(ctx context.Context, networkOnboardsops *NetworkOnboardoptns, paramValue string) (*NetworkDeploymentres, error) {
 	// log.Println("Entering reboard block", networkOnboardsops)
@@ -369,5 +314,22 @@ func (prosimoClient *ProsimoClient) SearchOnboardNetworks(ctx context.Context) (
 	}
 
 	return networkOnboardSettingsResponseData, nil
+
+}
+
+func (prosimoClient *ProsimoClient) GetNetworkList(ctx context.Context, cloudKey string, region string) ([]VPC, error) {
+	updateDiscoveredNetworkVpc := fmt.Sprintf(DiscoveredNetworkVpc, cloudKey, region)
+
+	req, err := prosimoClient.api_client.NewRequest("GET", updateDiscoveredNetworkVpc, nil)
+	if err != nil {
+		return nil, err
+	}
+	readresponse := &VPCLIST{}
+	_, err = prosimoClient.api_client.Do(ctx, req, readresponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return readresponse.VpcList, nil
 
 }
